@@ -29,7 +29,7 @@ class RedisVelocityTracker:
             logger.warning(f"Could not connect to Redis ({e}). Running in fallback mode.")
             self.r = None
 
-    def record_and_get_velocity(self, account_no: str, amount: float) -> Tuple[int, int, float]:
+    def record_and_get_velocity(self, account_no: str, amount: float, tx_id: str = "") -> Tuple[int, int, float]:
         """
         Records the transaction and returns:
         - velocity_1m (count in last 60 seconds)
@@ -41,7 +41,8 @@ class RedisVelocityTracker:
 
         now = time.time()
         key = f"vel:acc:{account_no}"
-        member = f"{now}:{amount}"
+        # Use tx_id to ensure exact deduplication if duplicate logs are replayed
+        member = f"{tx_id}:{amount}" if tx_id else f"{now}:{amount}"
 
         try:
             pipe = self.r.pipeline()

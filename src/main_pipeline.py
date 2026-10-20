@@ -90,7 +90,7 @@ class FraudDetectionPipeline:
         # Step 2: Velocity & Blacklist
         is_bl = self.velocity_tracker.is_blacklisted(tx.source_account)
         vel_1m, vel_5m, amt_1h = self.velocity_tracker.record_and_get_velocity(
-            tx.source_account, tx.amount
+            tx.source_account, tx.amount, tx_id=tx.tx_id
         )
         tx.velocity_1m = vel_1m
         tx.velocity_5m = vel_5m

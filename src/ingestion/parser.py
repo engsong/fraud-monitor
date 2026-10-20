@@ -20,7 +20,8 @@ class TransactionParser:
             return None
 
         # 1. LMPS Switching Core Log lines (e.g. from LMPS.log)
-        if "[POST /transfer]" in cleaned or "/transfer CONTENT:" in cleaned:
+        # Exclusively match inbound [POST /transfer] to prevent duplicate counting of forwarded HTTP requests
+        if "[POST /transfer]" in cleaned:
             return TransactionParser._parse_lmps_log(cleaned)
 
         # 2. Standard JSON Payload
@@ -37,27 +38,15 @@ class TransactionParser:
     @staticmethod
     def _parse_lmps_log(line: str) -> Optional[Transaction]:
         """
-        Parses real-time LMPS payment switch log lines:
-        Example 1: ... [POST /transfer]	[{"frommember":"LFX","fromaccount":"23000...","tomember":"BCEL","toaccount":"0401...","reference":"BWRY...","amount":10000.00,"ccy":"LAK",...}]
-        Example 2: ... HTTP REQUEST TO: .../transfer CONTENT: {"frommember":"STB","fromaccount":"1510...","tomember":"JDB","amount":3600000,...}
+        Parses real-time LMPS payment switch inbound transfer log line:
+        Example: ... [POST /transfer]	[{"frommember":"LFX","fromaccount":"23000...","tomember":"BCEL","toaccount":"0401...","reference":"BWRY...","amount":10000.00,"ccy":"LAK",...}]
         """
         try:
-            json_text = None
-
-            # Pattern 1: [POST /transfer]\t[{...}]
-            if "[POST /transfer]" in line:
-                match = re.search(r'\[POST /transfer\]\s*\[(\{.*?\})\]', line)
-                if match:
-                    json_text = match.group(1)
-
-            # Pattern 2: CONTENT: {...}
-            elif "CONTENT:" in line:
-                match = re.search(r'CONTENT:\s*(\{.*?\})', line)
-                if match:
-                    json_text = match.group(1)
-
-            if not json_text:
+            match = re.search(r'\[POST /transfer\]\s*\[(\{.*?\})\]', line)
+            if not match:
                 return None
+
+            json_text = match.group(1)
 
             data = json.loads(json_text)
 
