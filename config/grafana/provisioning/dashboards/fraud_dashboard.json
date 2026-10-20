@@ -13,7 +13,7 @@
       "collapsed": false,
       "gridPos": {
         "h": 4,
-        "w": 6,
+        "w": 4,
         "x": 0,
         "y": 0
       },
@@ -47,8 +47,8 @@
       "collapsed": false,
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 6,
+        "w": 4,
+        "x": 4,
         "y": 0
       },
       "id": 2,
@@ -82,8 +82,8 @@
       "collapsed": false,
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 12,
+        "w": 4,
+        "x": 8,
         "y": 0
       },
       "id": 3,
@@ -116,19 +116,19 @@
       "collapsed": false,
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 18,
+        "w": 4,
+        "x": 12,
         "y": 0
       },
       "id": 4,
-      "title": "Total Amount Monitored (LAK)",
+      "title": "Monitored Volume (LAK)",
       "type": "stat",
       "datasource": "PostgreSQL-FraudDB",
       "targets": [
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT COALESCE(SUM(amount), 0) AS total_amount FROM fraud_monitoring.transactions WHERE currency = 'LAK';",
+          "rawSql": "SELECT COALESCE(SUM(amount), 0) AS lak_amount FROM fraud_monitoring.transactions WHERE currency = 'LAK';",
           "refId": "A"
         }
       ],
@@ -150,12 +150,82 @@
     {
       "collapsed": false,
       "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 0
+      },
+      "id": 5,
+      "title": "Monitored Volume (THB)",
+      "type": "stat",
+      "datasource": "PostgreSQL-FraudDB",
+      "targets": [
+        {
+          "datasource": "PostgreSQL-FraudDB",
+          "format": "table",
+          "rawSql": "SELECT COALESCE(SUM(amount), 0) AS thb_amount FROM fraud_monitoring.transactions WHERE currency = 'THB';",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyTHB",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "yellow", "value": null }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 0
+      },
+      "id": 6,
+      "title": "Monitored Volume (USD)",
+      "type": "stat",
+      "datasource": "PostgreSQL-FraudDB",
+      "targets": [
+        {
+          "datasource": "PostgreSQL-FraudDB",
+          "format": "table",
+          "rawSql": "SELECT COALESCE(SUM(amount), 0) AS usd_amount FROM fraud_monitoring.transactions WHERE currency = 'USD';",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "teal", "value": null }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
         "x": 0,
         "y": 4
       },
-      "id": 5,
+      "id": 7,
       "title": "Top Source Institutions (Sender Banks)",
       "type": "barchart",
       "datasource": "PostgreSQL-FraudDB",
@@ -172,11 +242,11 @@
       "collapsed": false,
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
+        "w": 8,
+        "x": 8,
         "y": 4
       },
-      "id": 6,
+      "id": 8,
       "title": "Top Destination Institutions (Beneficiary Banks)",
       "type": "barchart",
       "datasource": "PostgreSQL-FraudDB",
@@ -192,12 +262,33 @@
     {
       "collapsed": false,
       "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 4
+      },
+      "id": 9,
+      "title": "Transactions by Currency (LAK / THB / USD / CNY)",
+      "type": "piechart",
+      "datasource": "PostgreSQL-FraudDB",
+      "targets": [
+        {
+          "datasource": "PostgreSQL-FraudDB",
+          "format": "table",
+          "rawSql": "SELECT currency AS \"Currency\", count(*) AS \"Transactions\" FROM fraud_monitoring.transactions GROUP BY currency ORDER BY \"Transactions\" DESC;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
         "h": 10,
         "w": 24,
         "x": 0,
         "y": 12
       },
-      "id": 7,
+      "id": 10,
       "title": "🔴 Real-Time Live Transactions Stream",
       "type": "table",
       "datasource": "PostgreSQL-FraudDB",
@@ -205,7 +296,7 @@
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT to_char(timestamp, 'YYYY-MM-DD HH24:MI:SS') AS \"Time (UTC)\", tx_id AS \"Reference ID\", node AS \"Switch Node\", source_bank AS \"From Bank\", source_account AS \"From Account\", dest_bank AS \"To Bank\", dest_account AS \"To Account/QR\", to_char(amount, 'FM999,999,999,990.00') AS \"Amount\", currency AS \"Ccy\", risk_score AS \"Risk Score\" FROM fraud_monitoring.transactions ORDER BY id DESC LIMIT 50;",
+          "rawSql": "SELECT to_char(timestamp, 'YYYY-MM-DD HH24:MI:SS') AS \"Time (UTC)\", tx_id AS \"Reference ID\", node AS \"Switch Node\", source_bank AS \"From Bank\", source_account AS \"From Account\", dest_bank AS \"To Bank\", dest_account AS \"To Account/QR\", currency AS \"Ccy\", to_char(amount, 'FM999,999,999,990.00') AS \"Amount\", risk_score AS \"Risk Score\" FROM fraud_monitoring.transactions ORDER BY id DESC LIMIT 50;",
           "refId": "A"
         }
       ],
@@ -244,12 +335,12 @@
     {
       "collapsed": false,
       "gridPos": {
-        "h": 8,
+        "h": 10,
         "w": 24,
         "x": 0,
         "y": 22
       },
-      "id": 8,
+      "id": 11,
       "title": "🚨 High-Risk Fraud Alerts Feed",
       "type": "table",
       "datasource": "PostgreSQL-FraudDB",
@@ -257,16 +348,47 @@
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT to_char(timestamp, 'YYYY-MM-DD HH24:MI:SS') AS \"Time (UTC)\", tx_id AS \"Reference ID\", node AS \"Switch Node\", source_bank AS \"From Bank\", source_account AS \"From Account\", dest_bank AS \"To Bank\", dest_account AS \"To Account/QR\", to_char(amount, 'FM999,999,999,990.00') AS \"Amount\", risk_score AS \"Risk Score\", array_to_string(reasons, ', ') AS \"Triggers\", alert_status AS \"Status\" FROM fraud_monitoring.fraud_alerts ORDER BY timestamp DESC LIMIT 50;",
+          "rawSql": "SELECT to_char(timestamp, 'YYYY-MM-DD HH24:MI:SS') AS \"Time (UTC)\", tx_id AS \"Reference ID\", node AS \"Switch Node\", source_bank AS \"From Bank\", source_account AS \"From Account\", dest_bank AS \"To Bank\", dest_account AS \"To Account/QR\", currency AS \"Ccy\", to_char(amount, 'FM999,999,999,990.00') AS \"Amount\", risk_score AS \"Risk Score\", array_to_string(reasons, ', ') AS \"Triggers\", alert_status AS \"Status\" FROM fraud_monitoring.fraud_alerts ORDER BY timestamp DESC LIMIT 50;",
           "refId": "A"
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Risk Score" },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green", "value": 0 },
+                    { "color": "orange", "value": 50 },
+                    { "color": "red", "value": 80 }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "refresh": "5s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["fraud", "switching", "realtime"],
+  "tags": ["fraud", "switching", "realtime", "multicurrency"],
   "time": {
     "from": "now-1h",
     "to": "now"
@@ -277,5 +399,5 @@
   "timezone": "browser",
   "title": "LAPNet Payment Switch - Real-Time Fraud Monitor",
   "uid": "lapnet-fraud-live",
-  "version": 1
+  "version": 2
 }

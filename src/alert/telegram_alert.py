@@ -35,7 +35,7 @@ class TelegramAlertDispatcher:
             f"• *Channel*      : `{tx.channel}`\n"
             f"• *Source Inst*  : *{tx.source_bank}* (`{tx.source_account}`)\n"
             f"• *Dest Inst*    : *{tx.dest_bank}* (`{tx.dest_account}`)\n"
-            f"• *Amount*       : `{tx.amount:,.0f} {tx.currency}`\n"
+            f"• *Amount*       : `{tx.amount:,.2f} {tx.currency}`\n"
             f"• *Triggers*     :\n{reasons_list}\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
             f"⚠️ *Action*: Advise `{tx.dest_bank}` to verify / hold destination account."

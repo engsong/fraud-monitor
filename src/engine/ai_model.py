@@ -6,10 +6,19 @@ from src.common.logger import get_logger
 
 logger = get_logger("AIEngine")
 
+# Approximate conversion multipliers to normalize all currencies to LAK baseline
+CURRENCY_RATES_TO_LAK = {
+    "LAK": 1.0,
+    "THB": 650.0,
+    "USD": 22000.0,
+    "CNY": 3100.0,
+}
+
 class AIAnomalyScorer:
     """
     Unsupervised Anomaly Detection using Isolation Forest.
     Evaluates multi-dimensional behavioral deviations without requiring labeled fraud data.
+    Supports multi-currency normalization (LAK, USD, THB, CNY).
     """
 
     def __init__(self, contamination: float = 0.015):
@@ -26,12 +35,12 @@ class AIAnomalyScorer:
         """
         Synthesizes a realistic baseline normal distribution of switch transactions
         to enable zero-day scoring immediately upon startup.
-        Features: [amount, hour, velocity_1m, velocity_5m, amount_1h]
+        Features: [amount (LAK equivalent), hour, velocity_1m, velocity_5m, amount_1h (LAK equivalent)]
         """
         np.random.seed(42)
         n_samples = 2500
 
-        # Normal typical distribution
+        # Normal typical distribution in base LAK scale
         amounts = np.random.exponential(scale=500000, size=n_samples) + 20000
         hours = np.random.normal(loc=14, scale=4, size=n_samples) % 24
         vel_1m = np.random.choice([1, 1, 1, 2], size=n_samples)
@@ -41,7 +50,7 @@ class AIAnomalyScorer:
         X_train = np.column_stack([amounts, hours, vel_1m, vel_5m, amt_1h])
         self.model.fit(X_train)
         self.is_fitted = True
-        logger.info("AI Anomaly Baseline Model successfully trained and ready.")
+        logger.info("AI Anomaly Baseline Model successfully trained and ready (multi-currency normalized).")
 
     def score(self, tx: Transaction) -> Tuple[int, str]:
         """
@@ -50,12 +59,17 @@ class AIAnomalyScorer:
         if not self.is_fitted:
             return 0, ""
 
+        ccy = (tx.currency or "LAK").upper()
+        rate = CURRENCY_RATES_TO_LAK.get(ccy, 1.0)
+        norm_amt = tx.amount * rate
+        norm_amt_1h = tx.amount_1h * rate
+
         feature_vector = np.array([[
-            tx.amount,
+            norm_amt,
             tx.timestamp.hour,
             tx.velocity_1m,
             tx.velocity_5m,
-            tx.amount_1h
+            norm_amt_1h
         ]])
 
         try:
@@ -68,9 +82,10 @@ class AIAnomalyScorer:
 
             reason = ""
             if normalized >= 65:
-                reason = f"AI Statistical Outlier: Behavioral anomaly detected (Confidence: {normalized}%)"
+                reason = f"AI Statistical Outlier: Behavioral anomaly detected ({tx.amount:,.2f} {ccy}, Confidence: {normalized}%)"
 
             return normalized, reason
         except Exception as e:
             logger.error(f"AI scoring failed: {e}")
             return 0, ""
+
