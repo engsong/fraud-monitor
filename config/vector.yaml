@@ -1,0 +1,32 @@
+# ==============================================================================
+# VECTOR LOG SHIPPER CONFIGURATION FOR PAYMENT SWITCH
+# ==============================================================================
+
+sources:
+  switching_file_logs:
+    type: "file"
+    include:
+      - "/var/log/switching/*.log"
+      - "D:/switching_logs/*.log"
+    read_from: "end"
+    multiline:
+      start_pattern: '^(\{|<Document|<FIToFICstmrCdtTrf)'
+      condition_pattern: '^(\{|<Document|<FIToFICstmrCdtTrf)'
+      mode: "halt_before"
+      timeout_ms: 500
+
+transforms:
+  clean_logs:
+    type: "remap"
+    inputs: ["switching_file_logs"]
+    source: |
+      .raw_message = string!(.message)
+
+sinks:
+  kafka_sink:
+    type: "kafka"
+    inputs: ["clean_logs"]
+    bootstrap_servers: "localhost:9092"
+    topic: "switching-raw-logs"
+    encoding:
+      codec: "text"

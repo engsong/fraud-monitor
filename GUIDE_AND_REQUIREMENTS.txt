@@ -1,0 +1,338 @@
+================================================================================
+   REAL-TIME FRAUD MONITORING SYSTEM FOR PAYMENT SWITCH
+   ISO 20022 & REST API (JSON) - GUIDE & TECHNICAL REQUIREMENTS
+================================================================================
+Target System: Inter-bank / Non-bank / Fintech Payment Switching Network
+Project Path : D:\Dev_By_Eng\Fraud-monitor
+Date Created : 2026-10-19
+================================================================================
+
+TABLE OF CONTENTS:
+--------------------------------------------------------------------------------
+1. SYSTEM ARCHITECTURE & HIGH-LEVEL OVERVIEW
+2. HARDWARE & INFRASTRUCTURE REQUIREMENTS
+3. SOFTWARE & OPERATING SYSTEM PREREQUISITES
+4. PROGRAMMING LANGUAGES, LIBRARIES & DEPENDENCIES
+5. DATA SCHEMAS & MESSAGE SPECIFICATIONS (ISO 20022 vs REST JSON)
+6. STEP-BY-STEP IMPLEMENTATION ROADMAP (PHASE 1 - PHASE 6)
+7. PROJECT DIRECTORY STRUCTURE & FILE ROLES
+8. MONITORING, ALERTING & DASHBOARD SPECIFICATIONS
+9. NEXT ACTION PLAN FOR BUILD
+================================================================================
+
+
+--------------------------------------------------------------------------------
+1. SYSTEM ARCHITECTURE & HIGH-LEVEL OVERVIEW
+--------------------------------------------------------------------------------
+
+The fraud monitoring system is designed as an asynchronous, near-real-time 
+streaming pipeline that monitors 100% of switched transactions without 
+interfering with or adding latency to core payment switching operations.
+
+DATA FLOW DIAGRAM:
+------------------
+[ Payment Switch Core ]
+       │ (Writes transaction logs: XML / JSON)
+       ▼
+[ Log Shipper Agent (Vector / Filebeat) ] 
+       │ (Tails log file in real-time, <50ms latency)
+       ▼
+[ Message Queue: Apache Kafka ]
+       │ Topic: "switching-raw-logs"
+       ▼
+[ Stream Parser Service (Python / Go) ]
+       │ Normalizes ISO 20022 (pacs.008, pacs.002) and REST JSON
+       ▼
+[ Message Queue: Apache Kafka ]
+       │ Topic: "switching-normalized-tx"
+       ▼
+┌────────────────────────────────────────────────────────┐
+│ STREAMING FRAUD EVALUATION ENGINE                      │
+│                                                        │
+│  1. In-Memory State & Velocity Engine (Redis)          │
+│     - Sliding window: 1 min, 5 min, 1 hour, 24 hours   │
+│     - Tracks account frequency, sums, fail rates       │
+│                                                        │
+│  2. Deterministic Rule Engine                          │
+│     - Blacklist / Watchlist checks                     │
+│     - High-velocity spikes (e.g. >5 tx/min)            │
+│     - Sudden large single-amount threshold             │
+│                                                        │
+│  3. AI / Machine Learning Engine (Scoring: 0-100)      │
+│     - Phase 1: Isolation Forest (Anomaly Detection)    │
+│     - Phase 2: LightGBM / XGBoost via ONNX Runtime     │
+└──────────────────────────┬─────────────────────────────┘
+                           │
+       ┌───────────────────┴───────────────────┐
+       │ (Score >= 80 or Rule Triggered)       │ (All Transactions)
+       ▼                                       ▼
+[ Instant Notification ]              [ High-Speed Analytics DB ]
+  • Telegram Bot Alerts                 • ClickHouse Database
+  • Bank Risk API Webhooks              • Audit trail & reporting
+  • Email / SMS Alerts                         │
+                                               ▼
+                                      [ Real-time Dashboard ]
+                                        • Grafana / Custom Web UI
+
+
+--------------------------------------------------------------------------------
+2. HARDWARE & INFRASTRUCTURE REQUIREMENTS
+--------------------------------------------------------------------------------
+
+Because tabular fraud detection models (Isolation Forest, XGBoost, LightGBM) run 
+efficiently on modern CPUs, NO EXPENSIVE GPU SERVERS ARE REQUIRED.
+
+Recommended Server Sizing for 500 - 2,000 Transactions Per Second (TPS):
+
+A. Development / PoC Environment (Single Machine / PC):
+   • CPU      : 8 Cores (Intel Core i7/i9 or AMD Ryzen 7/9 / Xeon)
+   • RAM      : 16 GB - 32 GB RAM
+   • Disk     : 256 GB NVMe SSD
+   • OS       : Windows 10/11 Pro (with WSL2 & Docker Desktop) or Linux (Ubuntu 22.04+)
+
+B. Production Deployment (Distributed 3 Nodes / VMs):
+   • Node 1 (Ingestion & State):
+     - Role   : Apache Kafka + Redis Cluster
+     - Specs  : 8 vCPUs, 32 GB RAM, 500 GB NVMe SSD
+   • Node 2 (AI Processing & Parser):
+     - Role   : Parser Worker + AI Scoring Engine (ONNX Runtime)
+     - Specs  : 16 vCPUs, 32 GB RAM, 256 GB SSD
+   • Node 3 (Analytics & Dashboard):
+     - Role   : ClickHouse Database + Grafana + Web UI
+     - Specs  : 16 vCPUs, 64 GB RAM, 2 TB NVMe SSD (RAID 10 recommended)
+
+
+--------------------------------------------------------------------------------
+3. SOFTWARE & OPERATING SYSTEM PREREQUISITES
+--------------------------------------------------------------------------------
+
+Before starting development on Windows (D:\Dev_By_Eng\Fraud-monitor):
+1. Docker Desktop for Windows (with WSL2 backend enabled)
+2. Python 3.10 or Python 3.11 (64-bit)
+3. Git for Windows
+4. Visual Studio Code or any IDE
+5. (Optional for High-Performance Parser) Go (Golang) 1.21+
+
+
+--------------------------------------------------------------------------------
+4. PROGRAMMING LANGUAGES, LIBRARIES & DEPENDENCIES
+--------------------------------------------------------------------------------
+
+A. Primary Languages:
+   • Python (Primary for Parser, Rule Engine, and AI Modeling)
+   • SQL (For ClickHouse analytics)
+   • YAML / Docker Compose (For infrastructure orchestration)
+
+B. Core Python Libraries (requirements.txt):
+   -----------------------------------------------------------------------------
+   Package Name         Version       Purpose
+   -----------------------------------------------------------------------------
+   kafka-python         >=2.0.2       Kafka consumer and producer
+   redis                >=5.0.1       Real-time sliding window velocity counters
+   clickhouse-connect   >=0.6.14      Fast ClickHouse database driver
+   scikit-learn         >=1.3.0       Isolation Forest anomaly detection
+   lightgbm             >=4.1.0       Supervised gradient boosting model
+   xgboost              >=2.0.0       Alternative supervised model
+   onnxruntime          >=1.16.0      Ultra-fast model inference (<3ms execution)
+   numpy                >=1.24.0      Numerical matrix calculations
+   pandas               >=2.0.0       Data preprocessing and feature engineering
+   lxml                 >=4.9.0       High-speed ISO 20022 XML parsing
+   pydantic             >=2.4.0       Data validation & schema enforcement
+   requests             >=2.31.0      Telegram Bot API & Bank Webhooks
+   fastapi              >=0.104.0     Internal management REST API
+   uvicorn              >=0.23.0      ASGI server for FastAPI
+   python-dotenv        >=1.0.0       Environment variables manager
+
+C. Infrastructure Tools:
+   • Apache Kafka (confluentinc/cp-kafka:7.5.0) - High-throughput event streaming
+   • Redis (redis:7-alpine) - In-memory key-value & sorted sets (sliding windows)
+   • ClickHouse (clickhouse/clickhouse-server:latest) - Columnar analytical DB
+   • Vector (timberio/vector:latest-alpine) - Ultra-fast log shipper (written in Rust)
+   • Grafana (grafana/grafana:latest) - Real-time metrics visualization
+
+
+--------------------------------------------------------------------------------
+5. DATA SCHEMAS & MESSAGE SPECIFICATIONS
+--------------------------------------------------------------------------------
+
+A. Input Formats from Payment Switch:
+   1. ISO 20022 XML:
+      • pacs.008.001.xx (Financial Institutional Customer Credit Transfer)
+      • pacs.002.001.xx (Payment Status Report - Success / Fail confirmation)
+      • Key fields extracted:
+        - GrpHdr/MsgId             -> Transaction Reference ID
+        - IntrBkSttlmAmt           -> Amount & Currency
+        - DbtrAgt/FinInstnId/BICFI -> Debtor (Sender) Bank Identifier
+        - DbtrAcct/Id/Othr/Id      -> Debtor (Sender) Account / Wallet
+        - CdtrAgt/FinInstnId/BICFI -> Creditor (Receiver) Bank Identifier
+        - CdtrAcct/Id/Othr/Id      -> Creditor (Receiver) Account / Wallet
+        - CreDtTm                  -> Transaction Timestamp
+
+   2. REST API JSON (Mobile App / QR Payments):
+      • Direct fields:
+        {
+          "txn_id": "TXN998234",
+          "sender_inst": "BANK_A",
+          "sender_acc": "0100928371",
+          "receiver_inst": "WALLET_B",
+          "receiver_acc": "2099384711",
+          "amount": 5000000.0,
+          "currency": "LAK",
+          "timestamp": "2026-10-19T14:40:00Z",
+          "status": "SUCCESS"
+        }
+
+B. Normalized Internal Data Model (Canonical Schema):
+   Every incoming transaction will be converted into this standard JSON schema:
+   {
+     "tx_id": string,
+     "timestamp": string (ISO 8601),
+     "channel": string ("ISO20022" | "REST_API" | "QR"),
+     "source_bank": string,
+     "source_account": string,
+     "dest_bank": string,
+     "dest_account": string,
+     "amount": float,
+     "currency": string,
+     "status": string ("SUCCESS" | "FAILED" | "PENDING"),
+     "response_code": string,
+     "risk_score": integer (0 - 100),
+     "risk_reasons": list[string]
+   }
+
+
+--------------------------------------------------------------------------------
+6. STEP-BY-STEP IMPLEMENTATION ROADMAP
+--------------------------------------------------------------------------------
+
+PHASE 1: Infrastructure Deployment (Local Docker Setup)
+-------------------------------------------------------
+• Set up `docker-compose.yml` defining Kafka, Redis, ClickHouse, and Grafana.
+• Initialize ClickHouse tables for transactions and fraud alerts.
+• Verify local connectivity and ports.
+
+PHASE 2: Real-time Ingestion & Normalizer (Parser)
+--------------------------------------------------
+• Configure Vector (or Filebeat) to monitor switch log directories.
+• Develop `normalizer.py`:
+  - Consumes from Kafka `switching-raw-logs`.
+  - Determines if payload is XML (ISO 20022) or JSON (REST).
+  - Normalizes fields and publishes to `switching-normalized-tx`.
+
+PHASE 3: Redis Velocity Engine (Rule-based Detection)
+-----------------------------------------------------
+• Develop `velocity_engine.py`:
+  - Sliding Window in Redis (Sorted Set `ZADD` with TTL).
+  - Calculate 1-minute, 5-minute, 1-hour transaction counts per account.
+  - Calculate 1-hour cumulative amount per account.
+  - Check against Blacklist / Watchlist sets in Redis.
+  - Trigger instant rules:
+    * Rule 1: More than 5 transfers from 1 account in 60 seconds (Card/Account draining).
+    * Rule 2: Single transfer exceeding configured high-risk threshold.
+    * Rule 3: High failure velocity (>3 failed transfers followed by 1 large transfer).
+
+PHASE 4: AI Anomaly Detection Engine
+------------------------------------
+• Develop `ai_engine.py`:
+  - Extract feature vector per transaction:
+    [amount, hour_of_day, velocity_1m, velocity_5m, amount_ratio_to_avg]
+  - Run Isolation Forest (Unsupervised) for zero-day anomaly scoring.
+  - Compute normalized Risk Score (0 - 100).
+  - Append evaluation result to the transaction payload.
+
+PHASE 5: Alerting & Storage Pipeline
+------------------------------------
+• Stream all evaluated transactions into ClickHouse for historical auditing.
+• If `risk_score >= 80` or Rule Triggered:
+  - Format instant alert payload.
+  - Dispatch to Telegram Bot channel.
+  - Send asynchronous Webhook to Bank/Fintech Risk API.
+
+PHASE 6: Real-time Operational Dashboard
+----------------------------------------
+• Configure ClickHouse datasource in Grafana.
+• Build monitoring panels:
+  - Current System TPS (Transactions Per Second).
+  - Real-time Fraud Alert Feed (Table with Red Highlights).
+  - High-risk source accounts & destination accounts.
+  - Anomaly distribution heatmap by institution.
+
+
+--------------------------------------------------------------------------------
+7. PROJECT DIRECTORY STRUCTURE & FILE ROLES
+--------------------------------------------------------------------------------
+
+D:\Dev_By_Eng\Fraud-monitor\
+│
+├── GUIDE_AND_REQUIREMENTS.txt    # This comprehensive guide
+├── docker-compose.yml            # Docker services (Kafka, Redis, ClickHouse, Grafana)
+├── .env.example                  # Environment variables template (Kafka host, Telegram token)
+├── requirements.txt              # Python libraries list
+│
+├── config/
+│   ├── vector.yaml               # Vector log shipping configuration
+│   └── clickhouse_init.sql       # ClickHouse database & table creation script
+│
+├── src/
+│   ├── __init__.py
+│   ├── common/
+│   │   ├── models.py             # Pydantic data schemas
+│   │   └── logger.py             # Structured logger
+│   │
+│   ├── ingestion/
+│   │   └── parser.py             # ISO 20022 XML and JSON parsing logic
+│   │
+│   ├── engine/
+│   │   ├── redis_velocity.py     # Redis sliding-window velocity tracker
+│   │   ├── rules.py              # Rule-based conditions & thresholds
+│   │   └── ai_model.py           # Isolation Forest / ONNX inference model
+│   │
+│   ├── alert/
+│   │   ├── telegram_alert.py     # Telegram notification dispatcher
+│   │   └── webhook_alert.py      # Bank risk webhook dispatcher
+│   │
+│   └── main_pipeline.py          # Main streaming orchestration service
+│
+├── tests/
+│   ├── sample_pacs008.xml        # Sample ISO 20022 test message
+│   ├── sample_rest.json          # Sample REST API test message
+│   └── simulate_traffic.py       # Load generator simulating 100 TPS with fraud injection
+│
+└── dashboard/
+    └── grafana_dashboard.json    # Pre-built Grafana dashboard template
+
+
+--------------------------------------------------------------------------------
+8. MONITORING, ALERTING & DASHBOARD SPECIFICATIONS
+--------------------------------------------------------------------------------
+
+Telegram Alert Message Format:
+------------------------------
+🚨 [FRAUD ALERT - LAPNET SWITCH] 🚨
+--------------------------------------
+• Risk Level    : CRITICAL (Score: 92/100)
+• Trigger Reason: High Velocity (>6 transfers in 60s)
+• Transaction ID: TXN-20261019-88310
+• Timestamp     : 2026-10-19 15:00:23
+• Source Inst   : BANK_A (Acc: 0102938481)
+• Dest Inst     : FINTECH_WALLET_B (Acc: 2099384711)
+• Amount        : 25,000,000 LAK
+• Status        : PENDING REVIEW
+--------------------------------------
+Immediate Action: Advise FINTECH_WALLET_B to freeze incoming payout.
+
+
+--------------------------------------------------------------------------------
+9. NEXT ACTION PLAN FOR BUILD
+--------------------------------------------------------------------------------
+Now that the technical requirements and architecture are fully documented, 
+the build phase can proceed step-by-step:
+  Step 1: Create requirements.txt and .env configuration
+  Step 2: Create docker-compose.yml for Kafka, Redis, ClickHouse & Grafana
+  Step 3: Create ClickHouse database schema (clickhouse_init.sql)
+  Step 4: Create core data models and ISO 20022 / JSON parser (parser.py)
+  Step 5: Create Redis velocity counter & Rule engine (redis_velocity.py & rules.py)
+  Step 6: Create AI anomaly detection engine (ai_model.py)
+  Step 7: Create Alert dispatchers (telegram_alert.py)
+  Step 8: Create Main pipeline orchestrator and traffic simulation test script
+================================================================================

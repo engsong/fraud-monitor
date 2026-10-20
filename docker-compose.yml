@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Database for Fraud Monitoring
+  postgres:
+    image: postgres:16-alpine
+    container_name: fraud-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: lapnet_fraud_db
+      POSTGRES_USER: lev
+      POSTGRES_PASSWORD: LEV@2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./config/postgres_init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lev -d lapnet_fraud_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # 2. Redis for Real-Time Sliding Window Velocity Tracking
+  redis:
+    image: redis:7-alpine
+    container_name: fraud-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # 3. Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: fraud-grafana
+    restart: always
+    ports:
+      - "3002:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - postgres
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  postgres_data:
+  redis_data:
+  grafana_data:

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>MSG-20261019-99001</MsgId>
+      <CreDtTm>2026-10-19T15:10:00Z</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <SttlmInf>
+        <SttlmMtd>CLRG</SttlmMtd>
+      </SttlmInf>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <EndToEndId>TXN-ISO-20261019-001</EndToEndId>
+        <TxId>TXN-ISO-20261019-001</TxId>
+      </PmtId>
+      <IntrBkSttlmAmt Ccy="LAK">250000.00</IntrBkSttlmAmt>
+      <DbtrAgt>
+        <FinInstnId>
+          <BICFI>BCELVNVX</BICFI>
+        </FinInstnId>
+      </DbtrAgt>
+      <DbtrAcct>
+        <Id>
+          <Othr>
+            <Id>0101200088991</Id>
+          </Othr>
+        </Id>
+      </DbtrAcct>
+      <CdtrAgt>
+        <FinInstnId>
+          <BICFI>LDBLVNVX</BICFI>
+        </FinInstnId>
+      </CdtrAgt>
+      <CdtrAcct>
+        <Id>
+          <Othr>
+            <Id>0209900011223</Id>
+          </Othr>
+        </Id>
+      </CdtrAcct>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>

@@ -1,0 +1,13 @@
+{
+  "tx_id": "TXN-REST-20261019-881",
+  "timestamp": "2026-10-19T15:12:00Z",
+  "channel": "QR_PAYMENT",
+  "source_bank": "APB_BANK",
+  "source_account": "04088192831",
+  "dest_bank": "M_MONEY_WALLET",
+  "dest_account": "20993847112",
+  "amount": 75000000.0,
+  "currency": "LAK",
+  "status": "SUCCESS",
+  "response_code": "00"
+}

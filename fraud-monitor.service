@@ -1,0 +1,15 @@
+[Unit]
+Description=Fraud Monitoring Streaming Pipeline Service (LMPS Switching)
+After=network.target docker.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/LAPNet/Fraud-monitor
+ExecStart=/root/LAPNet/Fraud-monitor/venv/bin/python /root/LAPNet/Fraud-monitor/src/ingestion/remote_streamer.py
+Restart=always
+RestartSec=5
+EnvironmentFile=/root/LAPNet/Fraud-monitor/.env
+
+[Install]
+WantedBy=multi-user.target
