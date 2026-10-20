@@ -18,7 +18,7 @@
         "y": 0
       },
       "id": 1,
-      "title": "Total Transactions Monitored",
+      "title": "Total Monitored",
       "type": "stat",
       "datasource": "PostgreSQL-FraudDB",
       "targets": [
@@ -52,7 +52,7 @@
         "y": 0
       },
       "id": 2,
-      "title": "High-Risk Fraud Alerts",
+      "title": "High-Risk Alerts",
       "type": "stat",
       "datasource": "PostgreSQL-FraudDB",
       "targets": [
@@ -87,7 +87,7 @@
         "y": 0
       },
       "id": 3,
-      "title": "Transactions Last 1 Hour",
+      "title": "Last 1 Hour",
       "type": "stat",
       "datasource": "PostgreSQL-FraudDB",
       "targets": [
@@ -121,20 +121,19 @@
         "y": 0
       },
       "id": 4,
-      "title": "Monitored Volume (LAK)",
+      "title": "Volume (₭ LAK)",
       "type": "stat",
       "datasource": "PostgreSQL-FraudDB",
       "targets": [
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT COALESCE(SUM(amount), 0) AS lak_amount FROM fraud_monitoring.transactions WHERE currency = 'LAK';",
+          "rawSql": "SELECT CASE WHEN COALESCE(SUM(amount), 0) >= 1000000000 THEN '₭' || to_char(COALESCE(SUM(amount), 0) / 1000000000.0, 'FM999,999,990.00') || 'B' WHEN COALESCE(SUM(amount), 0) >= 1000000 THEN '₭' || to_char(COALESCE(SUM(amount), 0) / 1000000.0, 'FM999,990.00') || 'M' ELSE '₭' || to_char(COALESCE(SUM(amount), 0), 'FM999,999,990.00') END AS lak_amount FROM fraud_monitoring.transactions WHERE currency = 'LAK';",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyLAK",
           "color": {
             "mode": "thresholds"
           },
@@ -156,20 +155,19 @@
         "y": 0
       },
       "id": 5,
-      "title": "Monitored Volume (THB)",
+      "title": "Volume (฿ THB)",
       "type": "stat",
       "datasource": "PostgreSQL-FraudDB",
       "targets": [
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT COALESCE(SUM(amount), 0) AS thb_amount FROM fraud_monitoring.transactions WHERE currency = 'THB';",
+          "rawSql": "SELECT CASE WHEN COALESCE(SUM(amount), 0) >= 1000000000 THEN '฿' || to_char(COALESCE(SUM(amount), 0) / 1000000000.0, 'FM999,999,990.00') || 'B' WHEN COALESCE(SUM(amount), 0) >= 1000000 THEN '฿' || to_char(COALESCE(SUM(amount), 0) / 1000000.0, 'FM999,990.00') || 'M' ELSE '฿' || to_char(COALESCE(SUM(amount), 0), 'FM999,999,990.00') END AS thb_amount FROM fraud_monitoring.transactions WHERE currency = 'THB';",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyTHB",
           "color": {
             "mode": "thresholds"
           },
@@ -191,7 +189,7 @@
         "y": 0
       },
       "id": 6,
-      "title": "Monitored Volume (USD)",
+      "title": "Volume ($ USD)",
       "type": "stat",
       "datasource": "PostgreSQL-FraudDB",
       "targets": [
@@ -278,7 +276,32 @@
           "rawSql": "SELECT currency AS \"Currency\", count(*) AS \"Transactions\" FROM fraud_monitoring.transactions GROUP BY currency ORDER BY \"Transactions\" DESC;",
           "refId": "A"
         }
-      ]
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": true
+        },
+        "pieType": "pie",
+        "tooltip": {
+          "mode": "single"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value",
+            "percent"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      }
     },
     {
       "collapsed": false,
@@ -399,5 +422,5 @@
   "timezone": "browser",
   "title": "LAPNet Payment Switch - Real-Time Fraud Monitor",
   "uid": "lapnet-fraud-live",
-  "version": 2
+  "version": 3
 }
