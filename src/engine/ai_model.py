@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from sklearn.ensemble import IsolationForest
 from typing import Tuple
@@ -6,12 +7,12 @@ from src.common.logger import get_logger
 
 logger = get_logger("AIEngine")
 
-# Approximate conversion multipliers to normalize all currencies to LAK baseline
+# Approximate conversion multipliers to normalize all currencies to LAK baseline (Customizable via .env)
 CURRENCY_RATES_TO_LAK = {
     "LAK": 1.0,
-    "THB": 650.0,
-    "USD": 22000.0,
-    "CNY": 3100.0,
+    "THB": float(os.getenv("RATE_THB_TO_LAK", 650.0)),
+    "USD": float(os.getenv("RATE_USD_TO_LAK", 22000.0)),
+    "CNY": float(os.getenv("RATE_CNY_TO_LAK", 3100.0)),
 }
 
 class AIAnomalyScorer:

@@ -1,26 +1,27 @@
+import os
 from typing import List, Tuple
 from src.common.models import Transaction
 
-# Currency-specific thresholds
+# Currency-specific thresholds (Customizable via .env)
 LARGE_AMOUNT_THRESHOLDS = {
-    "LAK": 50000000.0,   # 50 Million LAK (~$2,300)
-    "THB": 80000.0,      # 80,000 THB (~$2,400)
-    "USD": 2500.0,       # $2,500 USD
-    "CNY": 15000.0,      # 15,000 CNY
+    "LAK": float(os.getenv("MAX_AMOUNT_LAK", 50000000.0)),   # 50 Million LAK (~$2,300)
+    "THB": float(os.getenv("MAX_AMOUNT_THB", 80000.0)),      # 80,000 THB (~$2,400)
+    "USD": float(os.getenv("MAX_AMOUNT_USD", 2500.0)),       # $2,500 USD
+    "CNY": float(os.getenv("MAX_AMOUNT_CNY", 15000.0)),      # 15,000 CNY
 }
 
 OFF_HOURS_THRESHOLDS = {
-    "LAK": 10000000.0,   # 10 Million LAK
-    "THB": 15000.0,      # 15,000 THB
-    "USD": 500.0,        # $500 USD
-    "CNY": 3000.0,       # 3,000 CNY
+    "LAK": float(os.getenv("OFF_HOURS_LAK", 10000000.0)),    # 10 Million LAK
+    "THB": float(os.getenv("OFF_HOURS_THB", 15000.0)),       # 15,000 THB
+    "USD": float(os.getenv("OFF_HOURS_USD", 500.0)),         # $500 USD
+    "CNY": float(os.getenv("OFF_HOURS_CNY", 3000.0)),        # 3,000 CNY
 }
 
 PROBING_MICRO_THRESHOLDS = {
-    "LAK": 10000.0,      # 10,000 LAK
-    "THB": 20.0,         # 20 THB
-    "USD": 1.0,          # $1 USD
-    "CNY": 5.0,          # 5 CNY
+    "LAK": float(os.getenv("PROBING_LAK", 10000.0)),         # 10,000 LAK
+    "THB": float(os.getenv("PROBING_THB", 20.0)),            # 20 THB
+    "USD": float(os.getenv("PROBING_USD", 1.0)),             # $1 USD
+    "CNY": float(os.getenv("PROBING_CNY", 5.0)),             # 5 CNY
 }
 
 class RuleEngine:

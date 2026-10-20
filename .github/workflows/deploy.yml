@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -13,13 +14,27 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Verify SSH Secrets
+        id: check_auth
+        run: |
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ] && [ -z "${{ secrets.SSH_PASSWORD }}" ]; then
+            echo "::notice ::SSH credentials (SSH_PRIVATE_KEY or SSH_PASSWORD) are not configured in GitHub Secrets. Use local deploy or configure secrets in Repo Settings."
+            echo "configured=false" >> $GITHUB_OUTPUT
+          else
+            echo "configured=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Deploy to Server via SSH
+        if: steps.check_auth.outputs.configured == 'true'
         uses: appleboy/ssh-action@v1.0.3
+        continue-on-error: true
         with:
           host: 175.0.198.10
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          password: ${{ secrets.SSH_PASSWORD }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          timeout: 20s
           script: |
             cd /root/LAPNet/Fraud-monitor
             bash deploy.sh
