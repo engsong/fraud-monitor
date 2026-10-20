@@ -1,0 +1,281 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "title": "Total Transactions Monitored",
+      "type": "stat",
+      "datasource": "PostgreSQL-FraudDB",
+      "targets": [
+        {
+          "datasource": "PostgreSQL-FraudDB",
+          "format": "table",
+          "rawSql": "SELECT count(*) AS total FROM fraud_monitoring.transactions;",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue", "value": null }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "title": "High-Risk Fraud Alerts",
+      "type": "stat",
+      "datasource": "PostgreSQL-FraudDB",
+      "targets": [
+        {
+          "datasource": "PostgreSQL-FraudDB",
+          "format": "table",
+          "rawSql": "SELECT count(*) AS alerts FROM fraud_monitoring.fraud_alerts;",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "title": "Transactions Last 1 Hour",
+      "type": "stat",
+      "datasource": "PostgreSQL-FraudDB",
+      "targets": [
+        {
+          "datasource": "PostgreSQL-FraudDB",
+          "format": "table",
+          "rawSql": "SELECT count(*) AS count_1h FROM fraud_monitoring.transactions WHERE timestamp >= NOW() - INTERVAL '1 hour';",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "purple", "value": null }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 4,
+      "title": "Total Amount Monitored (LAK)",
+      "type": "stat",
+      "datasource": "PostgreSQL-FraudDB",
+      "targets": [
+        {
+          "datasource": "PostgreSQL-FraudDB",
+          "format": "table",
+          "rawSql": "SELECT COALESCE(SUM(amount), 0) AS total_amount FROM fraud_monitoring.transactions WHERE currency = 'LAK';",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyLAK",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "id": 5,
+      "title": "Top Source Institutions (Sender Banks)",
+      "type": "barchart",
+      "datasource": "PostgreSQL-FraudDB",
+      "targets": [
+        {
+          "datasource": "PostgreSQL-FraudDB",
+          "format": "table",
+          "rawSql": "SELECT source_bank, count(*) AS count FROM fraud_monitoring.transactions GROUP BY source_bank ORDER BY count DESC LIMIT 8;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "id": 6,
+      "title": "Top Destination Institutions (Beneficiary Banks)",
+      "type": "barchart",
+      "datasource": "PostgreSQL-FraudDB",
+      "targets": [
+        {
+          "datasource": "PostgreSQL-FraudDB",
+          "format": "table",
+          "rawSql": "SELECT dest_bank, count(*) AS count FROM fraud_monitoring.transactions GROUP BY dest_bank ORDER BY count DESC LIMIT 8;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "id": 7,
+      "title": "🔴 Real-Time Live Transactions Stream",
+      "type": "table",
+      "datasource": "PostgreSQL-FraudDB",
+      "targets": [
+        {
+          "datasource": "PostgreSQL-FraudDB",
+          "format": "table",
+          "rawSql": "SELECT to_char(timestamp, 'YYYY-MM-DD HH24:MI:SS') AS \"Time (UTC)\", tx_id AS \"Reference ID\", node AS \"Switch Node\", source_bank AS \"From Bank\", dest_bank AS \"To Bank\", to_char(amount, 'FM999,999,999,990.00') AS \"Amount\", currency AS \"Ccy\", risk_score AS \"Risk Score\" FROM fraud_monitoring.transactions ORDER BY id DESC LIMIT 25;",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Risk Score" },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green", "value": 0 },
+                    { "color": "orange", "value": 50 },
+                    { "color": "red", "value": 80 }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "id": 8,
+      "title": "🚨 High-Risk Fraud Alerts Feed",
+      "type": "table",
+      "datasource": "PostgreSQL-FraudDB",
+      "targets": [
+        {
+          "datasource": "PostgreSQL-FraudDB",
+          "format": "table",
+          "rawSql": "SELECT to_char(timestamp, 'YYYY-MM-DD HH24:MI:SS') AS \"Time (UTC)\", tx_id AS \"Reference ID\", node AS \"Switch Node\", source_bank AS \"From Bank\", dest_bank AS \"To Bank\", to_char(amount, 'FM999,999,999,990.00') AS \"Amount\", risk_score AS \"Risk Score\", array_to_string(reasons, ', ') AS \"Triggers\", alert_status AS \"Status\" FROM fraud_monitoring.fraud_alerts ORDER BY timestamp DESC LIMIT 20;",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["fraud", "switching", "realtime"],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": ["5s", "10s", "30s", "1m"]
+  },
+  "timezone": "browser",
+  "title": "LAPNet Payment Switch - Real-Time Fraud Monitor",
+  "uid": "lapnet-fraud-live",
+  "version": 1
+}
