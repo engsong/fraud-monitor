@@ -28,8 +28,9 @@ class RuleEngine:
     High-speed deterministic rule engine supporting multi-currency (LAK, USD, THB, CNY).
     """
 
-    def __init__(self, max_vel_1m: int = 5):
+    def __init__(self, max_vel_1m: int = 5, max_single_amt: float = 50000000.0):
         self.max_vel_1m = max_vel_1m
+        self.max_single_amt = max_single_amt
 
     def evaluate(self, tx: Transaction, is_blacklisted: bool) -> Tuple[int, List[str]]:
         score = 0
@@ -48,7 +49,7 @@ class RuleEngine:
             reasons.append(f"High Velocity: {tx.velocity_1m} transfers in 60s (Limit: {self.max_vel_1m})")
 
         # 3. Sudden large transfer based on currency
-        large_thresh = LARGE_AMOUNT_THRESHOLDS.get(ccy, 50000000.0)
+        large_thresh = self.max_single_amt if ccy == "LAK" else LARGE_AMOUNT_THRESHOLDS.get(ccy, 50000000.0)
         if tx.amount >= large_thresh:
             score += 35
             reasons.append(f"Large Transfer: {tx.amount:,.2f} {ccy} exceeds limit ({large_thresh:,.0f} {ccy})")
