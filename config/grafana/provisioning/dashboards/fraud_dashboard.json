@@ -205,7 +205,7 @@
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT to_char(timestamp, 'YYYY-MM-DD HH24:MI:SS') AS \"Time (UTC)\", tx_id AS \"Reference ID\", node AS \"Switch Node\", source_bank AS \"From Bank\", dest_bank AS \"To Bank\", to_char(amount, 'FM999,999,999,990.00') AS \"Amount\", currency AS \"Ccy\", risk_score AS \"Risk Score\" FROM fraud_monitoring.transactions ORDER BY id DESC LIMIT 25;",
+          "rawSql": "SELECT to_char(timestamp, 'YYYY-MM-DD HH24:MI:SS') AS \"Time (UTC)\", tx_id AS \"Reference ID\", node AS \"Switch Node\", source_bank AS \"From Bank\", source_account AS \"From Account\", dest_bank AS \"To Bank\", dest_account AS \"To Account/QR\", to_char(amount, 'FM999,999,999,990.00') AS \"Amount\", currency AS \"Ccy\", risk_score AS \"Risk Score\" FROM fraud_monitoring.transactions ORDER BY id DESC LIMIT 50;",
           "refId": "A"
         }
       ],
@@ -257,7 +257,7 @@
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT to_char(timestamp, 'YYYY-MM-DD HH24:MI:SS') AS \"Time (UTC)\", tx_id AS \"Reference ID\", node AS \"Switch Node\", source_bank AS \"From Bank\", dest_bank AS \"To Bank\", to_char(amount, 'FM999,999,999,990.00') AS \"Amount\", risk_score AS \"Risk Score\", array_to_string(reasons, ', ') AS \"Triggers\", alert_status AS \"Status\" FROM fraud_monitoring.fraud_alerts ORDER BY timestamp DESC LIMIT 20;",
+          "rawSql": "SELECT to_char(timestamp, 'YYYY-MM-DD HH24:MI:SS') AS \"Time (UTC)\", tx_id AS \"Reference ID\", node AS \"Switch Node\", source_bank AS \"From Bank\", source_account AS \"From Account\", dest_bank AS \"To Bank\", dest_account AS \"To Account/QR\", to_char(amount, 'FM999,999,999,990.00') AS \"Amount\", risk_score AS \"Risk Score\", array_to_string(reasons, ', ') AS \"Triggers\", alert_status AS \"Status\" FROM fraud_monitoring.fraud_alerts ORDER BY timestamp DESC LIMIT 50;",
           "refId": "A"
         }
       ]
