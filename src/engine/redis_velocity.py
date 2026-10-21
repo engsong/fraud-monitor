@@ -79,6 +79,48 @@ class RedisVelocityTracker:
             logger.error(f"Redis velocity error for account {account_no}: {e}")
             return 1, 1, amount
 
+    def record_and_get_dest_velocity(self, dest_account: str, source_account: str, amount: float, tx_id: str = "") -> Tuple[int, int, int]:
+        """
+        Tracks inbound velocity and distinct senders for destination/beneficiary account (Mule Detection).
+        Returns:
+        - dest_vel_1m (inbound transfer count in last 60s)
+        - dest_vel_5m (inbound transfer count in last 300s)
+        - dest_unique_senders_5m (number of different senders depositing into this account in last 300s)
+        """
+        if not self.r or not dest_account:
+            return 1, 1, 1
+
+        now = time.time()
+        key_dst = f"vel:dst:{dest_account}"
+        key_senders = f"vel:dst_senders:{dest_account}"
+        member = f"{tx_id}:{amount}" if tx_id else f"{now}:{amount}"
+
+        try:
+            pipe = self.r.pipeline()
+            # 1. Inbound velocity tracking
+            pipe.zadd(key_dst, {member: now})
+            pipe.expire(key_dst, 3600)
+            pipe.zremrangebyscore(key_dst, 0, now - 3600)
+            pipe.zcount(key_dst, now - 60, now)
+            pipe.zcount(key_dst, now - 300, now)
+
+            # 2. Distinct senders tracking for Fan-In (Mule Account) detection
+            if source_account:
+                pipe.zadd(key_senders, {source_account: now})
+                pipe.expire(key_senders, 600)
+                pipe.zremrangebyscore(key_senders, 0, now - 300)
+                pipe.zcount(key_senders, now - 300, now)
+
+            results = pipe.execute()
+            dest_vel_1m = results[3]
+            dest_vel_5m = results[4]
+            dest_unique_senders_5m = results[8] if source_account else 1
+
+            return dest_vel_1m, dest_vel_5m, dest_unique_senders_5m
+        except Exception as e:
+            logger.error(f"Redis dest velocity error for {dest_account}: {e}")
+            return 1, 1, 1
+
     def is_blacklisted(self, account_no: str) -> bool:
         if not self.r or not account_no:
             return False

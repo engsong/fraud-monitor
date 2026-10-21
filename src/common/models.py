@@ -16,10 +16,15 @@ class Transaction(BaseModel):
     status: str = "SUCCESS"  # SUCCESS, FAILED, TIMEOUT
     response_code: str = "00"
 
-    # Computed Real-Time Features
+    # Computed Real-Time Features (Sender / Outbound)
     velocity_1m: int = 0
     velocity_5m: int = 0
     amount_1h: float = 0.0
+
+    # Computed Real-Time Features (Receiver / Inbound Mule Detection)
+    dest_velocity_1m: int = 0
+    dest_velocity_5m: int = 0
+    dest_unique_senders_5m: int = 0
 
     # Risk Scoring Results
     risk_score: int = 0  # 0 to 100

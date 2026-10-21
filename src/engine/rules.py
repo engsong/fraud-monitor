@@ -33,21 +33,35 @@ class RuleEngine:
         self.max_vel_1m = max_vel_1m
         self.max_single_amt = max_single_amt
 
-    def evaluate(self, tx: Transaction, is_blacklisted: bool) -> Tuple[int, List[str]]:
+    def evaluate(self, tx: Transaction, is_blacklisted: bool = False, is_dest_blacklisted: bool = False) -> Tuple[int, List[str]]:
         score = 0
         reasons = []
         ccy = (tx.currency or "LAK").upper()
 
-        # 1. Blacklist check (Immediate Critical)
+        # 1. Sender Blacklist check (Immediate Critical)
         if is_blacklisted:
             score += 100
-            reasons.append(f"Account {tx.source_account} is on Fraud Blacklist")
+            reasons.append(f"Sender Watchlist: Account {tx.source_account} ({tx.source_bank}) is on Fraud Blacklist")
             return min(100, score), reasons
 
-        # 2. Excessive velocity in 1 minute
+        # 2. Beneficiary / Mule Blacklist check (Immediate Critical)
+        if is_dest_blacklisted:
+            score += 100
+            reasons.append(f"Mule Watchlist: Beneficiary Account {tx.dest_account} ({tx.dest_bank}) is on Mule/Fraud Blacklist")
+            return min(100, score), reasons
+
+        # 3. Mule Account Fan-In Pattern (Multiple distinct senders depositing into same beneficiary)
+        if tx.dest_unique_senders_5m >= 4:
+            score += 50
+            reasons.append(f"Mule Collector Alert: {tx.dest_unique_senders_5m} distinct senders deposited into {tx.dest_bank} ({tx.dest_account}) within 5m")
+        elif tx.dest_velocity_1m >= 5:
+            score += 40
+            reasons.append(f"Rapid Inflow Velocity: Beneficiary {tx.dest_account} received {tx.dest_velocity_1m} deposits in 60s")
+
+        # 4. Excessive outbound velocity in 1 minute
         if tx.velocity_1m > self.max_vel_1m:
             score += 45
-            reasons.append(f"High Velocity: {tx.velocity_1m} transfers in 60s (Limit: {self.max_vel_1m})")
+            reasons.append(f"High Outbound Velocity: {tx.velocity_1m} transfers in 60s (Limit: {self.max_vel_1m})")
 
         # 3. Sudden large transfer based on currency
         large_thresh = self.max_single_amt if ccy == "LAK" else LARGE_AMOUNT_THRESHOLDS.get(ccy, 50000000.0)

@@ -87,8 +87,11 @@ class FraudDetectionPipeline:
         if not tx:
             return None
 
-        # Step 2: Velocity & Blacklist
-        is_bl = self.velocity_tracker.is_blacklisted(tx.source_account)
+        # Step 2: Velocity & Blacklist (Both Sender & Receiver / Mule Detection)
+        is_src_bl = self.velocity_tracker.is_blacklisted(tx.source_account)
+        is_dst_bl = self.velocity_tracker.is_blacklisted(tx.dest_account)
+
+        # 2a. Outbound Sender Velocity
         vel_1m, vel_5m, amt_1h = self.velocity_tracker.record_and_get_velocity(
             tx.source_account, tx.amount, tx_id=tx.tx_id
         )
@@ -96,8 +99,18 @@ class FraudDetectionPipeline:
         tx.velocity_5m = vel_5m
         tx.amount_1h = amt_1h
 
-        # Step 3: Rules
-        rule_score, rule_reasons = self.rule_engine.evaluate(tx, is_blacklisted=is_bl)
+        # 2b. Inbound Receiver Velocity & Fan-In (Mule Account Detection)
+        dst_vel_1m, dst_vel_5m, dst_senders = self.velocity_tracker.record_and_get_dest_velocity(
+            tx.dest_account, tx.source_account, tx.amount, tx_id=tx.tx_id
+        )
+        tx.dest_velocity_1m = dst_vel_1m
+        tx.dest_velocity_5m = dst_vel_5m
+        tx.dest_unique_senders_5m = dst_senders
+
+        # Step 3: Rules (Evaluating both Sender and Beneficiary)
+        rule_score, rule_reasons = self.rule_engine.evaluate(
+            tx, is_blacklisted=is_src_bl, is_dest_blacklisted=is_dst_bl
+        )
 
         # Step 4: AI Model
         ai_score, ai_reason = self.ai_engine.score(tx)
