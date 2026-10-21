@@ -342,7 +342,7 @@
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT dest_bank AS \"Dest Bank\", dest_account AS \"Beneficiary / Mule Account\", count(DISTINCT source_account) AS \"Unique Senders (Fan-In)\", count(*) AS \"Inbound Deposits\", MAX(currency) AS \"Ccy\", to_char(sum(amount), 'FM999,999,999,990.00') AS \"Total Inflow Volume\", to_char(MAX(timestamp), 'HH24:MI:SS') AS \"Last Active (UTC)\" FROM fraud_monitoring.transactions WHERE $__timeFilter(timestamp) GROUP BY dest_bank, dest_account HAVING count(DISTINCT source_account) >= 2 OR count(*) >= 3 ORDER BY \"Unique Senders (Fan-In)\" DESC, \"Inbound Deposits\" DESC LIMIT 15;",
+          "rawSql": "SELECT dest_bank AS \"Dest Bank\", CASE WHEN length(dest_account) > 28 THEN substring(dest_account from 1 for 16) || '...' || substring(dest_account from length(dest_account)-6) ELSE dest_account END AS \"Beneficiary / Mule Account\", count(DISTINCT source_account) AS \"Unique Senders (Fan-In)\", count(*) AS \"Inbound Deposits\", MAX(currency) AS \"Ccy\", to_char(sum(amount), 'FM999,999,999,990.00') AS \"Total Inflow Volume\", to_char(MAX(timestamp), 'HH24:MI:SS') AS \"Last Active (UTC)\" FROM fraud_monitoring.transactions WHERE $__timeFilter(timestamp) GROUP BY dest_bank, dest_account HAVING count(DISTINCT source_account) >= 2 OR count(*) >= 3 ORDER BY \"Unique Senders (Fan-In)\" DESC, \"Inbound Deposits\" DESC LIMIT 15;",
           "refId": "A"
         }
       ],
@@ -354,8 +354,28 @@
         },
         "overrides": [
           {
+            "matcher": { "id": "byName", "options": "Dest Bank" },
+            "properties": [
+              { "id": "custom.width", "value": 90 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Beneficiary / Mule Account" },
+            "properties": [
+              { "id": "custom.width", "value": 240 }
+            ]
+          },
+          {
             "matcher": { "id": "byName", "options": "Unique Senders (Fan-In)" },
             "properties": [
+              { "id": "custom.width", "value": 150 },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
+              },
               {
                 "id": "color",
                 "value": {
@@ -367,12 +387,60 @@
                 "value": {
                   "mode": "absolute",
                   "steps": [
-                    { "color": "green", "value": 0 },
-                    { "color": "orange", "value": 3 },
-                    { "color": "red", "value": 5 }
+                    { "color": "text", "value": null },
+                    { "color": "#FF9900", "value": 3 },
+                    { "color": "#E02F44", "value": 6 }
                   ]
                 }
               }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Inbound Deposits" },
+            "properties": [
+              { "id": "custom.width", "value": 130 },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "text", "value": null },
+                    { "color": "#FF9900", "value": 5 },
+                    { "color": "#E02F44", "value": 15 }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Ccy" },
+            "properties": [
+              { "id": "custom.width", "value": 65 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Total Inflow Volume" },
+            "properties": [
+              { "id": "custom.width", "value": 160 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Last Active (UTC)" },
+            "properties": [
+              { "id": "custom.width", "value": 120 }
             ]
           }
         ]
@@ -395,7 +463,7 @@
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT CASE WHEN array_to_string(reasons, ' ') LIKE '%Mule%' OR array_to_string(reasons, ' ') LIKE '%Inflow%' OR array_to_string(reasons, ' ') LIKE '%Beneficiary%' THEN 'Receiver / Mule Alert' WHEN array_to_string(reasons, ' ') LIKE '%Velocity%' THEN 'Sender Outbound Velocity' WHEN array_to_string(reasons, ' ') LIKE '%Large Transfer%' THEN 'High-Value Transfer' WHEN array_to_string(reasons, ' ') LIKE '%Off-Hours%' THEN 'Off-Hours Activity' WHEN array_to_string(reasons, ' ') LIKE '%Probing%' THEN 'Micro-Probing Attack' ELSE 'Other Policy Violation' END AS \"Alert Category\", count(*) AS \"Count\" FROM fraud_monitoring.fraud_alerts WHERE $__timeFilter(timestamp) GROUP BY 1 ORDER BY \"Count\" DESC;",
+          "rawSql": "SELECT CASE WHEN reason LIKE '%Mule%' OR reason LIKE '%Inflow%' OR reason LIKE '%Beneficiary%' THEN 'Receiver / Mule Alert' WHEN reason LIKE '%Velocity%' THEN 'Sender High Velocity' WHEN reason LIKE '%Large Transfer%' THEN 'High-Value Transfer' WHEN reason LIKE '%Off-Hours%' THEN 'Off-Hours Activity' WHEN reason LIKE '%Probing%' THEN 'Micro-Probing Attack' ELSE 'Other Policy Violation' END AS \"Alert Category\", count(*) AS \"Count\" FROM fraud_monitoring.fraud_alerts, unnest(reasons) AS reason WHERE $__timeFilter(timestamp) GROUP BY 1 ORDER BY \"Count\" DESC;",
           "refId": "A"
         }
       ],
@@ -422,7 +490,69 @@
           "color": {
             "mode": "palette-classic"
           }
-        }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Receiver / Mule Alert" },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#E02F44",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Sender High Velocity" },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#FF780A",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "High-Value Transfer" },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#FADE2A",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Micro-Probing Attack" },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#A352CC",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Off-Hours Activity" },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#3274D9",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       }
     },
     {
@@ -544,5 +674,5 @@
   "timezone": "browser",
   "title": "LAPNet Payment Switch - Real-Time Fraud Monitor",
   "uid": "lapnet-fraud-live",
-  "version": 7
+  "version": 8
 }
