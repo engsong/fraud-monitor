@@ -18,14 +18,14 @@
         "y": 0
       },
       "id": 1,
-      "title": "Total Monitored",
+      "title": "Selected Transactions",
       "type": "stat",
       "datasource": "PostgreSQL-FraudDB",
       "targets": [
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT count(*) AS total FROM fraud_monitoring.transactions;",
+          "rawSql": "SELECT count(*) AS total FROM fraud_monitoring.transactions WHERE $__timeFilter(timestamp);",
           "refId": "A"
         }
       ],
@@ -59,7 +59,7 @@
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT count(*) AS alerts FROM fraud_monitoring.fraud_alerts;",
+          "rawSql": "SELECT count(*) AS alerts FROM fraud_monitoring.fraud_alerts WHERE $__timeFilter(timestamp);",
           "refId": "A"
         }
       ],
@@ -87,14 +87,14 @@
         "y": 0
       },
       "id": 3,
-      "title": "Last 1 Hour",
+      "title": "All-Time Monitored",
       "type": "stat",
       "datasource": "PostgreSQL-FraudDB",
       "targets": [
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT count(*) AS count_1h FROM fraud_monitoring.transactions WHERE timestamp >= NOW() - INTERVAL '1 hour';",
+          "rawSql": "SELECT count(*) AS total_all FROM fraud_monitoring.transactions;",
           "refId": "A"
         }
       ],
@@ -128,7 +128,7 @@
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT CASE WHEN COALESCE(SUM(amount), 0) >= 1000000000 THEN '₭' || to_char(COALESCE(SUM(amount), 0) / 1000000000.0, 'FM999,999,990.00') || 'B' WHEN COALESCE(SUM(amount), 0) >= 1000000 THEN '₭' || to_char(COALESCE(SUM(amount), 0) / 1000000.0, 'FM999,990.00') || 'M' ELSE '₭' || to_char(COALESCE(SUM(amount), 0), 'FM999,999,990.00') END AS lak_amount FROM fraud_monitoring.transactions WHERE currency = 'LAK';",
+          "rawSql": "SELECT CASE WHEN COALESCE(SUM(amount), 0) >= 1000000000 THEN '₭' || to_char(COALESCE(SUM(amount), 0) / 1000000000.0, 'FM999,999,990.00') || 'B' WHEN COALESCE(SUM(amount), 0) >= 1000000 THEN '₭' || to_char(COALESCE(SUM(amount), 0) / 1000000.0, 'FM999,990.00') || 'M' ELSE '₭' || to_char(COALESCE(SUM(amount), 0), 'FM999,999,990.00') END AS lak_amount FROM fraud_monitoring.transactions WHERE currency = 'LAK' AND $__timeFilter(timestamp);",
           "refId": "A"
         }
       ],
@@ -173,7 +173,7 @@
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT CASE WHEN COALESCE(SUM(amount), 0) >= 1000000000 THEN '฿' || to_char(COALESCE(SUM(amount), 0) / 1000000000.0, 'FM999,999,990.00') || 'B' WHEN COALESCE(SUM(amount), 0) >= 1000000 THEN '฿' || to_char(COALESCE(SUM(amount), 0) / 1000000.0, 'FM999,990.00') || 'M' ELSE '฿' || to_char(COALESCE(SUM(amount), 0), 'FM999,999,990.00') END AS thb_amount FROM fraud_monitoring.transactions WHERE currency = 'THB';",
+          "rawSql": "SELECT CASE WHEN COALESCE(SUM(amount), 0) >= 1000000000 THEN '฿' || to_char(COALESCE(SUM(amount), 0) / 1000000000.0, 'FM999,999,990.00') || 'B' WHEN COALESCE(SUM(amount), 0) >= 1000000 THEN '฿' || to_char(COALESCE(SUM(amount), 0) / 1000000.0, 'FM999,990.00') || 'M' ELSE '฿' || to_char(COALESCE(SUM(amount), 0), 'FM999,999,990.00') END AS thb_amount FROM fraud_monitoring.transactions WHERE currency = 'THB' AND $__timeFilter(timestamp);",
           "refId": "A"
         }
       ],
@@ -218,7 +218,7 @@
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT COALESCE(SUM(amount), 0) AS usd_amount FROM fraud_monitoring.transactions WHERE currency = 'USD';",
+          "rawSql": "SELECT COALESCE(SUM(amount), 0) AS usd_amount FROM fraud_monitoring.transactions WHERE currency = 'USD' AND $__timeFilter(timestamp);",
           "refId": "A"
         }
       ],
@@ -253,7 +253,7 @@
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT source_bank, count(*) AS count FROM fraud_monitoring.transactions GROUP BY source_bank ORDER BY count DESC LIMIT 8;",
+          "rawSql": "SELECT source_bank, count(*) AS count FROM fraud_monitoring.transactions WHERE $__timeFilter(timestamp) GROUP BY source_bank ORDER BY count DESC LIMIT 8;",
           "refId": "A"
         }
       ]
@@ -274,7 +274,7 @@
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT dest_bank, count(*) AS count FROM fraud_monitoring.transactions GROUP BY dest_bank ORDER BY count DESC LIMIT 8;",
+          "rawSql": "SELECT dest_bank, count(*) AS count FROM fraud_monitoring.transactions WHERE $__timeFilter(timestamp) GROUP BY dest_bank ORDER BY count DESC LIMIT 8;",
           "refId": "A"
         }
       ]
@@ -295,7 +295,7 @@
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT currency AS \"Currency\", count(*) AS \"Transactions\" FROM fraud_monitoring.transactions GROUP BY currency ORDER BY \"Transactions\" DESC;",
+          "rawSql": "SELECT currency AS \"Currency\", count(*) AS \"Transactions\" FROM fraud_monitoring.transactions WHERE $__timeFilter(timestamp) GROUP BY currency ORDER BY \"Transactions\" DESC;",
           "refId": "A"
         }
       ],
@@ -341,7 +341,7 @@
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT to_char(timestamp, 'YYYY-MM-DD HH24:MI:SS') AS \"Time (UTC)\", tx_id AS \"Reference ID\", node AS \"Switch Node\", source_bank AS \"From Bank\", source_account AS \"From Account\", dest_bank AS \"To Bank\", dest_account AS \"To Account/QR\", currency AS \"Ccy\", to_char(amount, 'FM999,999,999,990.00') AS \"Amount\", risk_score AS \"Risk Score\" FROM fraud_monitoring.transactions ORDER BY id DESC LIMIT 50;",
+          "rawSql": "SELECT to_char(timestamp, 'YYYY-MM-DD HH24:MI:SS') AS \"Time (UTC)\", tx_id AS \"Reference ID\", node AS \"Switch Node\", source_bank AS \"From Bank\", source_account AS \"From Account\", dest_bank AS \"To Bank\", dest_account AS \"To Account/QR\", currency AS \"Ccy\", to_char(amount, 'FM999,999,999,990.00') AS \"Amount\", risk_score AS \"Risk Score\" FROM fraud_monitoring.transactions WHERE $__timeFilter(timestamp) ORDER BY id DESC LIMIT 100;",
           "refId": "A"
         }
       ],
@@ -393,7 +393,7 @@
         {
           "datasource": "PostgreSQL-FraudDB",
           "format": "table",
-          "rawSql": "SELECT to_char(timestamp, 'YYYY-MM-DD HH24:MI:SS') AS \"Time (UTC)\", tx_id AS \"Reference ID\", node AS \"Switch Node\", source_bank AS \"From Bank\", source_account AS \"From Account\", dest_bank AS \"To Bank\", dest_account AS \"To Account/QR\", currency AS \"Ccy\", to_char(amount, 'FM999,999,999,990.00') AS \"Amount\", risk_score AS \"Risk Score\", array_to_string(reasons, ', ') AS \"Triggers\", alert_status AS \"Status\" FROM fraud_monitoring.fraud_alerts ORDER BY timestamp DESC LIMIT 50;",
+          "rawSql": "SELECT to_char(timestamp, 'YYYY-MM-DD HH24:MI:SS') AS \"Time (UTC)\", tx_id AS \"Reference ID\", node AS \"Switch Node\", source_bank AS \"From Bank\", source_account AS \"From Account\", dest_bank AS \"To Bank\", dest_account AS \"To Account/QR\", currency AS \"Ccy\", to_char(amount, 'FM999,999,999,990.00') AS \"Amount\", risk_score AS \"Risk Score\", array_to_string(reasons, ', ') AS \"Triggers\", alert_status AS \"Status\" FROM fraud_monitoring.fraud_alerts WHERE $__timeFilter(timestamp) ORDER BY timestamp DESC LIMIT 100;",
           "refId": "A"
         }
       ],
@@ -439,10 +439,10 @@
     "to": "now"
   },
   "timepicker": {
-    "refresh_intervals": ["5s", "10s", "30s", "1m"]
+    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m"]
   },
   "timezone": "browser",
   "title": "LAPNet Payment Switch - Real-Time Fraud Monitor",
   "uid": "lapnet-fraud-live",
-  "version": 5
+  "version": 6
 }
