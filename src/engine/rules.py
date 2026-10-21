@@ -51,11 +51,14 @@ class RuleEngine:
             return min(100, score), reasons
 
         # 3. Mule Account Fan-In Pattern (Multiple distinct senders depositing into same beneficiary)
-        if tx.dest_unique_senders_5m >= 4:
-            score += 50
+        if tx.dest_unique_senders_5m >= 6:
+            score += 85
+            reasons.append(f"Mule Collector Ring Alert: {tx.dest_unique_senders_5m} distinct senders deposited into {tx.dest_bank} ({tx.dest_account}) within 5m")
+        elif tx.dest_unique_senders_5m >= 4:
+            score += 60
             reasons.append(f"Mule Collector Alert: {tx.dest_unique_senders_5m} distinct senders deposited into {tx.dest_bank} ({tx.dest_account}) within 5m")
         elif tx.dest_velocity_1m >= 5:
-            score += 40
+            score += 50
             reasons.append(f"Rapid Inflow Velocity: Beneficiary {tx.dest_account} received {tx.dest_velocity_1m} deposits in 60s")
 
         # 4. Excessive outbound velocity in 1 minute

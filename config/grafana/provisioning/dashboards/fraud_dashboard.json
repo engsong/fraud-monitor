@@ -328,10 +328,110 @@
     {
       "collapsed": false,
       "gridPos": {
+        "h": 8,
+        "w": 15,
+        "x": 0,
+        "y": 12
+      },
+      "id": 12,
+      "title": "🎯 Suspicious Beneficiaries & Potential Mule Accounts (Fan-In Analysis)",
+      "type": "table",
+      "datasource": "PostgreSQL-FraudDB",
+      "description": "Monitors destination accounts receiving inbound transfers from multiple unique senders or abnormal inbound volume.",
+      "targets": [
+        {
+          "datasource": "PostgreSQL-FraudDB",
+          "format": "table",
+          "rawSql": "SELECT dest_bank AS \"Dest Bank\", dest_account AS \"Beneficiary / Mule Account\", count(DISTINCT source_account) AS \"Unique Senders (Fan-In)\", count(*) AS \"Inbound Deposits\", MAX(currency) AS \"Ccy\", to_char(sum(amount), 'FM999,999,999,990.00') AS \"Total Inflow Volume\", to_char(MAX(timestamp), 'HH24:MI:SS') AS \"Last Active (UTC)\" FROM fraud_monitoring.transactions WHERE $__timeFilter(timestamp) GROUP BY dest_bank, dest_account HAVING count(DISTINCT source_account) >= 2 OR count(*) >= 3 ORDER BY \"Unique Senders (Fan-In)\" DESC, \"Inbound Deposits\" DESC LIMIT 15;",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Unique Senders (Fan-In)" },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green", "value": 0 },
+                    { "color": "orange", "value": 3 },
+                    { "color": "red", "value": 5 }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 9,
+        "x": 15,
+        "y": 12
+      },
+      "id": 13,
+      "title": "⚡ Alert Types (Sender vs Mule/Receiver)",
+      "type": "piechart",
+      "datasource": "PostgreSQL-FraudDB",
+      "description": "Distribution of triggered alerts categorized by Sender Velocity vs Mule Account vs Policy violations.",
+      "targets": [
+        {
+          "datasource": "PostgreSQL-FraudDB",
+          "format": "table",
+          "rawSql": "SELECT CASE WHEN array_to_string(reasons, ' ') LIKE '%Mule%' OR array_to_string(reasons, ' ') LIKE '%Inflow%' OR array_to_string(reasons, ' ') LIKE '%Beneficiary%' THEN 'Receiver / Mule Alert' WHEN array_to_string(reasons, ' ') LIKE '%Velocity%' THEN 'Sender Outbound Velocity' WHEN array_to_string(reasons, ' ') LIKE '%Large Transfer%' THEN 'High-Value Transfer' WHEN array_to_string(reasons, ' ') LIKE '%Off-Hours%' THEN 'Off-Hours Activity' WHEN array_to_string(reasons, ' ') LIKE '%Probing%' THEN 'Micro-Probing Attack' ELSE 'Other Policy Violation' END AS \"Alert Category\", count(*) AS \"Count\" FROM fraud_monitoring.fraud_alerts WHERE $__timeFilter(timestamp) GROUP BY 1 ORDER BY \"Count\" DESC;",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": true
+        },
+        "pieType": "pie",
+        "tooltip": {
+          "mode": "single"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value",
+            "percent"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 12
+        "y": 20
       },
       "id": 10,
       "title": "🔴 Real-Time Live Transactions Stream",
@@ -383,10 +483,10 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 30
       },
       "id": 11,
-      "title": "🚨 High-Risk Fraud Alerts Feed",
+      "title": "🚨 High-Risk Fraud Alerts Feed (Sender & Receiver/Mule)",
       "type": "table",
       "datasource": "PostgreSQL-FraudDB",
       "targets": [
@@ -444,5 +544,5 @@
   "timezone": "browser",
   "title": "LAPNet Payment Switch - Real-Time Fraud Monitor",
   "uid": "lapnet-fraud-live",
-  "version": 6
+  "version": 7
 }
