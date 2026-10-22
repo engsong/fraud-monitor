@@ -55,16 +55,65 @@ def get_nodes():
         })
     return jsonify(nodes)
 
+@app.route("/api/node-stats")
+def get_node_stats():
+    """Returns real-time switching metrics comparing VM1 (175.2.0.23) and VM2 (175.2.0.24)"""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT 
+                node, 
+                count(*) AS tx_count,
+                count(*) FILTER (WHERE risk_score >= 80) AS alert_count,
+                COALESCE(sum(amount) FILTER (WHERE currency = 'LAK'), 0) AS lak_volume,
+                COALESCE(sum(amount) FILTER (WHERE currency = 'THB'), 0) AS thb_volume,
+                COALESCE(sum(amount) FILTER (WHERE currency = 'USD'), 0) AS usd_volume
+            FROM fraud_monitoring.transactions
+            GROUP BY node;
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        vm1 = next((r for r in rows if "175.2.0.23" in (r["node"] or "")), {"tx_count": 0, "alert_count": 0, "lak_volume": 0})
+        vm2 = next((r for r in rows if "175.2.0.24" in (r["node"] or "")), {"tx_count": 0, "alert_count": 0, "lak_volume": 0})
+        
+        total_tx = vm1["tx_count"] + vm2["tx_count"]
+        vm1_pct = round((vm1["tx_count"] / total_tx * 100), 1) if total_tx > 0 else 0
+        vm2_pct = round((vm2["tx_count"] / total_tx * 100), 1) if total_tx > 0 else 0
+
+        return jsonify({
+            "total_tx": total_tx,
+            "vm1": {
+                "name": "VM1-175.2.0.23",
+                "count": vm1["tx_count"],
+                "alerts": vm1["alert_count"],
+                "pct": vm1_pct,
+                "lak_volume": float(vm1["lak_volume"])
+            },
+            "vm2": {
+                "name": "VM2-175.2.0.24",
+                "count": vm2["tx_count"],
+                "alerts": vm2["alert_count"],
+                "pct": vm2_pct,
+                "lak_volume": float(vm2["lak_volume"])
+            }
+        })
+    except Exception as e:
+        return jsonify({"error": str(e), "total_tx": 0, "vm1": {"count": 0, "pct": 0}, "vm2": {"count": 0, "pct": 0}})
+
 @app.route("/api/hourly-stats")
 def get_hourly_stats():
-    """Returns hourly volume and alert counts for the last 12-24 hours"""
+    """Returns hourly volume by node (VM1 vs VM2) and alerts for the timeline area chart"""
     try:
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
             SELECT 
                 to_char(date_trunc('hour', timestamp), 'HH24:00') AS hour_label,
-                count(*) AS total_tx,
+                count(*) FILTER (WHERE node LIKE '%175.2.0.23%') AS vm1_tx,
+                count(*) FILTER (WHERE node LIKE '%175.2.0.24%') AS vm2_tx,
                 count(*) FILTER (WHERE risk_score >= 80) AS alert_tx
             FROM fraud_monitoring.transactions
             WHERE timestamp >= NOW() - INTERVAL '24 hours'
@@ -80,7 +129,7 @@ def get_hourly_stats():
 
 @app.route("/api/recent-alerts")
 def get_recent_alerts():
-    """Returns the latest 15 alerts for the left real-time detection table"""
+    """Returns the latest 15 alerts for the right live alerts board"""
     try:
         conn = get_db_connection()
         cur = conn.cursor()
@@ -88,13 +137,15 @@ def get_recent_alerts():
             SELECT 
                 id,
                 to_char(timestamp, 'HH24:MI:SS') AS alert_time,
+                node,
                 source_bank,
                 source_account,
                 dest_bank,
+                dest_account,
                 currency,
                 amount,
                 risk_score,
-                reasons[1] AS primary_reason,
+                array_to_string(reasons, ', ') AS triggers,
                 CASE 
                     WHEN risk_score >= 85 THEN 'Critical'
                     WHEN risk_score >= 70 THEN 'High'
@@ -172,7 +223,7 @@ def get_fan_in_out():
 
 @app.route("/api/live-stream")
 def live_stream():
-    """SSE Real-Time Stream for Map Flight Arcs and Table"""
+    """SSE Real-Time Stream for Map Transit Lines and Service Board"""
     def generate():
         last_id = 0
         try:
@@ -193,7 +244,7 @@ def live_stream():
                 cur = conn.cursor()
                 cur.execute("""
                     SELECT 
-                        id, tx_id, source_bank, source_account, dest_bank, dest_account,
+                        id, tx_id, node, source_bank, source_account, dest_bank, dest_account,
                         currency, amount, risk_score, array_to_string(reasons, ', ') AS triggers,
                         to_char(timestamp, 'HH24:MI:SS') AS tx_time
                     FROM fraud_monitoring.transactions
@@ -208,6 +259,7 @@ def live_stream():
                 if rows:
                     for r in rows:
                         last_id = max(last_id, r["id"])
+                        node_name = r["node"] or "VM1-175.2.0.23"
                         src_code = r["source_bank"] or "LAPNET"
                         dst_code = r["dest_bank"] or "LAPNET"
                         src_coords = get_institution_coords(src_code)
@@ -221,41 +273,40 @@ def live_stream():
 
                         is_mule = "Mule" in triggers or "Inflow" in triggers or "Fan-In" in triggers
                         
-                        # Color Determination:
-                        # 🔴 Red: Alert / Mule / High Risk
-                        # 🟡 Gold: Large Value
-                        # 🔵 Cyan: Normal / Cross-Border
+                        # Status classification
                         if score >= 80 or is_mule:
-                            color = "#ff2244"
-                            category = "Mule / Alert"
+                            color = "#ff2255"
+                            status_label = "ALERT"
                             threat = "High"
                         elif amt >= large_limit:
                             color = "#ffb800"
-                            category = "High-Value"
+                            status_label = "HIGH-VAL"
                             threat = "Medium"
                         elif ccy in ["THB", "USD", "CNY"] or src_code in ["ITMX", "NAPAS", "CAMBODIA", "UPI", "e-CNY"] or dst_code in ["ITMX", "NAPAS", "CAMBODIA", "UPI", "e-CNY"]:
-                            color = "#00f0ff"
-                            category = "Cross-Border FX"
+                            color = "#00e5ff"
+                            status_label = "FX-CROSS"
                             threat = "Low"
                         else:
-                            color = "#00e5ff"
-                            category = "Inter-Bank"
+                            color = "#26c6da"
+                            status_label = "NORMAL"
                             threat = "Low"
 
                         tx_event = {
                             "id": r["id"],
                             "tx_id": r["tx_id"],
+                            "node": "VM1" if "175.2.0.23" in node_name else "VM2",
+                            "full_node": node_name,
                             "from_code": src_code,
                             "to_code": dst_code,
                             "from_coords": src_coords,
                             "to_coords": dst_coords,
                             "color": color,
-                            "category": category,
+                            "status": status_label,
                             "threat": threat,
                             "currency": ccy,
                             "amount": f"{amt:,.2f}",
                             "risk_score": score,
-                            "triggers": triggers or category,
+                            "triggers": triggers or status_label,
                             "time": r["tx_time"],
                             "is_fan_in": is_mule
                         }

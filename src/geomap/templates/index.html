@@ -3,29 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LAPNet Switch - Cyber Threat Intelligence Dashboard</title>
+  <title>LAPNet Regional Switching Control - Dual-Node Real-Time NOC Dashboard</title>
   
-  <!-- Google Fonts: Inter & Orbitron & JetBrains Mono -->
+  <!-- Google Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Orbitron:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 
-  <!-- Local ECharts JS -->
+  <!-- Local ECharts -->
   <script src="/static/echarts.min.js"></script>
 
   <style>
     :root {
-      --bg-dark: #040812;
-      --card-bg: rgba(7, 15, 30, 0.88);
-      --card-border: rgba(0, 180, 255, 0.22);
-      --neon-cyan: #00e5ff;
-      --neon-blue: #0088ff;
-      --neon-orange: #ff7700;
-      --neon-red: #ff2255;
-      --neon-gold: #ffb800;
-      --neon-green: #00ff88;
-      --text-main: #e2e8f0;
-      --text-muted: #64748b;
+      --bg-ocean: #05101a;
+      --card-bg: #071724;
+      --card-inner: #0a1f30;
+      --border-blue: rgba(0, 200, 255, 0.22);
+      --border-light: rgba(0, 220, 255, 0.4);
+      --neon-cyan: #00f2fe;
+      --neon-teal: #26c6da;
+      --neon-amber: #ff9900;
+      --neon-red: #ff3366;
+      --neon-green: #00e676;
+      --neon-purple: #bb86fc;
+      --text-white: #f8fafc;
+      --text-dim: #78909c;
     }
 
     * {
@@ -37,1043 +39,1337 @@
     }
 
     body {
-      background: var(--bg-dark);
-      color: var(--text-main);
+      background: var(--bg-ocean);
+      color: var(--text-white);
       width: 100vw;
       height: 100vh;
       overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 8px;
+      padding: 10px;
     }
 
-    /* Outer Cyber Shell Bezel */
-    .cyber-shell {
-      position: relative;
+    /* Outer OCC Frame */
+    .occ-frame {
       width: 100%;
       height: 100%;
-      background: radial-gradient(circle at 50% 50%, #081226 0%, #03060d 100%);
-      border: 1.5px solid rgba(0, 200, 255, 0.35);
+      background: #040c14;
+      border: 2px solid var(--border-blue);
       border-radius: 12px;
-      box-shadow: 0 0 35px rgba(0, 140, 255, 0.18), inset 0 0 25px rgba(0, 180, 255, 0.08);
+      box-shadow: 0 0 35px rgba(0, 180, 255, 0.12), inset 0 0 20px rgba(0, 140, 255, 0.05);
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
 
-    /* Top Circuit Board Header */
-    .shell-header {
+    /* Top OCC Header Strip */
+    .occ-topbar {
       height: 48px;
-      background: rgba(5, 11, 24, 0.95);
-      border-bottom: 1px solid var(--card-border);
+      background: #061521;
+      border-bottom: 1.5px solid var(--border-blue);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 18px;
+      padding: 0 16px;
       z-index: 10;
     }
 
-    .header-left {
+    .topbar-title {
       display: flex;
-      align-items: center;
-      gap: 12px;
+      flex-direction: column;
     }
 
-    .shield-badge {
-      width: 26px;
-      height: 26px;
-      background: linear-gradient(135deg, rgba(0, 229, 255, 0.2), rgba(0, 119, 255, 0.4));
-      border: 1px solid var(--neon-cyan);
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+    .title-main {
       font-size: 13px;
-    }
-
-    .shell-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: 0.8px;
       color: #ffffff;
-      text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+      text-transform: uppercase;
     }
 
-    .header-center {
-      display: flex;
-      align-items: center;
-      gap: 16px;
+    .title-sub {
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: 0.4px;
     }
 
-    .secure-pill {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(0, 229, 255, 0.08);
-      border: 1px solid rgba(0, 229, 255, 0.3);
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 11px;
-      color: var(--neon-cyan);
-      box-shadow: 0 0 10px rgba(0, 229, 255, 0.15);
-    }
-
-    .header-right {
+    .kpi-strip {
       display: flex;
       align-items: center;
       gap: 12px;
     }
 
-    .hdr-btn {
-      background: rgba(0, 180, 255, 0.1);
-      border: 1px solid rgba(0, 200, 255, 0.25);
-      color: #b0e0ff;
-      font-size: 11px;
-      padding: 4px 10px;
+    .kpi-pill {
+      background: #092030;
+      border: 1px solid var(--border-blue);
       border-radius: 6px;
-      cursor: pointer;
+      padding: 4px 10px;
       display: flex;
       align-items: center;
-      gap: 5px;
-      transition: all 0.2s;
-    }
-
-    .hdr-btn:hover {
-      background: rgba(0, 229, 255, 0.2);
-      color: #ffffff;
-      border-color: var(--neon-cyan);
-    }
-
-    .window-controls {
-      display: flex;
       gap: 8px;
-      color: #64748b;
-      font-size: 11px;
+      font-size: 10px;
     }
 
-    /* Main Grid Layout */
-    .dashboard-grid {
+    .kpi-pill span.label {
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 9px;
+    }
+
+    .kpi-pill span.val {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: var(--neon-cyan);
+    }
+
+    .kpi-pill span.val-teal { color: var(--neon-teal); }
+    .kpi-pill span.val-amber { color: var(--neon-amber); }
+
+    .clock-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: #ffffff;
+      background: rgba(0, 242, 254, 0.12);
+      border: 1px solid rgba(0, 242, 254, 0.35);
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    /* Main Grid Layout (Left - Center - Right) */
+    .occ-grid {
       flex: 1;
       display: grid;
-      grid-template-columns: 310px 1fr 320px;
+      grid-template-columns: 290px 1fr 310px;
       gap: 10px;
-      padding: 10px 14px;
-      position: relative;
+      padding: 10px;
       overflow: hidden;
     }
 
-    /* Common Card Styling */
-    .cyber-card {
+    /* Card Panels */
+    .occ-panel {
       background: var(--card-bg);
-      border: 1px solid var(--card-border);
+      border: 1px solid var(--border-blue);
       border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 140, 255, 0.03);
       display: flex;
       flex-direction: column;
       overflow: hidden;
       position: relative;
     }
 
-    .cyber-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
-      opacity: 0.6;
-    }
-
-    .card-title-bar {
-      height: 32px;
-      padding: 0 12px;
+    .panel-header-bar {
+      height: 30px;
+      background: #081a28;
+      border-bottom: 1px solid rgba(0, 200, 255, 0.15);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid rgba(0, 180, 255, 0.12);
+      padding: 0 10px;
       font-size: 11px;
       font-weight: 700;
-      letter-spacing: 0.5px;
-      color: #f1f5f9;
-      background: rgba(0, 140, 255, 0.04);
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
     }
 
-    /* Left Column */
+    .header-tag {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(0, 242, 254, 0.12);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      color: var(--neon-cyan);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Tab Controls */
+    .tab-pills {
+      display: flex;
+      gap: 4px;
+      background: #040e17;
+      padding: 2px;
+      border-radius: 4px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: rgba(0, 242, 254, 0.2);
+      color: #ffffff;
+      border: 1px solid rgba(0, 242, 254, 0.4);
+    }
+
+    /* ================= LEFT COLUMN ================= */
     .col-left {
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
 
-    .search-box {
-      margin: 8px 10px;
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid rgba(0, 180, 255, 0.2);
+    /* Departure / Clearing Schedule Table */
+    .table-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .table-container::-webkit-scrollbar {
+      width: 3px;
+    }
+    .table-container::-webkit-scrollbar-thumb {
+      background: rgba(0, 220, 255, 0.2);
+      border-radius: 3px;
+    }
+
+    .sched-row {
+      background: rgba(10, 31, 48, 0.6);
+      border: 1px solid rgba(0, 200, 255, 0.08);
       border-radius: 4px;
-      padding: 4px 8px;
+      padding: 5px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10px;
+      border-left: 3px solid #37474f;
+      transition: all 0.15s;
+    }
+
+    .sched-row.row-alert {
+      border-left-color: var(--neon-red);
+      background: rgba(255, 51, 102, 0.08);
+    }
+
+    .sched-row.row-gold {
+      border-left-color: var(--neon-amber);
+      background: rgba(255, 153, 0, 0.08);
+    }
+
+    .sched-row.row-cross {
+      border-left-color: var(--neon-cyan);
+    }
+
+    .node-tag {
+      font-size: 8px;
+      font-weight: 800;
+      padding: 1px 4px;
+      border-radius: 2px;
+      font-family: 'JetBrains Mono', monospace;
+      margin-right: 4px;
+    }
+    .tag-vm1 { background: rgba(0, 242, 254, 0.2); color: var(--neon-cyan); }
+    .tag-vm2 { background: rgba(38, 198, 218, 0.2); color: var(--neon-teal); }
+
+    .status-pill {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .pill-norm { background: rgba(38, 198, 218, 0.15); color: var(--neon-teal); }
+    .pill-alert { background: var(--neon-red); color: #fff; }
+    .pill-gold { background: var(--neon-amber); color: #000; }
+    .pill-fx { background: rgba(0, 242, 254, 0.2); color: var(--neon-cyan); }
+
+    /* Platform Occupancy (Currency Meters) */
+    .currency-box {
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .curr-meter {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 9px;
+    }
+
+    .meter-label {
+      width: 45px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-dim);
+    }
+
+    .meter-track {
+      flex: 1;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 2px;
+      margin: 0 8px;
+      overflow: hidden;
+      display: flex;
+      gap: 2px;
+    }
+
+    .meter-seg {
+      height: 100%;
+      border-radius: 1px;
+    }
+
+    .seg-lak { background: var(--neon-cyan); width: 82%; box-shadow: 0 0 6px var(--neon-cyan); }
+    .seg-thb { background: var(--neon-teal); width: 12%; box-shadow: 0 0 6px var(--neon-teal); }
+    .seg-usd { background: var(--neon-amber); width: 5%; box-shadow: 0 0 6px var(--neon-amber); }
+    .seg-cny { background: var(--neon-purple); width: 1%; }
+
+    /* Service Mix Rings */
+    .service-mix-row {
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0;
+      border-top: 1px solid rgba(0, 200, 255, 0.1);
+    }
+
+    .mix-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .mix-ring {
+      position: relative;
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mix-ring svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .mix-ring circle {
+      fill: none;
+      stroke-width: 3.5;
+    }
+
+    .mix-ring .bg-circle { stroke: rgba(255, 255, 255, 0.08); }
+    .mix-ring .fg-circle { stroke-linecap: round; }
+
+    .mix-val {
+      position: absolute;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .mix-lbl {
+      font-size: 8px;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    /* ================= CENTER COLUMN ================= */
+    .col-center {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Center Network Topology Map */
+    .map-panel {
+      flex: 1;
+      position: relative;
+      background: radial-gradient(circle at 50% 50%, #061828 0%, #030a12 100%);
+      overflow: hidden;
+    }
+
+    #canvas-network-map {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .map-hud-top {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    .map-title-tag {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      color: #ffffff;
+      text-transform: uppercase;
+    }
+
+    .map-controls-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .compass-btn {
+      width: 22px;
+      height: 22px;
+      background: #081d2e;
+      border: 1px solid var(--border-blue);
+      border-radius: 4px;
+      color: var(--neon-cyan);
+      font-size: 10px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .map-hud-bottom {
+      position: absolute;
+      bottom: 8px;
+      left: 12px;
+      right: 12px;
+      background: rgba(6, 19, 32, 0.85);
+      border: 1px solid var(--border-blue);
+      border-radius: 6px;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 9px;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .hud-stat-unit {
       display: flex;
       align-items: center;
       gap: 6px;
     }
 
-    .search-box input {
-      background: transparent;
-      border: none;
-      outline: none;
-      color: #fff;
-      font-size: 11px;
-      width: 100%;
+    .hud-stat-unit strong {
+      color: #ffffff;
     }
 
-    .table-hdr {
-      display: grid;
-      grid-template-columns: 55px 75px 1fr 50px;
-      padding: 4px 10px;
-      font-size: 9px;
-      text-transform: uppercase;
-      color: #64748b;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      font-weight: 600;
+    /* Center Bottom Flow & Trend Panel */
+    .trend-panel {
+      height: 175px;
+      display: flex;
+      flex-direction: column;
     }
 
-    .table-body {
+    .trend-body {
       flex: 1;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      padding: 4px 6px;
-    }
-
-    .table-body::-webkit-scrollbar {
-      width: 3px;
-    }
-    .table-body::-webkit-scrollbar-thumb {
-      background: rgba(0, 229, 255, 0.2);
-      border-radius: 3px;
-    }
-
-    .table-row {
       display: grid;
-      grid-template-columns: 55px 75px 1fr 50px;
-      padding: 5px 6px;
-      border-radius: 4px;
-      font-size: 10px;
-      align-items: center;
-      background: rgba(255, 255, 255, 0.02);
-      border-left: 2px solid transparent;
-      transition: all 0.15s;
+      grid-template-columns: 1fr 180px;
+      gap: 10px;
+      padding: 4px 10px;
     }
 
-    .table-row:hover {
-      background: rgba(0, 229, 255, 0.08);
-    }
-
-    .table-row.threat-high {
-      border-left-color: var(--neon-red);
-      color: #ffb3c1;
-    }
-    .table-row.threat-medium {
-      border-left-color: var(--neon-orange);
-      color: #ffe0b2;
-    }
-    .table-row.threat-low {
-      border-left-color: var(--neon-cyan);
-      color: #b3f0ff;
-    }
-
-    .threat-tag {
-      font-size: 9px;
-      font-weight: 700;
-      text-align: right;
-    }
-    .tag-high { color: var(--neon-red); }
-    .tag-med { color: var(--neon-orange); }
-    .tag-low { color: var(--neon-cyan); }
-
-    /* Left Bottom Mini Bar Chart */
-    #chart-hourly-bar {
-      width: 100%;
-      height: 125px;
-    }
-
-    /* Center Column (Map Canvas) */
-    .col-center {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      background: radial-gradient(circle at 50% 50%, #07122a 0%, #030713 100%);
-      box-shadow: inset 0 0 40px rgba(0, 180, 255, 0.08);
-    }
-
-    /* Holographic Map Container */
-    #map-canvas {
+    #chart-service-trend {
       width: 100%;
       height: 100%;
     }
 
-    /* Center Map Top Overlay Badges */
-    .map-floating-overlay {
-      position: absolute;
-      top: 14px;
-      right: 18px;
+    .dispatch-box {
+      border-left: 1px solid rgba(0, 200, 255, 0.12);
+      padding-left: 10px;
       display: flex;
-      gap: 10px;
-      z-index: 5;
+      flex-direction: column;
+      justify-content: space-around;
+      font-size: 9px;
     }
 
-    .map-badge {
-      background: rgba(4, 12, 28, 0.85);
-      border: 1px solid rgba(0, 229, 255, 0.35);
-      backdrop-filter: blur(8px);
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 10px;
-      font-weight: 600;
-      color: #ffffff;
+    .dispatch-title {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    .dispatch-metrics {
       display: flex;
+      justify-content: space-between;
+    }
+
+    .disp-item {
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 6px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
     }
 
-    .map-badge .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
+    .disp-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 11px;
+      color: var(--neon-cyan);
     }
 
-    /* Right Column */
+    .disp-bars {
+      display: flex;
+      gap: 3px;
+      align-items: flex-end;
+      height: 35px;
+    }
+
+    .mini-bar {
+      width: 14px;
+      background: var(--neon-teal);
+      border-radius: 2px 2px 0 0;
+    }
+
+    /* ================= RIGHT COLUMN ================= */
     .col-right {
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
 
-    /* Neural Network / AI Topology Canvas */
-    #canvas-neural-net {
-      width: 100%;
-      height: 110px;
-    }
-
-    .ai-stat-row {
-      display: flex;
-      justify-content: space-around;
-      padding: 6px 0;
-      border-top: 1px solid rgba(0, 180, 255, 0.08);
-      font-size: 10px;
-    }
-
-    .ai-stat-item {
+    .alert-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 8px;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 1px;
-    }
-
-    .ai-stat-val {
-      font-family: 'JetBrains Mono', monospace;
-      font-weight: 700;
-      color: var(--neon-cyan);
-    }
-
-    /* Deep Learning MLP Diagram */
-    #canvas-mlp-diagram {
-      width: 100%;
-      height: 85px;
-    }
-
-    /* Predictive Area Trend Chart */
-    #chart-predictive-area {
-      width: 100%;
-      height: 115px;
-    }
-
-    /* Bottom Shell Footer */
-    .shell-footer {
-      height: 28px;
-      background: rgba(3, 7, 16, 0.98);
-      border-top: 1px solid rgba(0, 180, 255, 0.15);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      font-size: 10px;
-      color: #64748b;
-      font-family: 'JetBrains Mono', monospace;
-      z-index: 10;
-    }
-
-    .footer-left {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .health-bar-box {
-      display: flex;
-      align-items: center;
       gap: 6px;
     }
 
-    .health-meter {
-      width: 60px;
-      height: 5px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 2px;
-      overflow: hidden;
+    .alert-card {
+      background: rgba(10, 31, 48, 0.7);
+      border: 1px solid rgba(0, 200, 255, 0.12);
+      border-radius: 5px;
+      padding: 7px 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      font-size: 10px;
+      border-left: 3px solid #ff3366;
     }
 
-    .health-fill {
+    .alert-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 700;
+    }
+
+    .alert-reason {
+      font-size: 9px;
+      color: #90a4ae;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Maintenance Gantt Window */
+    .maint-box {
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .maint-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 9px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .gantt-bar-wrap {
+      width: 150px;
+      height: 7px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .gantt-seg {
+      height: 100%;
+      border-radius: 2px;
+      position: absolute;
+    }
+
+    /* Efficiency Tachometer Gauge */
+    .gauge-box {
+      height: 110px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    #chart-efficiency-gauge {
       width: 100%;
       height: 100%;
-      background: var(--neon-green);
-      box-shadow: 0 0 6px var(--neon-green);
     }
   </style>
 </head>
 <body>
 
-  <!-- Outer Cyber Shell Frame -->
-  <div class="cyber-shell">
+  <!-- Outer OCC Frame -->
+  <div class="occ-frame">
 
-    <!-- Top Command Header -->
-    <header class="shell-header">
-      <div class="header-left">
-        <div class="shield-badge">🛡️</div>
-        <div class="shell-title">CYBER THREAT INTELLIGENCE DASHBOARD</div>
+    <!-- Top OCC Header Strip -->
+    <header class="occ-topbar">
+      <div class="topbar-title">
+        <span class="title-main">REGIONAL SWITCHING CONTROL (LMPS CORE)</span>
+        <span class="title-sub">VM1 & VM2 Real-Time Dual-Node Ingestion | Real-Time Fraud Monitoring</span>
       </div>
 
-      <div class="header-center">
-        <div class="secure-pill">
-          <span style="font-size: 10px;">🔒</span>
-          <span>Secure Digital Switching Connection</span>
+      <!-- KPI Horizontal Strip -->
+      <div class="kpi-strip">
+        <div class="kpi-pill">
+          <span class="label">Network</span>
+          <span class="val">99.8%</span>
         </div>
-      </div>
-
-      <div class="header-right">
-        <button class="hdr-btn">
-          <span>⚙️ Data Analytics...</span>
-        </button>
-        <button class="hdr-btn" onclick="toggleFullscreen()">
-          <span>⛶</span>
-        </button>
-        <div class="window-controls">
-          <span>—</span>
-          <span>□</span>
-          <span>✕</span>
+        <div class="kpi-pill">
+          <span class="label">On-Time</span>
+          <span class="val">94.7%</span>
+        </div>
+        <div class="kpi-pill">
+          <span class="label">VM1 (175.2.0.23)</span>
+          <span id="kpi-vm1-pct" class="val val-teal">28.5%</span>
+        </div>
+        <div class="kpi-pill">
+          <span class="label">VM2 (175.2.0.24)</span>
+          <span id="kpi-vm2-pct" class="val val-teal">71.5%</span>
+        </div>
+        <div class="kpi-pill">
+          <span class="label">Latency</span>
+          <span class="val">2.6ms</span>
+        </div>
+        <div class="kpi-pill">
+          <span class="label">Risk Index</span>
+          <span class="val val-amber">0.41</span>
+        </div>
+        <div class="clock-badge" id="clock-display">
+          14:32 UTC
         </div>
       </div>
     </header>
 
-    <!-- Main Dashboard Grid -->
-    <main class="dashboard-grid">
+    <!-- Main Grid Layout -->
+    <main class="occ-grid">
 
       <!-- ================= LEFT COLUMN ================= -->
       <section class="col-left">
-
-        <!-- Top Card: Real-Time Fraud & Malware Detection -->
-        <div class="cyber-card" style="flex: 1;">
-          <div class="card-title-bar">
-            <span>REAL-TIME MALWARE & FRAUD DETECTION</span>
-            <span style="font-size: 9px; color: var(--neon-cyan);">LIVE</span>
+        <div class="occ-panel" style="flex: 1;">
+          <div class="panel-header-bar">
+            <span>SERVICE BOARD</span>
+            <div class="tab-pills">
+              <button class="tab-btn active">LIVE</button>
+              <button class="tab-btn">REGION</button>
+              <button class="tab-btn">AUTO</button>
+            </div>
           </div>
 
-          <div class="search-box">
-            <span style="font-size: 10px; color: #64748b;">🔍</span>
-            <input type="text" placeholder="Search..." id="search-input">
+          <!-- Transaction Schedule Table -->
+          <div style="padding: 6px 10px 2px; font-size: 9px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">
+            TRANSACTION CLEARING SCHEDULE
           </div>
 
-          <div class="table-hdr">
-            <span>Time</span>
-            <span>Source</span>
-            <span>Trigger</span>
-            <span style="text-align: right;">Threat</span>
+          <div class="table-container" id="schedule-table-body">
+            <!-- Dynamic Rows injected via SSE -->
           </div>
 
-          <div class="table-body" id="threat-table-body">
-            <!-- Dynamic rows injected here -->
+          <!-- Platform Currency Occupancy -->
+          <div style="border-top: 1px solid rgba(0, 200, 255, 0.12); padding-top: 6px;">
+            <div style="padding: 0 10px; font-size: 9px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">
+              PLATFORM OCCUPANCY (CURRENCY)
+            </div>
+            <div class="currency-box">
+              <div class="curr-meter">
+                <span class="meter-label">01 LAK</span>
+                <div class="meter-track"><div class="meter-seg seg-lak"></div></div>
+                <span style="font-family: monospace; font-size: 9px;">82%</span>
+              </div>
+              <div class="curr-meter">
+                <span class="meter-label">02 THB</span>
+                <div class="meter-track"><div class="meter-seg seg-thb"></div></div>
+                <span style="font-family: monospace; font-size: 9px;">12%</span>
+              </div>
+              <div class="curr-meter">
+                <span class="meter-label">03 USD</span>
+                <div class="meter-track"><div class="meter-seg seg-usd"></div></div>
+                <span style="font-family: monospace; font-size: 9px;">5%</span>
+              </div>
+              <div class="curr-meter">
+                <span class="meter-label">04 CNY</span>
+                <div class="meter-track"><div class="meter-seg seg-cny"></div></div>
+                <span style="font-family: monospace; font-size: 9px;">1%</span>
+              </div>
+            </div>
           </div>
+
+          <!-- Service Mix Circular Progress Rings -->
+          <div class="service-mix-row">
+            <div class="mix-item">
+              <div class="mix-ring">
+                <svg viewBox="0 0 36 36">
+                  <circle class="bg-circle" cx="18" cy="18" r="14" />
+                  <circle class="fg-circle" stroke="var(--neon-cyan)" stroke-dasharray="88, 100" cx="18" cy="18" r="14" />
+                </svg>
+                <span class="mix-val" style="color: var(--neon-cyan);">29%</span>
+              </div>
+              <span class="mix-lbl">VM1 LOAD</span>
+            </div>
+
+            <div class="mix-item">
+              <div class="mix-ring">
+                <svg viewBox="0 0 36 36">
+                  <circle class="bg-circle" cx="18" cy="18" r="14" />
+                  <circle class="fg-circle" stroke="var(--neon-teal)" stroke-dasharray="71, 100" cx="18" cy="18" r="14" />
+                </svg>
+                <span class="mix-val" style="color: var(--neon-teal);">71%</span>
+              </div>
+              <span class="mix-lbl">VM2 LOAD</span>
+            </div>
+
+            <div class="mix-item">
+              <div class="mix-ring">
+                <svg viewBox="0 0 36 36">
+                  <circle class="bg-circle" cx="18" cy="18" r="14" />
+                  <circle class="fg-circle" stroke="var(--neon-red)" stroke-dasharray="5, 100" cx="18" cy="18" r="14" />
+                </svg>
+                <span class="mix-val" style="color: var(--neon-red);">1%</span>
+              </div>
+              <span class="mix-lbl">RISK RATE</span>
+            </div>
+          </div>
+
         </div>
-
-        <!-- Bottom Card: Malware Detections Mini Bar Chart -->
-        <div class="cyber-card" style="height: 165px;">
-          <div class="card-title-bar">
-            <span>MALWARE & ALERT DETECTIONS</span>
-            <span style="color: #64748b; font-size: 9px;">Last 24 hours</span>
-          </div>
-          <div id="chart-hourly-bar"></div>
-        </div>
-
       </section>
 
-      <!-- ================= CENTER COLUMN (MAP) ================= -->
+      <!-- ================= CENTER COLUMN ================= -->
       <section class="col-center">
 
-        <!-- Floating Badges over Map -->
-        <div class="map-floating-overlay">
-          <div class="map-badge">
-            <div class="dot" style="background: var(--neon-orange); box-shadow: 0 0 8px var(--neon-orange);"></div>
-            <span>Cross-Border Corridors Active</span>
+        <!-- Top Map: Schematic Switching Network Topology Map -->
+        <div class="occ-panel map-panel">
+          <div class="map-hud-top">
+            <span class="map-title-tag">SWITCHING NETWORK OVERVIEW MAP</span>
+            <div class="map-controls-group">
+              <div class="tab-pills">
+                <button class="tab-btn active">LIVE</button>
+                <button class="tab-btn">SIGNAL</button>
+                <button class="tab-btn">GRID</button>
+              </div>
+              <div class="compass-btn">N ↑</div>
+            </div>
           </div>
-          <div class="map-badge">
-            <div class="dot" style="background: var(--neon-cyan); box-shadow: 0 0 8px var(--neon-cyan);"></div>
-            <span>LAPNet Switch Core</span>
+
+          <!-- HTML5 Canvas Transit/Switching Network Map -->
+          <canvas id="canvas-network-map"></canvas>
+
+          <!-- Bottom Status on Map -->
+          <div class="map-hud-bottom">
+            <div class="hud-stat-unit">
+              <span>JUNCTION LOAD:</span>
+              <strong style="color: var(--neon-cyan);">78%</strong>
+            </div>
+            <div class="hud-stat-unit">
+              <span>TOTAL HEALTH:</span>
+              <strong style="color: var(--neon-green);">99.7%</strong>
+            </div>
+            <div class="hud-stat-unit">
+              <span>SENSOR PROVISION:</span>
+              <strong style="color: #ffffff;">94%</strong>
+            </div>
+            <div class="hud-stat-unit">
+              <span>WINDOW:</span>
+              <strong>00:00 - 24:00 UTC</strong>
+            </div>
           </div>
         </div>
 
-        <!-- ECharts Holographic World Map Canvas -->
-        <div id="map-canvas"></div>
+        <!-- Bottom Panel: Service & Energy Trend Chart -->
+        <div class="occ-panel trend-panel">
+          <div class="panel-header-bar">
+            <span>SERVICE & SWITCHING FLOW TREND</span>
+            <div class="tab-pills">
+              <button class="tab-btn active">24H</button>
+              <button class="tab-btn">OFFSET</button>
+            </div>
+          </div>
+
+          <div class="trend-body">
+            <div id="chart-service-trend"></div>
+            
+            <div class="dispatch-box">
+              <span class="dispatch-title">DISPATCH METRICS</span>
+              <div class="dispatch-metrics">
+                <div class="disp-item">
+                  <span class="disp-val">2.6ms</span>
+                  <span style="font-size: 8px; color: var(--text-dim);">LATENCY</span>
+                </div>
+                <div class="disp-item">
+                  <span class="disp-val" style="color: var(--neon-teal);">38%</span>
+                  <span style="font-size: 8px; color: var(--text-dim);">SWITCH</span>
+                </div>
+                <div class="disp-item">
+                  <span class="disp-val" style="color: #64b5f6;">-12%</span>
+                  <span style="font-size: 8px; color: var(--text-dim);">JITTER</span>
+                </div>
+              </div>
+              <div class="disp-bars">
+                <div class="mini-bar" style="height: 18px;"></div>
+                <div class="mini-bar" style="height: 28px;"></div>
+                <div class="mini-bar" style="height: 22px;"></div>
+                <div class="mini-bar" style="height: 35px; background: var(--neon-cyan);"></div>
+                <div class="mini-bar" style="height: 30px;"></div>
+                <div class="mini-bar" style="height: 25px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
 
       </section>
 
       <!-- ================= RIGHT COLUMN ================= -->
       <section class="col-right">
 
-        <!-- Top Card: AI Analytics & Predictive Intelligence -->
-        <div class="cyber-card" style="height: 175px;">
-          <div class="card-title-bar">
-            <span>AI ANALYTICS & PREDICTIVE INTELLIGENCE</span>
+        <!-- Panel: Alert & Maintenance -->
+        <div class="occ-panel" style="flex: 1;">
+          <div class="panel-header-bar">
+            <span>ALERT & MAINTENANCE</span>
+            <span class="header-tag" style="color: var(--neon-red); border-color: rgba(255,51,102,0.4); background: rgba(255,51,102,0.15);">
+              RISK: HIGH
+            </span>
           </div>
-          <!-- Brain / Neural Network Canvas Animation -->
-          <canvas id="canvas-neural-net"></canvas>
-          <div class="ai-stat-row">
-            <div class="ai-stat-item">
-              <span class="ai-stat-val">100%</span>
-              <span style="color: #64748b; font-size: 8px;">Confidence</span>
-            </div>
-            <div class="ai-stat-item">
-              <span class="ai-stat-val" style="color: var(--neon-orange);">560%</span>
-              <span style="color: #64748b; font-size: 8px;">Graph Nodes</span>
-            </div>
-            <div class="ai-stat-item">
-              <span class="ai-stat-val">27.0%</span>
-              <span style="color: #64748b; font-size: 8px;">Mule Fan-In</span>
-            </div>
-            <div class="ai-stat-item">
-              <span class="ai-stat-val">33.0%</span>
-              <span style="color: #64748b; font-size: 8px;">Velocity</span>
-            </div>
-          </div>
-        </div>
 
-        <!-- Middle Card: Threat Actor Attribution Accuracy -->
-        <div class="cyber-card" style="height: 130px;">
-          <div class="card-title-bar">
-            <span>THREAT ACTOR ATTRIBUTION ACCURACY</span>
-            <span style="color: var(--neon-cyan); font-family: monospace; font-size: 10px;">97%</span>
+          <div style="padding: 6px 10px 2px; font-size: 9px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">
+            LIVE HIGH-RISK ALERTS
           </div>
-          <canvas id="canvas-mlp-diagram"></canvas>
-          <div style="padding: 2px 10px 6px; font-size: 9px; display: flex; justify-content: space-between; color: #94a3b8;">
-            <span>Anomaly Detection Score</span>
-            <span style="color: var(--neon-cyan); font-weight: bold;">9.8%</span>
-          </div>
-        </div>
 
-        <!-- Bottom Card: Predictive Uptick in Attack -->
-        <div class="cyber-card" style="flex: 1;">
-          <div class="card-title-bar">
-            <span>PREDICTIVE UPTICK IN ATTACK</span>
-            <span style="color: var(--neon-red); font-size: 9px;">● Uptick</span>
+          <div class="alert-list" id="alert-card-list">
+            <!-- Dynamic Alert Cards injected here -->
           </div>
-          <div id="chart-predictive-area"></div>
+
+          <!-- Maintenance Windows Gantt Bars -->
+          <div style="border-top: 1px solid rgba(0, 200, 255, 0.12); padding-top: 6px;">
+            <div style="padding: 0 10px; font-size: 9px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">
+              NODE MAINTENANCE WINDOWS
+            </div>
+            <div class="maint-box">
+              <div class="maint-row">
+                <span>VM1 (175.2.0.23)</span>
+                <div class="gantt-bar-wrap">
+                  <div class="gantt-seg" style="left: 0; width: 85%; background: var(--neon-cyan); box-shadow: 0 0 6px var(--neon-cyan);"></div>
+                </div>
+              </div>
+              <div class="maint-row">
+                <span>VM2 (175.2.0.24)</span>
+                <div class="gantt-bar-wrap">
+                  <div class="gantt-seg" style="left: 0; width: 92%; background: var(--neon-teal); box-shadow: 0 0 6px var(--neon-teal);"></div>
+                </div>
+              </div>
+              <div class="maint-row">
+                <span>PG-FRAUDDB</span>
+                <div class="gantt-bar-wrap">
+                  <div class="gantt-seg" style="left: 0; width: 98%; background: var(--neon-green);"></div>
+                </div>
+              </div>
+              <div class="maint-row">
+                <span>REDIS-VELOCITY</span>
+                <div class="gantt-bar-wrap">
+                  <div class="gantt-seg" style="left: 0; width: 99%; background: var(--neon-purple);"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Energy & Efficiency Tachometer Half-Circle Gauge -->
+          <div style="border-top: 1px solid rgba(0, 200, 255, 0.12); padding: 4px 10px;">
+            <div style="font-size: 9px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">
+              SWITCH EFFICIENCY INDEX
+            </div>
+            <div class="gauge-box">
+              <div id="chart-efficiency-gauge"></div>
+            </div>
+          </div>
+
         </div>
 
       </section>
 
     </main>
 
-    <!-- Bottom Status Shell Footer -->
-    <footer class="shell-footer">
-      <div class="footer-left">
-        <div class="health-bar-box">
-          <span>System Health:</span>
-          <div class="health-meter">
-            <div class="health-fill"></div>
-          </div>
-        </div>
-        <span>|</span>
-        <span>System Status: <strong style="color: var(--neon-green);">Secure</strong></span>
-        <span>|</span>
-        <span>Switch Nodes: <strong>VM1-175.2.0.23</strong> & <strong>VM2-175.2.0.24</strong></span>
-      </div>
-
-      <div class="footer-center">
-        <span id="live-datetime">UTC TIME</span>
-      </div>
-
-      <div class="footer-right">
-        <span>👤 Analyst: LAPNet Fraud Ops | Status: <strong style="color: var(--neon-cyan);">Active</strong></span>
-      </div>
-    </footer>
-
   </div>
 
-  <!-- Main Application Logic -->
+  <!-- Main JavaScript Logic -->
   <script>
     // ==========================================
-    // 1. CLOCK & FULLSCREEN
+    // 1. CLOCK & NODE STATS POLLING
     // ==========================================
     function updateClock() {
       const now = new Date();
-      document.getElementById('live-datetime').innerText = now.toUTCString().replace('GMT', 'UTC');
+      const h = String(now.getUTCHours()).padStart(2, '0');
+      const m = String(now.getUTCMinutes()).padStart(2, '0');
+      document.getElementById('clock-display').innerText = `${h}:${m} UTC (LIVE)`;
     }
     setInterval(updateClock, 1000);
     updateClock();
 
-    function toggleFullscreen() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-      } else {
-        if (document.exitFullscreen) document.exitFullscreen();
+    function pollNodeStats() {
+      fetch('/api/node-stats')
+        .then(res => res.json())
+        .then(d => {
+          if (d.vm1 && d.vm2) {
+            document.getElementById('kpi-vm1-pct').innerText = `${d.vm1.pct}%`;
+            document.getElementById('kpi-vm2-pct').innerText = `${d.vm2.pct}%`;
+          }
+        })
+        .catch(() => {});
+    }
+    pollNodeStats();
+    setInterval(pollNodeStats, 8000);
+
+    // ==========================================
+    // 2. SCHEMATIC TRANSIT/SWITCHING TOPOLOGY MAP
+    // ==========================================
+    const cvsMap = document.getElementById('canvas-network-map');
+    const ctx = cvsMap.getContext('2d');
+
+    function resizeMap() {
+      cvsMap.width = cvsMap.clientWidth;
+      cvsMap.height = cvsMap.clientHeight;
+    }
+    window.addEventListener('resize', resizeMap);
+    resizeMap();
+
+    // Schematic Metro/Transit Stations & Coordinates
+    const STATIONS = {
+      // Central Switch Interchange
+      "LAPNET": { x: 0.50, y: 0.46, label: "LAPNET CORE", isHub: true },
+
+      // West Capital Line (Cyan Track)
+      "BCEL": { x: 0.36, y: 0.44, label: "BCEL HQ", isHub: true },
+      "JDB": { x: 0.22, y: 0.40, label: "JDB WEST" },
+      "BFL": { x: 0.12, y: 0.36, label: "BFL TERMINAL" },
+
+      // North Express Line (Teal Track)
+      "LDB": { x: 0.48, y: 0.26, label: "LDB NORTH" },
+      "IDB": { x: 0.40, y: 0.18, label: "IDB VANG VIENG" },
+      "ACLE": { x: 0.28, y: 0.12, label: "ACLEDA LUANG PRABANG", isHub: true },
+      "STB": { x: 0.18, y: 0.08, label: "STB OUDOMXAY" },
+
+      // South Corridor (Blue Track)
+      "APB": { x: 0.58, y: 0.58, label: "APB EAST" },
+      "PSV": { x: 0.68, y: 0.70, label: "PSV THAKHEK" },
+      "LVB": { x: 0.78, y: 0.80, label: "LVB SAVANNAKHET", isHub: true },
+      "UMONEY": { x: 0.88, y: 0.88, label: "UMONEY PAKSE" },
+
+      // Cross-Border Gateway (Amber Track)
+      "ITMX": { x: 0.30, y: 0.78, label: "ITMX BANGKOK (TH)", isCross: true },
+      "NAPAS": { x: 0.72, y: 0.28, label: "NAPAS HANOI (VN)", isCross: true },
+      "BAKONG": { x: 0.62, y: 0.85, label: "NBC BAKONG (KH)", isCross: true },
+      "UPI": { x: 0.85, y: 0.35, label: "UNIONPAY (CN)", isCross: true }
+    };
+
+    // Tracks (Railway Lines) Connecting Stations
+    const TRACKS = [
+      // Line 1: Northern Trunk Line (Teal)
+      { from: "STB", to: "ACLE", color: "#26c6da" },
+      { from: "ACLE", to: "IDB", color: "#26c6da" },
+      { from: "IDB", to: "LDB", color: "#26c6da" },
+      { from: "LDB", to: "LAPNET", color: "#26c6da" },
+
+      // Line 2: Western Capital Line (Cyan)
+      { from: "BFL", to: "JDB", color: "#00f2fe" },
+      { from: "JDB", to: "BCEL", color: "#00f2fe" },
+      { from: "BCEL", to: "LAPNET", color: "#00f2fe" },
+
+      // Line 3: Southern Spine Line (Light Blue)
+      { from: "LAPNET", to: "APB", color: "#4facfe" },
+      { from: "APB", to: "PSV", color: "#4facfe" },
+      { from: "PSV", to: "LVB", color: "#4facfe" },
+      { from: "LVB", to: "UMONEY", color: "#4facfe" },
+
+      // Line 4: Cross-Border Gateway Diagonal (Amber)
+      { from: "ITMX", to: "BCEL", color: "#ff9900" },
+      { from: "LAPNET", to: "NAPAS", color: "#ff9900" },
+      { from: "PSV", to: "BAKONG", color: "#ff9900" },
+      { from: "NAPAS", to: "UPI", color: "#ff9900" }
+    ];
+
+    // Animated Trains / Data Packets on Tracks
+    let movingPackets = [];
+
+    class MetroPacket {
+      constructor(track, color) {
+        this.track = track;
+        this.color = color || track.color;
+        this.progress = 0;
+        this.speed = 0.008 + Math.random() * 0.006;
+      }
+
+      update() {
+        this.progress += this.speed;
+        return this.progress < 1;
+      }
+
+      draw() {
+        const s1 = STATIONS[this.track.from];
+        const s2 = STATIONS[this.track.to];
+        if (!s1 || !s2) return;
+
+        const w = cvsMap.width;
+        const h = cvsMap.height;
+
+        const x = (s1.x + (s2.x - s1.x) * this.progress) * w;
+        const y = (s1.y + (s2.y - s1.y) * this.progress) * h;
+
+        ctx.beginPath();
+        ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        ctx.shadowBlur = 0;
       }
     }
 
-    // ==========================================
-    // 2. INITIALIZE ECHARTS HOLOGRAPHIC MAP
-    // ==========================================
-    const mapChart = echarts.init(document.getElementById('map-canvas'));
+    // Periodically spawn trains
+    setInterval(() => {
+      const randTrack = TRACKS[Math.floor(Math.random() * TRACKS.length)];
+      movingPackets.push(new MetroPacket(randTrack));
+    }, 400);
 
-    // Financial Hubs with Geographic Coordinates
-    const GEO_HUBS = {
-      // Laos Switch & Banks
-      "LAPNET": [102.6331, 17.9757],
-      "BCEL": [102.6074, 17.9658],
-      "LDB": [102.6250, 18.0150],
-      "APB": [102.6580, 17.9850],
-      "JDB": [102.5650, 17.9750],
-      "ACLE": [102.1359, 19.8893],
-      "LVB": [104.7500, 16.5550],
-      "Umoney.MB": [105.7800, 15.1200],
-      "PSV": [104.8300, 17.4000],
-      "STB": [101.9800, 20.6900],
-      
-      // Regional & Cross-Border Hubs
-      "Bangkok (ITMX)": [100.5018, 13.7563],
-      "Hanoi (NAPAS)": [105.8542, 21.0285],
-      "Phnom Penh (Bakong)": [104.9282, 11.5564],
-      "Kunming (China)": [102.7097, 25.0453],
-      "Beijing (e-CNY)": [116.4074, 39.9042],
-      "Singapore": [103.8198, 1.3521],
-      "Tokyo": [139.6917, 35.6895],
-      
-      // Global Financial Corridors (as shown in reference image)
-      "Frankfurt": [8.6821, 50.1109],
-      "London": [-0.1278, 51.5074],
-      "New York": [-74.0060, 40.7128],
-      "San Francisco": [-122.4194, 37.7749],
-      "Sao Paulo": [-46.6333, -23.5505],
-      "Johannesburg": [28.0473, -26.2041],
-      "Sydney": [151.2093, -33.8688]
-    };
+    function drawNetworkMap() {
+      ctx.clearRect(0, 0, cvsMap.width, cvsMap.height);
+      const w = cvsMap.width;
+      const h = cvsMap.height;
 
-    // Load Local World Map GeoJSON
-    fetch('/static/world.json')
-      .then(res => res.json())
-      .then(worldJson => {
-        echarts.registerMap('world', worldJson);
+      // 1. Draw Background Grid Matrix
+      ctx.strokeStyle = 'rgba(0, 200, 255, 0.04)';
+      ctx.lineWidth = 1;
+      const gridSize = 32;
+      for (let x = 0; x < w; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
 
-        // Core Flight Corridors (Orange & Cyan Glowing Arcs)
-        const initialLines = [
-          // Global Settlement Corridors (matching reference image)
-          { fromName: 'Frankfurt', toName: 'New York', coords: [GEO_HUBS['Frankfurt'], GEO_HUBS['New York']], color: '#ff7700' },
-          { fromName: 'Frankfurt', toName: 'San Francisco', coords: [GEO_HUBS['Frankfurt'], GEO_HUBS['San Francisco']], color: '#ff7700' },
-          { fromName: 'Frankfurt', toName: 'Sao Paulo', coords: [GEO_HUBS['Frankfurt'], GEO_HUBS['Sao Paulo']], color: '#ff7700' },
-          { fromName: 'Frankfurt', toName: 'Johannesburg', coords: [GEO_HUBS['Frankfurt'], GEO_HUBS['Johannesburg']], color: '#ff7700' },
-          { fromName: 'Frankfurt', toName: 'Beijing (e-CNY)', coords: [GEO_HUBS['Frankfurt'], GEO_HUBS['Beijing (e-CNY)']], color: '#ff7700' },
-          { fromName: 'Frankfurt', toName: 'Tokyo', coords: [GEO_HUBS['Frankfurt'], GEO_HUBS['Tokyo']], color: '#ff7700' },
-          { fromName: 'New York', toName: 'San Francisco', coords: [GEO_HUBS['New York'], GEO_HUBS['San Francisco']], color: '#00e5ff' },
-          { fromName: 'New York', toName: 'Sao Paulo', coords: [GEO_HUBS['New York'], GEO_HUBS['Sao Paulo']], color: '#00e5ff' },
-          { fromName: 'Tokyo', toName: 'Sydney', coords: [GEO_HUBS['Tokyo'], GEO_HUBS['Sydney']], color: '#ff7700' },
-          
-          // Regional ASEAN Switching Corridors
-          { fromName: 'LAPNET', toName: 'Bangkok (ITMX)', coords: [GEO_HUBS['LAPNET'], GEO_HUBS['Bangkok (ITMX)']], color: '#00e5ff' },
-          { fromName: 'LAPNET', toName: 'Hanoi (NAPAS)', coords: [GEO_HUBS['LAPNET'], GEO_HUBS['Hanoi (NAPAS)']], color: '#00e5ff' },
-          { fromName: 'LAPNET', toName: 'Phnom Penh (Bakong)', coords: [GEO_HUBS['LAPNET'], GEO_HUBS['Phnom Penh (Bakong)']], color: '#00e5ff' },
-          { fromName: 'LAPNET', toName: 'Kunming (China)', coords: [GEO_HUBS['LAPNET'], GEO_HUBS['Kunming (China)']], color: '#ff7700' },
-          { fromName: 'LAPNET', toName: 'Singapore', coords: [GEO_HUBS['LAPNET'], GEO_HUBS['Singapore']], color: '#00e5ff' },
-          
-          // Domestic Inter-Bank Corridors
-          { fromName: 'BCEL', toName: 'LAPNET', coords: [GEO_HUBS['BCEL'], GEO_HUBS['LAPNET']], color: '#00e5ff' },
-          { fromName: 'LDB', toName: 'BCEL', coords: [GEO_HUBS['LDB'], GEO_HUBS['BCEL']], color: '#00e5ff' },
-          { fromName: 'APB', toName: 'BCEL', coords: [GEO_HUBS['APB'], GEO_HUBS['BCEL']], color: '#00e5ff' },
-          { fromName: 'ACLE', toName: 'BCEL', coords: [GEO_HUBS['ACLE'], GEO_HUBS['BCEL']], color: '#ff7700' },
-          { fromName: 'Umoney.MB', toName: 'BCEL', coords: [GEO_HUBS['Umoney.MB'], GEO_HUBS['BCEL']], color: '#ff7700' }
-        ];
+      // 2. Draw Tracks (Railway lines)
+      TRACKS.forEach(track => {
+        const s1 = STATIONS[track.from];
+        const s2 = STATIONS[track.to];
+        if (!s1 || !s2) return;
 
-        // Nodes Scatter Data
-        const nodesData = Object.keys(GEO_HUBS).map(key => {
-          const isOrange = ['Frankfurt', 'New York', 'Kunming (China)', 'Tokyo', 'Sydney', 'ACLE', 'Umoney.MB'].includes(key);
-          return {
-            name: key,
-            value: [...GEO_HUBS[key], 1],
-            itemStyle: {
-              color: isOrange ? '#ff7700' : '#00e5ff',
-              shadowColor: isOrange ? '#ff7700' : '#00e5ff',
-              shadowBlur: 16
-            }
-          };
-        });
+        const x1 = s1.x * w;
+        const y1 = s1.y * h;
+        const x2 = s2.x * w;
+        const y2 = s2.y * h;
 
-        const mapOption = {
-          backgroundColor: 'transparent',
-          geo: {
-            map: 'world',
-            roam: true,
-            zoom: 1.15,
-            center: [15, 20],
-            label: { show: false },
-            itemStyle: {
-              // Holographic Cyan Contours with Translucent Fill
-              areaColor: 'rgba(0, 45, 95, 0.45)',
-              borderColor: '#00d4ff',
-              borderWidth: 1.2,
-              shadowColor: 'rgba(0, 212, 255, 0.4)',
-              shadowBlur: 10
-            },
-            emphasis: {
-              itemStyle: {
-                areaColor: 'rgba(0, 180, 255, 0.35)',
-                borderColor: '#ffffff',
-                borderWidth: 1.5
-              },
-              label: { show: false }
-            }
-          },
-          series: [
-            // 1. Static Base Curved Arcs
-            {
-              type: 'lines',
-              coordinateSystem: 'geo',
-              zlevel: 1,
-              silent: true,
-              data: initialLines.map(line => ({
-                coords: line.coords,
-                lineStyle: {
-                  color: line.color,
-                  width: 1.2,
-                  opacity: 0.3,
-                  curveness: 0.25
-                }
-              }))
-            },
-            // 2. Animated Glowing Particle Trails
-            {
-              id: 'animated-lines',
-              type: 'lines',
-              coordinateSystem: 'geo',
-              zlevel: 2,
-              effect: {
-                show: true,
-                period: 4,
-                trailLength: 0.6,
-                symbol: 'arrow',
-                symbolSize: 5
-              },
-              data: initialLines.map(line => ({
-                coords: line.coords,
-                lineStyle: {
-                  color: line.color,
-                  width: 2,
-                  opacity: 0.85,
-                  curveness: 0.25
-                }
-              }))
-            },
-            // 3. Pulsing Sonar Ripple Nodes
-            {
-              type: 'effectScatter',
-              coordinateSystem: 'geo',
-              zlevel: 3,
-              rippleEffect: {
-                brushType: 'stroke',
-                scale: 4,
-                period: 3
-              },
-              label: {
-                show: true,
-                position: 'right',
-                formatter: '{b}',
-                color: '#e2e8f0',
-                fontSize: 9,
-                fontWeight: 600,
-                backgroundColor: 'rgba(4, 10, 24, 0.8)',
-                padding: [2, 5],
-                borderRadius: 3,
-                borderColor: 'rgba(0, 229, 255, 0.3)',
-                borderWidth: 0.8
-              },
-              symbolSize: 7,
-              data: nodesData
-            }
-          ]
-        };
+        // Faint outer track glow
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.strokeStyle = track.color + '44';
+        ctx.lineWidth = 6;
+        ctx.stroke();
 
-        mapChart.setOption(mapOption);
+        // Core track line
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.strokeStyle = track.color;
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = track.color;
+        ctx.shadowBlur = 8;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
       });
 
-    window.addEventListener('resize', () => mapChart.resize());
+      // 3. Update & Draw Packets (Trains)
+      movingPackets = movingPackets.filter(p => {
+        const alive = p.update();
+        if (alive) p.draw();
+        return alive;
+      });
+
+      // 4. Draw Stations (Junctions)
+      Object.keys(STATIONS).forEach(key => {
+        const s = STATIONS[key];
+        const x = s.x * w;
+        const y = s.y * h;
+
+        const r = s.isHub ? 7 : (s.isCross ? 6 : 4.5);
+
+        // Outer Station Ring
+        ctx.beginPath();
+        ctx.arc(x, y, r + 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(5, 16, 26, 0.9)';
+        ctx.strokeStyle = s.isCross ? '#ff9900' : (s.isHub ? '#00f2fe' : '#26c6da');
+        ctx.lineWidth = 2;
+        ctx.fill();
+        ctx.stroke();
+
+        // Inner Station Core
+        ctx.beginPath();
+        ctx.arc(x, y, r - 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = s.isCross ? '#ff9900' : (s.isHub ? '#ffffff' : '#26c6da');
+        ctx.shadowColor = ctx.fillStyle;
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Station Label
+        ctx.font = '700 8.5px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillText(s.label, x + r + 5, y + 3);
+      });
+
+      requestAnimationFrame(drawNetworkMap);
+    }
+    drawNetworkMap();
 
     // ==========================================
-    // 3. LEFT MINI BAR CHART (Hourly Alerts)
+    // 3. BOTTOM FLOW & SERVICE TREND (ECHARTS)
     // ==========================================
-    const barChart = echarts.init(document.getElementById('chart-hourly-bar'));
+    const trendChart = echarts.init(document.getElementById('chart-service-trend'));
 
-    function renderHourlyBar(data) {
-      const labels = data.map(d => d.hour_label || '');
-      const values = data.map(d => parseInt(d.total_tx || 0));
+    function renderTrendChart(data) {
+      const labels = data.map(d => d.hour_label);
+      const vm1 = data.map(d => d.vm1_tx || 0);
+      const vm2 = data.map(d => d.vm2_tx || 0);
+      const alerts = data.map(d => d.alert_tx || 0);
 
-      barChart.setOption({
+      trendChart.setOption({
         backgroundColor: 'transparent',
         grid: { top: 12, bottom: 20, left: 30, right: 10 },
         xAxis: {
           type: 'category',
           data: labels.length ? labels : ['00h','04h','08h','12h','16h','20h','24h'],
-          axisLine: { lineStyle: { color: 'rgba(0, 180, 255, 0.2)' } },
-          axisLabel: { color: '#64748b', fontSize: 8 }
+          axisLine: { lineStyle: { color: 'rgba(0, 200, 255, 0.2)' } },
+          axisLabel: { color: '#78909c', fontSize: 8 }
         },
         yAxis: {
           type: 'value',
-          splitLine: { lineStyle: { color: 'rgba(0, 180, 255, 0.08)' } },
-          axisLabel: { color: '#64748b', fontSize: 8 }
+          splitLine: { lineStyle: { color: 'rgba(0, 200, 255, 0.08)' } },
+          axisLabel: { color: '#78909c', fontSize: 8 }
         },
-        series: [{
-          type: 'bar',
-          data: values.length ? values : [12, 28, 45, 80, 130, 95, 60],
-          barWidth: '55%',
-          itemStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: '#00e5ff' },
-              { offset: 1, color: 'rgba(0, 100, 255, 0.2)' }
-            ]),
-            borderRadius: [2, 2, 0, 0]
+        series: [
+          {
+            name: 'VM1 Traffic',
+            type: 'line',
+            smooth: true,
+            data: vm1.length ? vm1 : [120, 180, 140, 220, 260, 310],
+            lineStyle: { color: '#00f2fe', width: 2 },
+            areaStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: 'rgba(0, 242, 254, 0.35)' },
+                { offset: 1, color: 'rgba(0, 242, 254, 0.01)' }
+              ])
+            },
+            symbol: 'none'
+          },
+          {
+            name: 'VM2 Traffic',
+            type: 'line',
+            smooth: true,
+            data: vm2.length ? vm2 : [280, 340, 310, 480, 560, 680],
+            lineStyle: { color: '#26c6da', width: 2 },
+            areaStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: 'rgba(38, 198, 218, 0.35)' },
+                { offset: 1, color: 'rgba(38, 198, 218, 0.01)' }
+              ])
+            },
+            symbol: 'none'
+          },
+          {
+            name: 'Alert Spikes',
+            type: 'line',
+            smooth: true,
+            data: alerts.length ? alerts : [15, 8, 22, 10, 35, 18],
+            lineStyle: { color: '#ff9900', width: 2 },
+            symbol: 'circle',
+            symbolSize: 4,
+            itemStyle: { color: '#ff9900' }
           }
-        }]
+        ]
       });
     }
 
     fetch('/api/hourly-stats')
       .then(res => res.json())
-      .then(renderHourlyBar)
-      .catch(() => renderHourlyBar([]));
+      .then(renderTrendChart)
+      .catch(() => renderTrendChart([]));
 
     // ==========================================
-    // 4. RIGHT BOTTOM AREA CHART (Predictive Trend)
+    // 4. RIGHT EFFICIENCY TACHOMETER GAUGE
     // ==========================================
-    const areaChart = echarts.init(document.getElementById('chart-predictive-area'));
+    const gaugeChart = echarts.init(document.getElementById('chart-efficiency-gauge'));
 
-    areaChart.setOption({
+    gaugeChart.setOption({
       backgroundColor: 'transparent',
-      grid: { top: 14, bottom: 22, left: 30, right: 10 },
-      xAxis: {
-        type: 'category',
-        data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-        axisLine: { lineStyle: { color: 'rgba(0, 180, 255, 0.2)' } },
-        axisLabel: { color: '#64748b', fontSize: 8 }
-      },
-      yAxis: {
-        type: 'value',
-        splitLine: { lineStyle: { color: 'rgba(0, 180, 255, 0.08)' } },
-        axisLabel: { color: '#64748b', fontSize: 8 }
-      },
-      series: [
-        {
-          name: 'Total Volume',
-          type: 'line',
-          smooth: true,
-          data: [50, 75, 60, 95, 110, 160],
-          lineStyle: { color: '#00e5ff', width: 2 },
-          areaStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: 'rgba(0, 229, 255, 0.35)' },
-              { offset: 1, color: 'rgba(0, 229, 255, 0.02)' }
-            ])
-          },
-          symbol: 'none'
+      series: [{
+        type: 'gauge',
+        startAngle: 180,
+        endAngle: 0,
+        min: 0,
+        max: 1,
+        splitNumber: 4,
+        axisLine: {
+          lineStyle: {
+            width: 8,
+            color: [
+              [0.3, '#26c6da'],
+              [0.7, '#00f2fe'],
+              [1, '#ff9900']
+            ]
+          }
         },
-        {
-          name: 'Risk Trend',
-          type: 'line',
-          smooth: true,
-          data: [20, 35, 30, 65, 80, 140],
-          lineStyle: { color: '#ff2255', width: 2 },
-          areaStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: 'rgba(255, 34, 85, 0.45)' },
-              { offset: 1, color: 'rgba(255, 34, 85, 0.02)' }
-            ])
-          },
-          symbol: 'none'
-        }
-      ]
+        pointer: {
+          icon: 'triangle',
+          length: '65%',
+          width: 5,
+          offsetCenter: [0, '-10%'],
+          itemStyle: { color: '#ffffff' }
+        },
+        axisTick: { show: false },
+        splitLine: { show: false },
+        axisLabel: { show: false },
+        title: { show: false },
+        detail: {
+          valueAnimation: true,
+          offsetCenter: [0, '-20%'],
+          fontSize: 14,
+          fontWeight: 'bold',
+          formatter: '{value}',
+          color: '#ffffff'
+        },
+        data: [{ value: 0.41 }]
+      }]
     });
 
     window.addEventListener('resize', () => {
-      barChart.resize();
-      areaChart.resize();
+      trendChart.resize();
+      gaugeChart.resize();
     });
 
     // ==========================================
-    // 5. ANIMATED NEURAL GRAPH & MLP CANVAS
+    // 5. SSE LIVE TRANSACTION CLEARING SCHEDULE
     // ==========================================
-    const cvsBrain = document.getElementById('canvas-neural-net');
-    const ctxBrain = cvsBrain.getContext('2d');
-    cvsBrain.width = cvsBrain.clientWidth;
-    cvsBrain.height = cvsBrain.clientHeight;
+    const schedTable = document.getElementById('schedule-table-body');
+    const alertList = document.getElementById('alert-card-list');
 
-    const brainNodes = [
-      { x: 35, y: 30, r: 4 }, { x: 45, y: 75, r: 5 }, { x: 80, y: 20, r: 3 },
-      { x: 120, y: 55, r: 7 }, { x: 160, y: 25, r: 4 }, { x: 200, y: 65, r: 5 },
-      { x: 240, y: 35, r: 4 }, { x: 275, y: 70, r: 6 }
-    ];
-
-    let pulseStep = 0;
-    function drawBrainGraph() {
-      ctxBrain.clearRect(0, 0, cvsBrain.width, cvsBrain.height);
-      pulseStep += 0.05;
-
-      // Draw Edges
-      ctxBrain.strokeStyle = 'rgba(0, 180, 255, 0.25)';
-      ctxBrain.lineWidth = 1;
-      for (let i = 0; i < brainNodes.length; i++) {
-        for (let j = i + 1; j < brainNodes.length; j++) {
-          const dx = brainNodes[i].x - brainNodes[j].x;
-          const dy = brainNodes[i].y - brainNodes[j].y;
-          if (Math.sqrt(dx * dx + dy * dy) < 85) {
-            ctxBrain.beginPath();
-            ctxBrain.moveTo(brainNodes[i].x, brainNodes[i].y);
-            ctxBrain.lineTo(brainNodes[j].x, brainNodes[j].y);
-            ctxBrain.stroke();
-          }
-        }
-      }
-
-      // Draw Nodes
-      brainNodes.forEach((node, idx) => {
-        const glow = Math.sin(pulseStep + idx) * 3 + node.r;
-        ctxBrain.beginPath();
-        ctxBrain.arc(node.x, node.y, Math.max(2, glow), 0, Math.PI * 2);
-        ctxBrain.fillStyle = idx % 2 === 0 ? '#00e5ff' : '#0088ff';
-        ctxBrain.shadowColor = '#00e5ff';
-        ctxBrain.shadowBlur = 10;
-        ctxBrain.fill();
-        ctxBrain.shadowBlur = 0;
-      });
-
-      requestAnimationFrame(drawBrainGraph);
-    }
-    drawBrainGraph();
-
-    // MLP Diagram Canvas
-    const cvsMlp = document.getElementById('canvas-mlp-diagram');
-    const ctxMlp = cvsMlp.getContext('2d');
-    cvsMlp.width = cvsMlp.clientWidth;
-    cvsMlp.height = cvsMlp.clientHeight;
-
-    function drawMlpDiagram() {
-      ctxMlp.clearRect(0, 0, cvsMlp.width, cvsMlp.height);
-      const layers = [
-        [ {y: 20}, {y: 45}, {y: 70} ],
-        [ {y: 15}, {y: 35}, {y: 55}, {y: 75} ],
-        [ {y: 15}, {y: 35}, {y: 55}, {y: 75} ],
-        [ {y: 30}, {y: 60} ]
-      ];
-      const colX = [40, 110, 180, 250];
-
-      // Draw Synapses
-      ctxMlp.strokeStyle = 'rgba(0, 229, 255, 0.18)';
-      ctxMlp.lineWidth = 1;
-      for (let c = 0; c < layers.length - 1; c++) {
-        layers[c].forEach(n1 => {
-          layers[c+1].forEach(n2 => {
-            ctxMlp.beginPath();
-            ctxMlp.moveTo(colX[c], n1.y);
-            ctxMlp.lineTo(colX[c+1], n2.y);
-            ctxMlp.stroke();
-          });
-        });
-      }
-
-      // Draw Neurons
-      colX.forEach((x, colIdx) => {
-        layers[colIdx].forEach(n => {
-          ctxMlp.beginPath();
-          ctxMlp.arc(x, n.y, 4, 0, Math.PI * 2);
-          ctxMlp.fillStyle = colIdx === 3 ? '#ff2255' : '#00e5ff';
-          ctxMlp.shadowColor = ctxMlp.fillStyle;
-          ctxMlp.shadowBlur = 8;
-          ctxMlp.fill();
-          ctxMlp.shadowBlur = 0;
-        });
-      });
-    }
-    drawMlpDiagram();
-
-    // ==========================================
-    // 6. REAL-TIME THREAT TABLE (SSE STREAM)
-    // ==========================================
-    const tableBody = document.getElementById('threat-table-body');
-
-    // Initial Recent Alerts Load
+    // Initial Recent Alerts
     fetch('/api/recent-alerts')
       .then(res => res.json())
       .then(alerts => {
-        alerts.forEach(a => appendThreatRow(a));
+        alerts.forEach(a => injectAlertCard(a));
       });
 
-    // Real-Time SSE Stream for Table Rows
+    // SSE Stream
     const eventSource = new EventSource('/api/live-stream');
 
     eventSource.onmessage = function(event) {
       try {
         const tx = JSON.parse(event.data);
-        appendThreatRow({
-          alert_time: tx.time,
-          source_bank: tx.from_code,
-          primary_reason: tx.triggers || tx.category,
-          threat_level: tx.threat
-        });
+        injectScheduleRow(tx);
 
-        // Trigger dynamic arc on map if available
-        if (mapChart && tx.from_coords && tx.to_coords) {
-          // Dynamic map update handled seamlessly
+        if (tx.threat === 'High' || tx.status === 'ALERT') {
+          injectAlertCard({
+            alert_time: tx.time,
+            node: tx.full_node,
+            source_bank: tx.from_code,
+            dest_bank: tx.to_code,
+            currency: tx.currency,
+            amount: tx.amount,
+            threat_level: tx.threat,
+            triggers: tx.triggers
+          });
         }
       } catch (e) {}
     };
 
-    function appendThreatRow(row) {
-      const tr = document.createElement('div');
+    function injectScheduleRow(tx) {
+      const row = document.createElement('div');
       
-      let threatClass = 'threat-low';
-      let tagClass = 'tag-low';
-      if (row.threat_level === 'Critical' || row.threat_level === 'High') {
-        threatClass = 'threat-high';
-        tagClass = 'tag-high';
-      } else if (row.threat_level === 'Medium') {
-        threatClass = 'threat-medium';
-        tagClass = 'tag-med';
+      let rowClass = 'row-cross';
+      let pillClass = 'pill-norm';
+      if (tx.status === 'ALERT') {
+        rowClass = 'row-alert';
+        pillClass = 'pill-alert';
+      } else if (tx.status === 'HIGH-VAL') {
+        rowClass = 'row-gold';
+        pillClass = 'pill-gold';
+      } else if (tx.status === 'FX-CROSS') {
+        pillClass = 'pill-fx';
       }
 
-      tr.className = `table-row ${threatClass}`;
-      tr.innerHTML = `
-        <span style="font-family: monospace; color: #94a3b8;">${row.alert_time}</span>
-        <strong style="color: #ffffff;">${row.source_bank || 'BCEL'}</strong>
-        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${row.primary_reason}">
-          ${row.primary_reason || 'Inter-Bank Transfer'}
-        </span>
-        <span class="threat-tag ${tagClass}">${row.threat_level || 'Low'}</span>
+      const nodeTagClass = tx.node === 'VM1' ? 'tag-vm1' : 'tag-vm2';
+
+      row.className = `sched-row ${rowClass}`;
+      row.innerHTML = `
+        <div style="display: flex; align-items: center;">
+          <span class="node-tag ${nodeTagClass}">${tx.node}</span>
+          <span style="font-family: monospace; color: #78909c;">${tx.time}</span>
+          <strong style="color: #fff; margin-left: 6px;">${tx.from_code} ➔ ${tx.to_code}</strong>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="font-family: monospace; font-weight: 700; color: ${tx.color};">${tx.amount} ${tx.currency}</span>
+          <span class="status-pill ${pillClass}">${tx.status}</span>
+        </div>
       `;
 
-      tableBody.insertBefore(tr, tableBody.firstChild);
-      if (tableBody.children.length > 25) {
-        tableBody.removeChild(tableBody.lastChild);
+      schedTable.insertBefore(row, schedTable.firstChild);
+      if (schedTable.children.length > 25) {
+        schedTable.removeChild(schedTable.lastChild);
+      }
+    }
+
+    function injectAlertCard(a) {
+      const card = document.createElement('div');
+      card.className = 'alert-card';
+
+      const isVm1 = (a.node || '').includes('175.2.0.23');
+      const nodeBadge = isVm1 ? '<span class="node-tag tag-vm1">VM1</span>' : '<span class="node-tag tag-vm2">VM2</span>';
+
+      card.innerHTML = `
+        <div class="alert-hdr">
+          <span>${nodeBadge} ${a.source_bank} ➔ ${a.dest_bank || 'BCEL'}</span>
+          <span style="font-family: monospace; color: var(--neon-red); font-size: 9px;">${a.alert_time}</span>
+        </div>
+        <div class="alert-reason" title="${a.triggers}">
+          ${a.triggers || 'High Velocity Inbound / Fan-In Risk'}
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 9px; margin-top: 2px;">
+          <span style="color: #ffffff; font-family: monospace;">${a.amount} ${a.currency}</span>
+          <span style="color: var(--neon-red); font-weight: 700;">${a.threat_level || 'CRITICAL'}</span>
+        </div>
+      `;
+
+      alertList.insertBefore(card, alertList.firstChild);
+      if (alertList.children.length > 15) {
+        alertList.removeChild(alertList.lastChild);
       }
     }
   </script>
