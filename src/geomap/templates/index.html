@@ -3,22 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LAPNet Switch - Real-Time Geo Money Flow & Fan-In/Out</title>
+  <title>LAPNet National Payment Switch - Real-Time Geo Money Flow & Fan-In/Out Command Center</title>
   
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
   <style>
+    :root {
+      --bg-dark: #080c14;
+      --card-bg: rgba(13, 20, 36, 0.85);
+      --border-glow: rgba(0, 240, 255, 0.2);
+      --accent-cyan: #00f0ff;
+      --accent-red: #ff1e56;
+      --accent-gold: #ffb800;
+      --accent-green: #00ff88;
+      --accent-purple: #b026ff;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     body {
-      background: #0b0f19;
-      color: #e2e8f0;
+      background: var(--bg-dark);
+      color: #f1f5f9;
       overflow: hidden;
       width: 100vw;
       height: 100vh;
@@ -27,353 +43,485 @@
     #map {
       width: 100%;
       height: 100%;
-      background: #06090e;
+      background: #080c14;
       z-index: 1;
     }
 
-    /* Top HUD Navigation Bar */
-    .hud-topbar {
+    /* Top Command Header */
+    .hud-header {
       position: absolute;
-      top: 12px;
+      top: 14px;
       left: 16px;
       right: 16px;
-      height: 58px;
-      background: rgba(11, 15, 25, 0.85);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
+      height: 64px;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 20px;
+      padding: 0 24px;
       z-index: 1000;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .pulse-dot {
-      width: 10px;
-      height: 10px;
-      background: #00ff88;
-      border-radius: 50%;
-      box-shadow: 0 0 12px #00ff88;
-      animation: pulse 1.5s infinite;
-    }
-
-    @keyframes pulse {
-      0% { transform: scale(0.9); opacity: 0.8; }
-      50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 20px #00ff88; }
-      100% { transform: scale(0.9); opacity: 0.8; }
-    }
-
-    .brand h1 {
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .brand span.sub {
-      font-size: 11px;
-      color: #94a3b8;
-      background: rgba(255, 255, 255, 0.06);
-      padding: 2px 8px;
-      border-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .stats-row {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-    }
-
-    .stat-item {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-    }
-
-    .stat-label {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: #94a3b8;
-    }
-
-    .stat-val {
-      font-size: 16px;
-      font-weight: 700;
-      font-family: monospace;
-    }
-
-    .val-green { color: #00ff88; }
-    .val-red { color: #ff2a55; }
-    .val-gold { color: #ffd700; }
-    .val-cyan { color: #00e5ff; }
-
-    /* Legend Box */
-    .legend-box {
+    .brand-section {
       display: flex;
       align-items: center;
       gap: 14px;
-      background: rgba(0, 0, 0, 0.35);
-      padding: 6px 14px;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      font-size: 11px;
     }
 
-    .legend-item {
+    .radar-icon {
+      position: relative;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .radar-core {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--accent-cyan);
+    }
+
+    .radar-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border: 2px solid var(--accent-cyan);
+      border-radius: 50%;
+      animation: radarPing 2s infinite cubic-bezier(0, 0.2, 0.8, 1);
+    }
+
+    @keyframes radarPing {
+      0% { transform: scale(0.6); opacity: 1; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+
+    .brand-title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-title span.slash {
+      color: #475569;
+      font-weight: 300;
+    }
+
+    .brand-title span.sub {
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 255, 136, 0.12);
+      border: 1px solid rgba(0, 255, 136, 0.3);
+      color: var(--accent-green);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      animation: blink 1s infinite alternate;
+    }
+
+    @keyframes blink {
+      from { opacity: 0.4; }
+      to { opacity: 1; }
+    }
+
+    /* Legend Strip */
+    .legend-strip {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 6px 16px;
+      border-radius: 30px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .legend-node {
       display: flex;
       align-items: center;
       gap: 6px;
     }
 
-    .legend-color {
-      width: 10px;
-      height: 10px;
-      border-radius: 2px;
+    .glow-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
     }
 
-    /* Bottom Floating Fan-In / Fan-Out Panels */
-    .hud-panels {
+    .dot-red { background: var(--accent-red); box-shadow: 0 0 10px var(--accent-red); }
+    .dot-gold { background: var(--accent-gold); box-shadow: 0 0 10px var(--accent-gold); }
+    .dot-cyan { background: var(--accent-cyan); box-shadow: 0 0 10px var(--accent-cyan); }
+    .dot-green { background: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); }
+
+    /* KPI Group */
+    .kpi-group {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .kpi-card {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .kpi-lbl {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    .kpi-val {
+      font-size: 17px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: -0.5px;
+    }
+
+    /* Sound / Action Controls */
+    .ctrl-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #cbd5e1;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .ctrl-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      border-color: var(--accent-cyan);
+    }
+
+    /* Bottom HUD Panels */
+    .hud-dock {
       position: absolute;
       bottom: 16px;
       left: 16px;
       right: 16px;
       display: grid;
-      grid-template-columns: 340px 1fr 340px;
+      grid-template-columns: 360px 1fr 360px;
       gap: 16px;
       z-index: 1000;
       pointer-events: none;
     }
 
-    .panel-card {
-      background: rgba(11, 15, 25, 0.88);
-      backdrop-filter: blur(12px);
+    .dock-panel {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 14px;
+      border-radius: 14px;
+      padding: 14px 16px;
       pointer-events: auto;
       max-height: 250px;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
     }
 
-    .panel-title {
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      margin-bottom: 10px;
+    .panel-hdr {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      color: #f1f5f9;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding-bottom: 6px;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
     }
 
-    .panel-list {
+    .panel-hdr h3 {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .panel-hdr span.tag {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .tag-red { background: rgba(255, 30, 86, 0.2); color: var(--accent-red); border: 1px solid rgba(255, 30, 86, 0.4); }
+    .tag-gold { background: rgba(255, 184, 0, 0.2); color: var(--accent-gold); border: 1px solid rgba(255, 184, 0, 0.4); }
+
+    .panel-scroll {
       overflow-y: auto;
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
-    .panel-item {
+    .panel-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+    .panel-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+
+    .panel-row {
       background: rgba(255, 255, 255, 0.03);
-      border-radius: 6px;
+      border-radius: 8px;
       padding: 8px 10px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      border-left: 3px solid #64748b;
+      justify-content: space-between;
+      border-left: 3px solid #475569;
       font-size: 11px;
+      transition: transform 0.15s ease, background 0.15s ease;
     }
 
-    .panel-item.alert-mule {
-      border-left-color: #ff2a55;
-      background: rgba(255, 42, 85, 0.08);
+    .panel-row:hover {
+      background: rgba(255, 255, 255, 0.06);
+      transform: translateX(2px);
     }
 
-    .panel-item.fan-out {
-      border-left-color: #ffd700;
-      background: rgba(255, 215, 0, 0.05);
+    .panel-row.fanin-alert {
+      border-left-color: var(--accent-red);
+      background: rgba(255, 30, 86, 0.08);
     }
 
-    .item-left {
+    .panel-row.fanout-alert {
+      border-left-color: var(--accent-gold);
+      background: rgba(255, 184, 0, 0.08);
+    }
+
+    .row-main {
       display: flex;
       flex-direction: column;
       gap: 2px;
     }
 
-    .item-bank {
+    .row-bank {
       font-weight: 700;
       color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .item-acc {
-      font-family: monospace;
+    .row-acc {
+      font-family: 'JetBrains Mono', monospace;
       color: #94a3b8;
       font-size: 10px;
     }
 
-    .item-right {
+    .row-stat {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
       gap: 2px;
     }
 
-    .badge-count {
+    .badge-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 10px;
       padding: 2px 6px;
       border-radius: 4px;
-      font-size: 10px;
-      font-weight: 700;
-      font-family: monospace;
     }
 
-    .badge-red { background: #ff2a55; color: #fff; }
-    .badge-gold { background: #eab308; color: #000; }
-    .badge-blue { background: #0284c7; color: #fff; }
+    .pill-red { background: var(--accent-red); color: #fff; }
+    .pill-gold { background: var(--accent-gold); color: #000; }
+    .pill-cyan { background: #0284c7; color: #fff; }
 
-    /* Live Stream Center Ticker */
-    .stream-feed {
+    /* Live Stream Log Ticker */
+    .stream-container {
       display: flex;
       flex-direction: column-reverse;
-      gap: 6px;
+      gap: 5px;
       overflow: hidden;
     }
 
-    .ticker-row {
+    .log-line {
+      font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
-      font-family: monospace;
       padding: 6px 10px;
       border-radius: 6px;
       background: rgba(255, 255, 255, 0.04);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      animation: fadeInRow 0.3s ease-out;
+      border-left: 2px solid transparent;
+      animation: slideIn 0.25s ease-out;
     }
 
-    @keyframes fadeInRow {
-      from { opacity: 0; transform: translateY(10px); }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Custom Leaflet Map styling */
+    /* Custom Leaflet Map Tooltips & Badges */
     .leaflet-container {
       background: #080c14 !important;
     }
 
-    .bank-marker-label {
-      background: rgba(11, 15, 25, 0.75);
+    .node-badge {
+      background: rgba(13, 20, 36, 0.85);
+      backdrop-filter: blur(8px);
       border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #f8fafc;
+      color: #ffffff;
       font-size: 10px;
-      font-weight: 600;
-      padding: 2px 6px;
-      border-radius: 4px;
+      font-weight: 700;
+      padding: 3px 7px;
+      border-radius: 5px;
       pointer-events: none;
       white-space: nowrap;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
   </style>
 </head>
 <body>
 
-  <!-- Top HUD Bar -->
-  <div class="hud-topbar">
-    <div class="brand">
-      <div class="pulse-dot"></div>
-      <h1>LAPNET SWITCH <span style="font-weight: 400; color: #94a3b8;">|</span> REAL-TIME GEO MONEY FLOW</h1>
-      <span class="sub">LMPS Core Streaming</span>
+  <!-- Top Command HUD Header -->
+  <header class="hud-header">
+    <div class="brand-section">
+      <div class="radar-icon">
+        <div class="radar-core"></div>
+        <div class="radar-ring"></div>
+      </div>
+      <div class="brand-title">
+        <span>LAPNET SWITCH</span>
+        <span class="slash">/</span>
+        <span class="sub">GEO MONEY FLOW & FAN-IN/OUT</span>
+      </div>
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        <span>LIVE CORE STREAM</span>
+      </div>
     </div>
 
-    <!-- Color Legend -->
-    <div class="legend-box">
-      <div class="legend-item">
-        <div class="legend-color" style="background: #ff2a55; box-shadow: 0 0 6px #ff2a55;"></div>
+    <!-- Center Legend -->
+    <div class="legend-strip">
+      <div class="legend-node">
+        <div class="glow-dot dot-red"></div>
         <span>Mule / Alert (Fan-In)</span>
       </div>
-      <div class="legend-item">
-        <div class="legend-color" style="background: #ffd700; box-shadow: 0 0 6px #ffd700;"></div>
+      <div class="legend-node">
+        <div class="glow-dot dot-gold"></div>
         <span>High-Value Transfer</span>
       </div>
-      <div class="legend-item">
-        <div class="legend-color" style="background: #00e5ff; box-shadow: 0 0 6px #00e5ff;"></div>
+      <div class="legend-node">
+        <div class="glow-dot dot-cyan"></div>
         <span>Cross-Border (THB/USD/CNY)</span>
       </div>
-      <div class="legend-item">
-        <div class="legend-color" style="background: #00ff88; box-shadow: 0 0 6px #00ff88;"></div>
+      <div class="legend-node">
+        <div class="glow-dot dot-green"></div>
         <span>Normal Inter-Bank</span>
       </div>
     </div>
 
-    <!-- Real-Time Metrics -->
-    <div class="stats-row">
-      <div class="stat-item">
-        <span class="stat-label">Active Arcs</span>
-        <span id="stat-active-arcs" class="stat-val val-cyan">0</span>
+    <!-- Right KPIs & Audio Control -->
+    <div class="kpi-group">
+      <div class="kpi-card">
+        <span class="kpi-lbl">Active Arcs</span>
+        <span id="kpi-active-arcs" class="kpi-val" style="color: var(--accent-cyan);">0</span>
       </div>
-      <div class="stat-item">
-        <span class="stat-label">Mule / Fan-In Alerts</span>
-        <span id="stat-mule-alerts" class="stat-val val-red">0</span>
+      <div class="kpi-card">
+        <span class="kpi-lbl">Mule / Fan-In Alerts</span>
+        <span id="kpi-mule-alerts" class="kpi-val" style="color: var(--accent-red);">0</span>
       </div>
-      <div class="stat-item">
-        <span class="stat-label">Streamed Txns</span>
-        <span id="stat-total-tx" class="stat-val val-green">0</span>
+      <div class="kpi-card">
+        <span class="kpi-lbl">Streamed Volume</span>
+        <span id="kpi-streamed-volume" class="kpi-val" style="color: var(--accent-green);">0 ₭</span>
       </div>
+      <button id="sound-btn" class="ctrl-btn" onclick="toggleAudio()">
+        <span id="sound-icon">🔊</span>
+        <span id="sound-text">Audio ON</span>
+      </button>
+      <button class="ctrl-btn" onclick="toggleFullscreen()">
+        <span>⛶</span>
+      </button>
     </div>
-  </div>
+  </header>
 
-  <!-- Map Container -->
+  <!-- Fullscreen Map Canvas -->
   <div id="map"></div>
 
-  <!-- Bottom HUD Panels -->
-  <div class="hud-panels">
-    <!-- Panel 1: Fan-In Mule Collector Watch -->
-    <div class="panel-card">
-      <div class="panel-title">
-        <span>🎯 TOP FAN-IN HUBS (Mule Accounts)</span>
-        <span style="font-size: 10px; color: #ff2a55; font-weight: normal;">Multiple Senders Inflow</span>
+  <!-- Bottom Floating Command Dock -->
+  <div class="hud-dock">
+    <!-- Panel 1: Fan-In Mule Watch -->
+    <div class="dock-panel">
+      <div class="panel-hdr">
+        <h3>🎯 Top Fan-In Mule Targets</h3>
+        <span class="tag tag-red">Multiple Senders Inbound</span>
       </div>
-      <div id="fan-in-list" class="panel-list">
-        <div style="font-size: 11px; color: #64748b; text-align: center; margin-top: 20px;">Scanning incoming deposits...</div>
+      <div id="dock-fanin" class="panel-scroll">
+        <div style="font-size: 11px; color: #64748b; text-align: center; margin-top: 30px;">Scanning real-time deposit fan-in...</div>
       </div>
     </div>
 
-    <!-- Panel 2: Real-Time Flow Feed Ticker -->
-    <div class="panel-card">
-      <div class="panel-title">
-        <span>🛰️ LIVE INTER-BANK SWITCHING STREAM</span>
-        <span id="stream-rate" style="font-size: 10px; color: #00ff88;">LIVE</span>
+    <!-- Panel 2: Live Switching Stream Terminal -->
+    <div class="dock-panel">
+      <div class="panel-hdr">
+        <h3>🛰️ Inter-Bank Switching Terminal</h3>
+        <span class="tag" style="background: rgba(0, 255, 136, 0.15); color: var(--accent-green); border: 1px solid rgba(0,255,136,0.3);">
+          ⚡ REAL-TIME LOG
+        </span>
       </div>
-      <div id="live-stream-ticker" class="panel-list stream-feed">
+      <div id="dock-terminal" class="panel-scroll stream-container">
         <!-- Live rows dynamically injected here -->
       </div>
     </div>
 
-    <!-- Panel 3: Fan-Out Velocity Watch -->
-    <div class="panel-card">
-      <div class="panel-title">
-        <span>📤 TOP FAN-OUT DISPERSERS</span>
-        <span style="font-size: 10px; color: #ffd700; font-weight: normal;">High Outbound Frequency</span>
+    <!-- Panel 3: Fan-Out Dispersers -->
+    <div class="dock-panel">
+      <div class="panel-hdr">
+        <h3>📤 Top Fan-Out Dispersers</h3>
+        <span class="tag tag-gold">Rapid Outbound Velocity</span>
       </div>
-      <div id="fan-out-list" class="panel-list">
-        <div style="font-size: 11px; color: #64748b; text-align: center; margin-top: 20px;">Tracking outbound velocity...</div>
+      <div id="dock-fanout" class="panel-scroll">
+        <div style="font-size: 11px; color: #64748b; text-align: center; margin-top: 30px;">Analyzing outbound dispersal...</div>
       </div>
     </div>
   </div>
@@ -382,9 +530,67 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // 1. Initialize Map
+    // ==========================================
+    // 1. AUDIO SYNTHESIZER (Web Audio API)
+    // ==========================================
+    let audioEnabled = true;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) audioCtx = new AudioContext();
+    }
+
+    function playBeep(type) {
+      if (!audioEnabled || !audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        if (type === 'alert') {
+          // Urgent double warning tone
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(880, now);
+          osc.frequency.setValueAtTime(440, now + 0.08);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } else if (type === 'gold') {
+          // Soft high chime for high-value
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(1200, now);
+          gain.gain.setValueAtTime(0.04, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+          osc.start(now);
+          osc.stop(now + 0.2);
+        }
+      } catch (e) {}
+    }
+
+    function toggleAudio() {
+      initAudio();
+      audioEnabled = !audioEnabled;
+      document.getElementById('sound-icon').innerText = audioEnabled ? '🔊' : '🔇';
+      document.getElementById('sound-text').innerText = audioEnabled ? 'Audio ON' : 'Muted';
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    // ==========================================
+    // 2. LEAFLET MAP SETUP (WATERMARK-FREE ESRI)
+    // ==========================================
     const map = L.map('map', {
-      center: [17.8, 103.2], // Center around Laos & Mekong Region
+      center: [18.2, 103.5], // Centered over Laos & Mekong Corridor
       zoom: 7,
       minZoom: 4,
       maxZoom: 16,
@@ -392,16 +598,22 @@
       attributionControl: false
     });
 
-    // Dark Matter Tiles (High-Tech Dark Theme)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      subdomains: 'abcd',
-      maxZoom: 19
+    // Layer 1: ESRI Dark Gray Base (Clean Charcoal Slate, Zero Watermark!)
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 16
     }).addTo(map);
 
-    // Zoom control on top-right
+    // Layer 2: ESRI Dark Gray Reference (Labels & Borders)
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 16,
+      opacity: 0.7
+    }).addTo(map);
+
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    // 2. Custom Canvas Layer for Animated Flight Arcs & Shockwave Ripples
+    // ==========================================
+    // 3. HTML5 CANVAS FLIGHT ARCS & SONAR RADAR
+    // ==========================================
     const canvasOverlay = document.createElement('canvas');
     canvasOverlay.style.position = 'absolute';
     canvasOverlay.style.top = '0';
@@ -421,138 +633,163 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // Flight Arcs State
     let activeArcs = [];
     let shockwaves = [];
     let institutionNodes = {};
 
-    // 3. Load Institution Nodes
+    // Load Institution Nodes
     fetch('/api/nodes')
       .then(res => res.json())
       .then(nodes => {
         nodes.forEach(node => {
           institutionNodes[node.code] = node;
-
-          // Add glowing marker
           const latLng = [node.coords[1], node.coords[0]];
-          
-          let markerColor = '#00e5ff';
-          if (node.type === 'switch') markerColor = '#ffffff';
-          if (node.type === 'wallet') markerColor = '#ffd700';
-          if (node.type === 'cross_border') markerColor = '#a855f7';
 
-          const circle = L.circleMarker(latLng, {
-            radius: node.type === 'switch' ? 8 : (node.type === 'cross_border' ? 6 : 5),
+          let markerColor = '#00f0ff';
+          let radius = 6;
+          let flag = '🇱🇦';
+          if (node.country === 'TH') flag = '🇹🇭';
+          if (node.country === 'VN') flag = '🇻🇳';
+          if (node.country === 'KH') flag = '🇰🇭';
+          if (node.country === 'CN') flag = '🇨🇳';
+
+          if (node.type === 'switch') {
+            markerColor = '#ffffff';
+            radius = 9;
+          } else if (node.type === 'cross_border') {
+            markerColor = '#b026ff';
+            radius = 7;
+          } else if (node.type === 'wallet') {
+            markerColor = '#ffb800';
+          }
+
+          // Outer glowing beacon circle
+          L.circleMarker(latLng, {
+            radius: radius + 4,
             color: markerColor,
+            weight: 1,
+            opacity: 0.35,
             fillColor: markerColor,
-            fillOpacity: 0.8,
-            weight: 2
+            fillOpacity: 0.1
           }).addTo(map);
 
-          circle.bindTooltip(node.code, {
+          // Core node marker
+          const circle = L.circleMarker(latLng, {
+            radius: radius,
+            color: '#ffffff',
+            weight: 1.5,
+            fillColor: markerColor,
+            fillOpacity: 0.95
+          }).addTo(map);
+
+          circle.bindTooltip(`<span style="font-size: 11px;">${flag}</span> <span>${node.code}</span>`, {
             permanent: true,
             direction: 'top',
-            className: 'bank-marker-label',
-            offset: [0, -8]
+            className: 'node-badge',
+            offset: [0, -10]
           });
         });
       });
 
-    // 4. Arc Class (Parabolic curved flight path)
-    class FlightArc {
+    // Animated Parabolic Flight Arc Class
+    class LaserFlightArc {
       constructor(fromCoords, toCoords, color, category, txData) {
-        this.fromCoords = fromCoords; // [lon, lat]
-        this.toCoords = toCoords;     // [lon, lat]
+        this.fromCoords = fromCoords;
+        this.toCoords = toCoords;
         this.color = color;
         this.category = category;
         this.txData = txData;
         this.progress = 0;
-        this.speed = 0.015 + Math.random() * 0.01; // Flight speed
+        this.speed = 0.014 + Math.random() * 0.008;
         this.isDone = false;
-        this.trail = [];
       }
 
       update() {
         this.progress += this.speed;
         if (this.progress >= 1) {
           this.isDone = true;
-          // Spawn shockwave ripple at destination
-          shockwaves.push(new Shockwave(this.toCoords, this.color, this.txData.is_fan_in));
+          // Spawn pulsing sonar shockwave at target
+          shockwaves.push(new SonarShockwave(this.toCoords, this.color, this.txData.is_fan_in));
+          if (this.txData.is_fan_in || this.txData.risk_score >= 80) playBeep('alert');
+          else if (this.category === 'High-Value Transfer') playBeep('gold');
         }
       }
 
       draw() {
-        // Project LatLng to Screen Pixels
         const p1 = map.latLngToContainerPoint([this.fromCoords[1], this.fromCoords[0]]);
         const p2 = map.latLngToContainerPoint([this.toCoords[1], this.toCoords[0]]);
 
-        // Calculate Curved Control Point
         const dx = p2.x - p1.x;
         const dy = p2.y - p1.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
-        // Arc height proportional to distance
-        const curvature = Math.min(dist * 0.25, 80);
+        // Curvature height
+        const curvature = Math.min(dist * 0.28, 90);
         const midX = (p1.x + p2.x) / 2 - (dy / dist) * curvature;
         const midY = (p1.y + p2.y) / 2 + (dx / dist) * curvature;
 
-        // Draw faint base trajectory
+        // 1. Draw Faint Trajectory Path
         ctx.beginPath();
         ctx.moveTo(p1.x, p1.y);
         ctx.quadraticCurveTo(midX, midY, p2.x, p2.y);
-        ctx.strokeStyle = this.color + '22'; // 15% opacity
+        ctx.strokeStyle = this.color + '1a'; // 10% opacity
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // Calculate Current Head Position on Quadratic Curve
+        // Current Head & Tail positions
         const t = Math.min(1, Math.max(0, this.progress));
         const headX = (1 - t) * (1 - t) * p1.x + 2 * (1 - t) * t * midX + t * t * p2.x;
         const headY = (1 - t) * (1 - t) * p1.y + 2 * (1 - t) * t * midY + t * t * p2.y;
 
-        // Draw animated glowing flight head and tail
-        ctx.beginPath();
-        ctx.arc(headX, headY, 3.5, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowColor = this.color;
-        ctx.shadowBlur = 12;
-        ctx.fill();
-        ctx.shadowBlur = 0; // reset
-
-        // Draw glowing particle trail
-        const trailT = Math.max(0, t - 0.15);
+        const trailT = Math.max(0, t - 0.2);
         const tailX = (1 - trailT) * (1 - trailT) * p1.x + 2 * (1 - trailT) * trailT * midX + trailT * trailT * p2.x;
         const tailY = (1 - trailT) * (1 - trailT) * p1.y + 2 * (1 - trailT) * trailT * midY + trailT * trailT * p2.y;
 
+        // 2. Draw Outer Neon Glow
         ctx.beginPath();
         ctx.moveTo(tailX, tailY);
         ctx.quadraticCurveTo(midX, midY, headX, headY);
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = this.color + '88';
+        ctx.lineWidth = 6;
         ctx.shadowColor = this.color;
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 16;
         ctx.stroke();
-        ctx.shadowBlur = 0;
+
+        // 3. Draw Core Laser Beam
+        ctx.beginPath();
+        ctx.moveTo(tailX, tailY);
+        ctx.quadraticCurveTo(midX, midY, headX, headY);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+
+        // 4. Draw Incandescent Head Bullet
+        ctx.beginPath();
+        ctx.arc(headX, headY, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 18;
+        ctx.fill();
+        ctx.shadowBlur = 0; // reset
       }
     }
 
-    // 5. Shockwave Ripple Class
-    class Shockwave {
+    // Concentric Sonar Shockwave Class
+    class SonarShockwave {
       constructor(coords, color, isFanIn) {
         this.coords = coords;
         this.color = color;
         this.isFanIn = isFanIn;
         this.radius = 2;
-        this.maxRadius = isFanIn ? 45 : 25;
+        this.maxRadius = isFanIn ? 55 : 28;
         this.alpha = 1.0;
         this.isDone = false;
       }
 
       update() {
-        this.radius += 1.2;
-        this.alpha -= 0.035;
-        if (this.alpha <= 0) {
-          this.isDone = true;
-        }
+        this.radius += 1.4;
+        this.alpha -= 0.03;
+        if (this.alpha <= 0) this.isDone = true;
       }
 
       draw() {
@@ -561,50 +798,53 @@
         ctx.arc(p.x, p.y, this.radius, 0, Math.PI * 2);
         ctx.strokeStyle = this.color;
         ctx.globalAlpha = Math.max(0, this.alpha);
-        ctx.lineWidth = this.isFanIn ? 3 : 1.5;
+        ctx.lineWidth = this.isFanIn ? 3.5 : 1.8;
         ctx.shadowColor = this.color;
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 14;
         ctx.stroke();
+
+        if (this.isFanIn) {
+          // Second echo ring for Fan-In
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, Math.max(0, this.radius - 12), 0, Math.PI * 2);
+          ctx.strokeStyle = '#ff1e56';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
         ctx.shadowBlur = 0;
         ctx.globalAlpha = 1.0;
       }
     }
 
-    // 6. Animation Loop (60 FPS)
+    // Animation Loop
     function animate() {
       ctx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
 
-      // Update & Draw Arcs
       for (let i = activeArcs.length - 1; i >= 0; i--) {
         const arc = activeArcs[i];
         arc.update();
         arc.draw();
-        if (arc.isDone) {
-          activeArcs.splice(i, 1);
-        }
+        if (arc.isDone) activeArcs.splice(i, 1);
       }
 
-      // Update & Draw Shockwaves
       for (let i = shockwaves.length - 1; i >= 0; i--) {
         const wave = shockwaves[i];
         wave.update();
         wave.draw();
-        if (wave.isDone) {
-          shockwaves.splice(i, 1);
-        }
+        if (wave.isDone) shockwaves.splice(i, 1);
       }
 
-      document.getElementById('stat-active-arcs').innerText = activeArcs.length;
+      document.getElementById('kpi-active-arcs').innerText = activeArcs.length;
       requestAnimationFrame(animate);
     }
     requestAnimationFrame(animate);
 
-    map.on('move', () => {
-      // Re-render when zooming or panning
-    });
-
-    // 7. Connect to Real-Time SSE Stream
+    // ==========================================
+    // 4. REAL-TIME SSE DATA STREAM
+    // ==========================================
     let totalTxCount = 0;
+    let totalVolumeLAK = 0;
     let muleAlertCount = 0;
 
     const eventSource = new EventSource('/api/live-stream');
@@ -613,103 +853,120 @@
       try {
         const tx = JSON.parse(event.data);
         totalTxCount++;
-        document.getElementById('stat-total-tx').innerText = totalTxCount.toLocaleString();
+        
+        const rawAmt = parseFloat(tx.amount.replace(/,/g, '')) || 0;
+        if (tx.currency === 'LAK') totalVolumeLAK += rawAmt;
+
+        document.getElementById('kpi-streamed-volume').innerText = formatCurrency(totalVolumeLAK);
 
         if (tx.is_fan_in || tx.risk_score >= 80) {
           muleAlertCount++;
-          document.getElementById('stat-mule-alerts').innerText = muleAlertCount.toLocaleString();
+          document.getElementById('kpi-mule-alerts').innerText = muleAlertCount.toLocaleString();
         }
 
-        // Add flight arc
-        activeArcs.push(new FlightArc(tx.from_coords, tx.to_coords, tx.color, tx.category, tx));
+        // Push Laser Arc
+        activeArcs.push(new LaserFlightArc(tx.from_coords, tx.to_coords, tx.color, tx.category, tx));
 
-        // Append to center live ticker
-        appendLiveTicker(tx);
+        // Inject to Bottom Terminal
+        injectTerminalLog(tx);
       } catch (e) {
-        console.error("Error parsing live transaction:", e);
+        console.error("Stream parse error:", e);
       }
     };
 
-    function appendLiveTicker(tx) {
-      const feed = document.getElementById('live-stream-ticker');
-      const row = document.createElement('div');
-      row.className = 'ticker-row';
+    function formatCurrency(val) {
+      if (val >= 1e9) return (val / 1e9).toFixed(2) + ' B ₭';
+      if (val >= 1e6) return (val / 1e6).toFixed(2) + ' M ₭';
+      return val.toLocaleString() + ' ₭';
+    }
 
-      let badgeClass = 'badge-blue';
-      if (tx.is_fan_in || tx.risk_score >= 80) badgeClass = 'badge-red';
-      else if (tx.category === 'High-Value Transfer') badgeClass = 'badge-gold';
+    function injectTerminalLog(tx) {
+      const term = document.getElementById('dock-terminal');
+      const row = document.createElement('div');
+      row.className = 'log-line';
+
+      let pillClass = 'pill-cyan';
+      if (tx.is_fan_in || tx.risk_score >= 80) {
+        pillClass = 'pill-red';
+        row.style.borderLeftColor = 'var(--accent-red)';
+      } else if (tx.category === 'High-Value Transfer') {
+        pillClass = 'pill-gold';
+        row.style.borderLeftColor = 'var(--accent-gold)';
+      }
 
       row.innerHTML = `
         <div>
-          <span style="color: #94a3b8;">${tx.time}</span>
-          <strong style="color: #fff; margin-left: 6px;">${tx.from_code}</strong> 
-          <span style="color: ${tx.color};">➔</span> 
-          <strong style="color: #fff;">${tx.to_code}</strong>
+          <span style="color: #64748b;">${tx.time}</span>
+          <strong style="color: #f8fafc; margin-left: 6px;">${tx.from_code}</strong> 
+          <span style="color: ${tx.color}; margin: 0 4px;">➔</span> 
+          <strong style="color: #f8fafc;">${tx.to_code}</strong>
         </div>
-        <div>
-          <span style="color: ${tx.color}; font-weight: bold; margin-right: 8px;">${tx.amount} ${tx.currency}</span>
-          <span class="badge-count ${badgeClass}">${tx.category}</span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="color: ${tx.color}; font-weight: 700;">${tx.amount} ${tx.currency}</span>
+          <span class="badge-pill ${pillClass}">${tx.category}</span>
         </div>
       `;
 
-      feed.insertBefore(row, feed.firstChild);
-      if (feed.children.length > 8) {
-        feed.removeChild(feed.lastChild);
+      term.insertBefore(row, term.firstChild);
+      if (term.children.length > 8) {
+        term.removeChild(term.lastChild);
       }
     }
 
-    // 8. Poll Top Fan-In / Fan-Out Panels (Every 10 seconds)
-    function fetchFanInOut() {
+    // ==========================================
+    // 5. POLL TOP FAN-IN & FAN-OUT DOCKS
+    // ==========================================
+    function updateDocks() {
       fetch('/api/fan-in-out')
         .then(res => res.json())
         .then(data => {
           // Render Fan-In
-          const inList = document.getElementById('fan-in-list');
+          const faninBox = document.getElementById('dock-fanin');
           if (data.fan_in && data.fan_in.length > 0) {
-            inList.innerHTML = '';
+            faninBox.innerHTML = '';
             data.fan_in.forEach(item => {
               const div = document.createElement('div');
-              div.className = 'panel-item alert-mule';
+              div.className = 'panel-row fanin-alert';
               div.innerHTML = `
-                <div class="item-left">
-                  <div class="item-bank">${item.dest_bank} <span style="font-size: 10px; color: #94a3b8;">(${item.last_seen})</span></div>
-                  <div class="item-acc">${item.dest_account}</div>
+                <div class="row-main">
+                  <div class="row-bank">${item.dest_bank} <span style="font-size: 10px; color: #94a3b8; font-weight: normal;">• ${item.last_seen}</span></div>
+                  <div class="row-acc">${item.dest_account}</div>
                 </div>
-                <div class="item-right">
-                  <span class="badge-count badge-red">${item.unique_senders} Senders (Fan-In)</span>
-                  <span style="font-size: 10px; color: #f87171;">${item.volume} ${item.currency}</span>
+                <div class="row-stat">
+                  <span class="badge-pill pill-red">${item.unique_senders} Senders (Fan-In)</span>
+                  <span style="font-size: 10px; color: #fca5a5; font-family: monospace;">${item.volume} ${item.currency}</span>
                 </div>
               `;
-              inList.appendChild(div);
+              faninBox.appendChild(div);
             });
           }
 
           // Render Fan-Out
-          const outList = document.getElementById('fan-out-list');
+          const fanoutBox = document.getElementById('dock-fanout');
           if (data.fan_out && data.fan_out.length > 0) {
-            outList.innerHTML = '';
+            fanoutBox.innerHTML = '';
             data.fan_out.forEach(item => {
               const div = document.createElement('div');
-              div.className = 'panel-item fan-out';
+              div.className = 'panel-row fanout-alert';
               div.innerHTML = `
-                <div class="item-left">
-                  <div class="item-bank">${item.source_bank} <span style="font-size: 10px; color: #94a3b8;">(${item.last_seen})</span></div>
-                  <div class="item-acc">${item.source_account}</div>
+                <div class="row-main">
+                  <div class="row-bank">${item.source_bank} <span style="font-size: 10px; color: #94a3b8; font-weight: normal;">• ${item.last_seen}</span></div>
+                  <div class="row-acc">${item.source_account}</div>
                 </div>
-                <div class="item-right">
-                  <span class="badge-count badge-gold">${item.unique_recipients} Recipients</span>
-                  <span style="font-size: 10px; color: #fde047;">${item.volume} ${item.currency}</span>
+                <div class="row-stat">
+                  <span class="badge-pill pill-gold">${item.unique_recipients} Recipients</span>
+                  <span style="font-size: 10px; color: #fde047; font-family: monospace;">${item.volume} ${item.currency}</span>
                 </div>
               `;
-              outList.appendChild(div);
+              fanoutBox.appendChild(div);
             });
           }
         })
-        .catch(err => console.error("Error fetching Fan-In/Out data:", err));
+        .catch(err => console.error("Error polling fan-in/out:", err));
     }
 
-    fetchFanInOut();
-    setInterval(fetchFanInOut, 10000);
+    updateDocks();
+    setInterval(updateDocks, 10000);
   </script>
 </body>
 </html>
