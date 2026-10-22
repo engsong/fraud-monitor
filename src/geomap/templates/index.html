@@ -522,6 +522,11 @@
       box-shadow: 0 0 6px var(--neon-purple);
     }
 
+    .dot-gov {
+      background: #ffd700;
+      box-shadow: 0 0 6px #ffd700;
+    }
+
     .hud-stat-unit {
       display: flex;
       align-items: center;
@@ -1166,9 +1171,11 @@
             </div>
             <div class="map-controls-group">
               <div class="tab-pills">
-                <button class="tab-btn active" id="btn-filter-all" onclick="setMapFilter('all')">ALL</button>
-                <button class="tab-btn" id="btn-filter-local" onclick="setMapFilter('local')">LOCAL</button>
-                <button class="tab-btn" id="btn-filter-cross" onclick="setMapFilter('cross')">CROSS-BORDER</button>
+                <button class="tab-btn active" id="btn-filter-all" onclick="setMapFilter('all')">ALL (37)</button>
+                <button class="tab-btn" id="btn-filter-banks" onclick="setMapFilter('banks')">BANKS (22)</button>
+                <button class="tab-btn" id="btn-filter-wallets" onclick="setMapFilter('wallets')">WALLETS & FINTECH (7)</button>
+                <button class="tab-btn" id="btn-filter-gov" onclick="setMapFilter('gov')">GOV & TAX (3)</button>
+                <button class="tab-btn" id="btn-filter-cross" onclick="setMapFilter('cross')">CROSS-BORDER (5)</button>
               </div>
               <div class="compass-btn">N ↑</div>
             </div>
@@ -1197,11 +1204,11 @@
               <span style="font-size: 8.5px; color: var(--text-dim); font-weight: 700;">FLOW COLORS:</span>
               <div class="flow-legend-pill">
                 <span class="legend-dot dot-inbound"></span>
-                <span>INBOUND (Bank ➔ LAPNet)</span>
+                <span>INBOUND (Member ➔ LAPNet)</span>
               </div>
               <div class="flow-legend-pill">
                 <span class="legend-dot dot-outbound"></span>
-                <span>OUTBOUND (LAPNet ➔ Bank)</span>
+                <span>OUTBOUND (LAPNet ➔ Member)</span>
               </div>
               <div class="flow-legend-pill">
                 <span class="legend-dot dot-alert"></span>
@@ -1211,13 +1218,17 @@
                 <span class="legend-dot dot-cross"></span>
                 <span>CROSS-BORDER</span>
               </div>
+              <div class="flow-legend-pill">
+                <span class="legend-dot dot-gov"></span>
+                <span>GOV / TAX</span>
+              </div>
             </div>
 
             <!-- Right: Health & Junction Metrics -->
             <div style="display: flex; align-items: center; gap: 12px;">
               <div class="hud-stat-unit">
-                <span>JUNCTION:</span>
-                <strong style="color: var(--neon-cyan);">78%</strong>
+                <span>MEMBERS:</span>
+                <strong style="color: var(--neon-cyan);">37 CONNECTED</strong>
               </div>
               <div class="hud-stat-unit">
                 <span>TOTAL HEALTH:</span>
@@ -1512,50 +1523,72 @@
     setTimeout(resizeMap, 50);
     setTimeout(resizeMap, 200);
 
-    // Filter controls: 'all', 'local', 'cross'
+    // Filter controls: 'all', 'banks', 'wallets', 'gov', 'cross'
     let currentMapFilter = 'all';
     function setMapFilter(filterType) {
       currentMapFilter = filterType;
-      document.querySelectorAll('.tab-pills .tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.map-controls-group .tab-pills .tab-btn').forEach(b => b.classList.remove('active'));
       const activeBtn = document.getElementById('btn-filter-' + filterType);
       if (activeBtn) activeBtn.classList.add('active');
     }
 
-    // Centered & Balanced Radial Stations Coordinates (0.0 to 1.0)
-    // LAPNET is placed at (0.50, 0.50) - true center
+    // Complete Roster of 37 National & Regional Member Institutions + LAPNET Core
+    // Mapped from live dual-node VM1 (175.2.0.23) and VM2 (175.2.0.24) switching ingestion
     const STATIONS = {
-      // Central Switching Interchange
-      "LAPNET": { x: 0.50, y: 0.50, label: "LAPNET SWITCH CORE", isHub: true, color: "#ffffff", fullName: "Lao National Payment Network" },
+      // Central Switching Core
+      "LAPNET": { x: 0.50, y: 0.50, label: "LAPNET SWITCH CORE", isHub: true, color: "#ffffff", category: "hub", fullName: "Lao National Payment Network Core" },
 
-      // West Corridor (Primary Commercial Banks)
-      "BCEL": { x: 0.26, y: 0.50, label: "BCEL HQ", color: "#00f2fe", fullName: "Banque Pour Le Commerce Exterieur Lao" },
-      "JDB": { x: 0.22, y: 0.35, label: "JDB BANK", color: "#00e5ff", fullName: "Joint Development Bank" },
-      "BFL": { x: 0.24, y: 0.20, label: "BFL BRED", color: "#26c6da", fullName: "BFL BRED Group" },
-      "MOFPAY": { x: 0.22, y: 0.65, label: "MOFPAY", color: "#69f0ae", fullName: "Ministry of Finance FinPay" },
-      "UMONEY": { x: 0.26, y: 0.80, label: "UMONEY", color: "#00e676", fullName: "Star Telecom (U-Money)" },
+      // Cross-Border Regional Switching Gateways (5 Perimeter Gateways)
+      "UPI": { x: 0.06, y: 0.10, label: "UNIONPAY (CN)", color: "#ff9900", category: "cross", fullName: "UnionPay International Gateway (China)" },
+      "e-CNY": { x: 0.50, y: 0.07, label: "e-CNY (CN)", color: "#ff9900", category: "cross", fullName: "Digital Yuan e-CNY Hub (China)" },
+      "NAPAS": { x: 0.94, y: 0.10, label: "NAPAS (VN)", color: "#ff9900", category: "cross", fullName: "NAPAS Switching Network (Vietnam)" },
+      "ITMX": { x: 0.06, y: 0.90, label: "ITMX (TH)", color: "#ff9900", category: "cross", fullName: "PromptPay ITMX Thailand Gateway" },
+      "BAKONG": { x: 0.94, y: 0.90, label: "BAKONG (KH)", color: "#ff9900", category: "cross", fullName: "National Bank of Cambodia Bakong Gateway" },
 
-      // North Corridor
-      "LDB": { x: 0.38, y: 0.18, label: "LDB NORTH", color: "#26c6da", fullName: "Lao Development Bank" },
-      "APB": { x: 0.50, y: 0.15, label: "APB BANK", color: "#4dd0e1", fullName: "Agricultural Promotion Bank" },
-      "STB": { x: 0.62, y: 0.18, label: "STB BANK", color: "#80deea", fullName: "ST Bank" },
+      // ================= INNER RING: TOP 12 VOLUME CLEARING HUBS =================
+      "BCEL": { x: 0.28, y: 0.50, label: "BCEL HQ", color: "#00f2fe", category: "banks", tier: "inner", fullName: "Banque Pour Le Commerce Exterieur Lao" },
+      "JDB": { x: 0.31, y: 0.36, label: "JDB BANK", color: "#00e5ff", category: "banks", tier: "inner", fullName: "Joint Development Bank" },
+      "LDB": { x: 0.38, y: 0.25, label: "LDB NORTH", color: "#26c6da", category: "banks", tier: "inner", fullName: "Lao Development Bank" },
+      "APB": { x: 0.50, y: 0.22, label: "APB BANK", color: "#4dd0e1", category: "banks", tier: "inner", fullName: "Agricultural Promotion Bank" },
+      "LFX": { x: 0.62, y: 0.25, label: "LAO FX", color: "#69f0ae", category: "wallets", tier: "inner", fullName: "Lao Foreign Exchange Clearing" },
+      "PSV": { x: 0.69, y: 0.36, label: "PSV BANK", color: "#4facfe", category: "banks", tier: "inner", fullName: "Phongsavanh Bank" },
+      "LVB": { x: 0.72, y: 0.50, label: "LVB BANK", color: "#00c6ff", category: "banks", tier: "inner", fullName: "Lao-Viet Bank" },
+      "ACLE": { x: 0.69, y: 0.64, label: "ACLEDA", color: "#00b0ff", category: "banks", tier: "inner", fullName: "ACLEDA Bank Lao" },
+      "IDB": { x: 0.62, y: 0.75, label: "IDB BANK", color: "#29b6f6", category: "banks", tier: "inner", fullName: "Indochina Bank" },
+      "UMONEY": { x: 0.50, y: 0.78, label: "U-MONEY", color: "#00e676", category: "wallets", tier: "inner", fullName: "Star Telecom (U-Money Mobile Wallet)" },
+      "MMONEY": { x: 0.38, y: 0.75, label: "M-MONEY", color: "#00e676", category: "wallets", tier: "inner", fullName: "Lao Telecom (M-Money Mobile Wallet)" },
+      "MOFPAY": { x: 0.31, y: 0.64, label: "MOFPAY", color: "#ffd700", category: "gov", tier: "inner", fullName: "Ministry of Finance Treasury Pay" },
 
-      // East Corridor
-      "LVB": { x: 0.74, y: 0.50, label: "LVB BANK", color: "#00c6ff", fullName: "Lao-Viet Bank" },
-      "LBB": { x: 0.76, y: 0.20, label: "LBB CHINA", color: "#80d8ff", fullName: "Lao-China Bank" },
-      "PSV": { x: 0.78, y: 0.35, label: "PSV BANK", color: "#4facfe", fullName: "Phongsavanh Bank" },
-      "ACLE": { x: 0.78, y: 0.65, label: "ACLEDA", color: "#00b0ff", fullName: "ACLEDA Bank Lao" },
-      "IDB": { x: 0.74, y: 0.80, label: "IDB BANK", color: "#29b6f6", fullName: "Indochina Bank" },
+      // ================= OUTER RING: COMMERCIAL, FOREIGN, FINTECH & GOV =================
+      // North Sector (Foreign & Commercial Banks)
+      "BOC": { x: 0.32, y: 0.15, label: "BOC CHINA", color: "#80d8ff", category: "banks", tier: "outer", fullName: "Bank of China Vientiane" },
+      "ICBC": { x: 0.42, y: 0.13, label: "ICBC BANK", color: "#80d8ff", category: "banks", tier: "outer", fullName: "Industrial & Commercial Bank of China" },
+      "KBANK": { x: 0.58, y: 0.13, label: "KASIKORN", color: "#80d8ff", category: "banks", tier: "outer", fullName: "Kasikornbank Lao" },
+      "LBB": { x: 0.68, y: 0.15, label: "LBB CHINA", color: "#80d8ff", category: "banks", tier: "outer", fullName: "Lao-China Bank" },
+      "STB": { x: 0.78, y: 0.20, label: "STB BANK", color: "#80deea", category: "banks", tier: "outer", fullName: "ST Bank" },
 
-      // South Corridor
-      "MJB": { x: 0.38, y: 0.82, label: "MJB BANK", color: "#00bfa5", fullName: "Maruhan Japan Bank Lao" },
-      "BIC": { x: 0.50, y: 0.85, label: "BIC BANK", color: "#26a69a", fullName: "BIC Bank Lao" },
-      "VMB": { x: 0.62, y: 0.82, label: "VMB VIETIN", color: "#26c6da", fullName: "VietinBank Lao" },
+      // East Sector (Commercial & International Banks)
+      "VTB": { x: 0.83, y: 0.34, label: "MB LAOS", color: "#82b1ff", category: "banks", tier: "outer", fullName: "Military Commercial Joint Stock Bank (MB Laos)" },
+      "SACOM": { x: 0.84, y: 0.48, label: "SACOMBANK", color: "#82b1ff", category: "banks", tier: "outer", fullName: "Sacombank Lao" },
+      "VCBLAO": { x: 0.83, y: 0.62, label: "VIETCOMBANK", color: "#82b1ff", category: "banks", tier: "outer", fullName: "Vietcombank Lao" },
+      "MJB": { x: 0.78, y: 0.76, label: "MJB BANK", color: "#00bfa5", category: "banks", tier: "outer", fullName: "Maruhan Japan Bank Lao" },
 
-      // Cross-Border Regional Gateways (4 Corners)
-      "UPI": { x: 0.08, y: 0.14, label: "UNIONPAY (CN)", color: "#ff9900", isCross: true, fullName: "UnionPay International Gateway" },
-      "NAPAS": { x: 0.92, y: 0.14, label: "NAPAS (VN)", color: "#ff9900", isCross: true, fullName: "NAPAS Vietnam Switch Gateway" },
-      "ITMX": { x: 0.08, y: 0.86, label: "ITMX (TH)", color: "#ff9900", isCross: true, fullName: "PromptPay ITMX Thailand Gateway" },
-      "BAKONG": { x: 0.92, y: 0.86, label: "BAKONG (KH)", color: "#ff9900", isCross: true, fullName: "NBC Bakong Cambodia Gateway" }
+      // South Sector (Commercial Banks, Wallets & Gov Portals)
+      "BIC": { x: 0.68, y: 0.85, label: "BIC BANK", color: "#26a69a", category: "banks", tier: "outer", fullName: "BIC Bank Lao" },
+      "VMB": { x: 0.58, y: 0.87, label: "VIETINBANK", color: "#26c6da", category: "banks", tier: "outer", fullName: "VietinBank Lao" },
+      "LOCAPAY": { x: 0.42, y: 0.87, label: "LOCAPAY", color: "#69f0ae", category: "wallets", tier: "outer", fullName: "LocaPay Tech FinTech Hub" },
+      "EASYTAX": { x: 0.32, y: 0.85, label: "EASYTAX", color: "#ffd700", category: "gov", tier: "outer", fullName: "National EasyTax Customs & Tax Portal" },
+      "LNSW": { x: 0.22, y: 0.78, label: "LNSW", color: "#ffd700", category: "gov", tier: "outer", fullName: "Lao National Single Window Gateway" },
+
+      // West Sector (Commercial & Foreign Banks)
+      "PBLL": { x: 0.18, y: 0.64, label: "PUBLIC BANK", color: "#80d8ff", category: "banks", tier: "outer", fullName: "Public Bank Berhad Lao" },
+      "LCNB": { x: 0.16, y: 0.50, label: "LCNB BANK", color: "#26c6da", category: "banks", tier: "outer", fullName: "Lao Construction Bank" },
+      "BFL": { x: 0.18, y: 0.36, label: "BFL BRED", color: "#26c6da", category: "banks", tier: "outer", fullName: "BFL BRED Group" },
+
+      // FinTech Satellites
+      "FINPASS": { x: 0.22, y: 0.22, label: "FINPASS", color: "#69f0ae", category: "wallets", tier: "outer", fullName: "FinPass Payment Gateway" },
+      "FINLINK": { x: 0.86, y: 0.56, label: "FINLINK", color: "#69f0ae", category: "wallets", tier: "outer", fullName: "FinLink Digital Gateway" },
+      "FINA": { x: 0.74, y: 0.27, label: "FINA", color: "#69f0ae", category: "wallets", tier: "outer", fullName: "Fina FinTech Hub (LBB)" }
     };
 
     // Calculate actual pixel position with guaranteed safe margins so NO bank is EVER clipped off
@@ -1569,8 +1602,8 @@
       // Safe asymmetric padding: clear top HUD (45px) and bottom flow legend (60px)
       const padTop = Math.max(48, Math.min(68, h * 0.11));
       const padBottom = Math.max(62, Math.min(84, h * 0.14));
-      const padLeft = Math.max(55, Math.min(90, w * 0.08));
-      const padRight = Math.max(55, Math.min(90, w * 0.08));
+      const padLeft = Math.max(50, Math.min(85, w * 0.07));
+      const padRight = Math.max(50, Math.min(85, w * 0.07));
 
       const usableW = Math.max(80, w - padLeft - padRight);
       const usableH = Math.max(80, h - padTop - padBottom);
@@ -1581,40 +1614,66 @@
       };
     }
 
-    // Dedicated separated lines from each bank directly to LAPNET!
+    // Dedicated separated lines from each member institution directly to LAPNET!
     const TRACKS = Object.keys(STATIONS)
       .filter(k => k !== "LAPNET")
       .map(k => ({
         from: k,
         to: "LAPNET",
         color: STATIONS[k].color,
-        isCross: STATIONS[k].isCross || false
+        category: STATIONS[k].category || 'banks'
       }));
 
     function normalizeBankCode(code) {
       if (!code) return "BCEL";
       const c = String(code).toUpperCase().trim();
+
+      // Mobile Wallets & Digital FinTech
+      if (c.includes("UMONEY") || c === "UMONEY.MB") return "UMONEY";
+      if (c.includes("MMONEY") || c === "MMONEY.JDB") return "MMONEY";
+      if (c.includes("LOCA")) return "LOCAPAY";
+      if (c.includes("LFX")) return "LFX";
+      if (c.includes("FINPASS")) return "FINPASS";
+      if (c.includes("FINLINK")) return "FINLINK";
+      if (c.includes("FINA")) return "FINA";
+
+      // Government & Single Window
+      if (c.includes("MOF")) return "MOFPAY";
+      if (c.includes("EASYTAX") || c.includes("TAX")) return "EASYTAX";
+      if (c.includes("LNSW")) return "LNSW";
+
+      // Cross-Border Regional Gateways
+      if (c.includes("ITMX") || c.includes("PROMPTPAY") || c.includes("THB")) return "ITMX";
+      if (c.includes("NAPAS") || c.includes("VIET")) return "NAPAS";
+      if (c.includes("BAKONG") || c.includes("CAMBODIA") || c.includes("NBC")) return "BAKONG";
+      if (c.includes("UPI") || c.includes("UNIONPAY")) return "UPI";
+      if (c.includes("CNY") || c.includes("E-CNY")) return "e-CNY";
+
+      // Major Domestic Commercial Banks
       if (c.includes("BCEL")) return "BCEL";
-      if (c.includes("JDB")) return "JDB";
       if (c.includes("LDB")) return "LDB";
       if (c.includes("APB")) return "APB";
-      if (c.includes("PSV") || c.includes("PHONGSAVANH")) return "PSV";
-      if (c.includes("LVB") || c.includes("LAO-VIET")) return "LVB";
+      if (c.includes("JDB")) return "JDB";
       if (c.includes("ACLE") || c.includes("ACLEDA")) return "ACLE";
-      if (c.includes("STB") || c.includes("ST BANK")) return "STB";
+      if (c.includes("LVB") || c.includes("LAO-VIET")) return "LVB";
+      if (c.includes("PSV") || c.includes("PHONGSAVANH")) return "PSV";
       if (c.includes("IDB") || c.includes("INDOCHINA")) return "IDB";
+      if (c.includes("STB") || c.includes("ST BANK")) return "STB";
       if (c.includes("BFL") || c.includes("BRED")) return "BFL";
       if (c.includes("BIC")) return "BIC";
       if (c.includes("MJB") || c.includes("MARUHAN")) return "MJB";
       if (c.includes("VMB") || c.includes("VIETIN")) return "VMB";
-      if (c.includes("UMO") || c.includes("UMONEY") || c.includes("UNITEL")) return "UMONEY";
-      if (c.includes("MOF") || c.includes("MOFPAY")) return "MOFPAY";
-      if (c.includes("LBB") || c.includes("LAO-CHINA") || c.includes("BOC") || c.includes("ICBC")) return "LBB";
-      if (c.includes("ITMX") || c.includes("PROMPTPAY") || c.includes("THB") || c.includes("THAI")) return "ITMX";
-      if (c.includes("NAPAS") || c.includes("VIET")) return "NAPAS";
-      if (c.includes("BAKONG") || c.includes("CAMBODIA") || c.includes("NBC")) return "BAKONG";
-      if (c.includes("UPI") || c.includes("UNIONPAY") || c.includes("CNY") || c.includes("CHINA")) return "UPI";
-      return "BCEL";
+      if (c.includes("LBB") || c.includes("LAO-CHINA") || c.includes("LAOCHINA")) return "LBB";
+      if (c.includes("BOC") || c.includes("BANK OF CHINA")) return "BOC";
+      if (c.includes("ICBC")) return "ICBC";
+      if (c.includes("KBANK") || c.includes("KASIKORN")) return "KBANK";
+      if (c.includes("VTB") || c.includes("MB BANK") || c.includes("MILITARY")) return "VTB";
+      if (c.includes("SACOM")) return "SACOM";
+      if (c.includes("PBLL") || c.includes("PUBLIC BANK")) return "PBLL";
+      if (c.includes("VCBLAO") || c.includes("VIETCOMBANK")) return "VCBLAO";
+      if (c.includes("LCNB") || c.includes("CONSTRUCTION")) return "LCNB";
+
+      return STATIONS[c] ? c : "BCEL";
     }
 
     // Animated Data Packets with Inbound (Hop 1) and Outbound (Hop 2) Flow Coloring
@@ -1630,8 +1689,14 @@
         this.toCode = toCode;
         this.txData = txData || null;
         this.isAlert = isAlert || false;
-        this.isCross = (STATIONS[fromCode] && STATIONS[fromCode].isCross) || (STATIONS[toCode] && STATIONS[toCode].isCross);
-        this.hop = 1; // 1: Source -> LAPNet (INBOUND), 2: LAPNet -> Dest (OUTBOUND)
+
+        const sFrom = STATIONS[fromCode] || {};
+        const sTo = STATIONS[toCode] || {};
+        this.isCross = sFrom.category === 'cross' || sTo.category === 'cross';
+        this.isGov = sFrom.category === 'gov' || sTo.category === 'gov';
+        this.isWallet = sFrom.category === 'wallets' || sTo.category === 'wallets';
+
+        this.hop = 1; // 1: Member -> LAPNet (INBOUND), 2: LAPNet -> Dest Member (OUTBOUND)
         this.progress = 0;
         this.speed = isAlert ? 0.018 : (0.009 + Math.random() * 0.005);
         this.tail = [];
@@ -1644,8 +1709,16 @@
           return this.hop === 1 ? '#ff9900' : '#ff1744';
         }
         if (this.isCross) {
-          // Cross-Border: Inbound is Purple, Outbound is Vivid Teal
+          // Cross-Border: Inbound is Purple, Outbound is Vivid Ice Teal
           return this.hop === 1 ? '#d500f9' : '#00e5ff';
+        }
+        if (this.isGov) {
+          // Gov / Tax: Inbound is Gold, Outbound is Bright Orange
+          return this.hop === 1 ? '#ffd700' : '#ff9100';
+        }
+        if (this.isWallet) {
+          // Wallets / FinTech: Inbound is Spring Green, Outbound is Cyan
+          return this.hop === 1 ? '#00e676' : '#00f2fe';
         }
         // Standard Bank Clearing: Inbound to LAPNet is Electric Cyan, Outbound from LAPNet is Neon Green!
         return this.hop === 1 ? '#00f2fe' : '#00e676';
@@ -1702,11 +1775,17 @@
       }
     }
 
-    // Periodically spawn ambient background packets on random bank routes
+    // Periodically spawn ambient background packets across all 37 member routes
     setInterval(() => {
-      const bankKeys = Object.keys(STATIONS).filter(k => k !== "LAPNET");
-      const src = bankKeys[Math.floor(Math.random() * bankKeys.length)];
-      let dst = bankKeys[Math.floor(Math.random() * bankKeys.length)];
+      const memberKeys = Object.keys(STATIONS).filter(k => k !== "LAPNET");
+      // Top high-volume members get slightly more ambient packets to mirror real traffic distribution
+      const topHubs = ["BCEL", "LDB", "UMONEY", "APB", "JDB", "ACLE", "LVB", "LFX", "PSV", "IDB"];
+      const useTopHub = Math.random() < 0.65;
+      const src = useTopHub 
+        ? topHubs[Math.floor(Math.random() * topHubs.length)]
+        : memberKeys[Math.floor(Math.random() * memberKeys.length)];
+
+      let dst = memberKeys[Math.floor(Math.random() * memberKeys.length)];
       if (dst === src) dst = "BCEL";
 
       movingPackets.push(new HopPacket(src, dst, null, false));
@@ -1720,7 +1799,7 @@
           activeHighlightedRoad.isAlert
         ));
       }
-    }, 450);
+    }, 400);
 
     function drawNetworkMap() {
       ctx.clearRect(0, 0, cvsMap.width, cvsMap.height);
@@ -1749,9 +1828,17 @@
       const lapnetP = getStationPixel("LAPNET");
 
       TRACKS.forEach(track => {
-        // Apply filter if active
-        if (currentMapFilter === 'local' && track.isCross) return;
-        if (currentMapFilter === 'cross' && !track.isCross) return;
+        const sFrom = STATIONS[track.from];
+        if (!sFrom) return;
+
+        // Apply filter dimming
+        let isDimmed = false;
+        if (currentMapFilter !== 'all') {
+          if (currentMapFilter === 'banks' && sFrom.category !== 'banks') isDimmed = true;
+          if (currentMapFilter === 'wallets' && sFrom.category !== 'wallets') isDimmed = true;
+          if (currentMapFilter === 'gov' && sFrom.category !== 'gov') isDimmed = true;
+          if (currentMapFilter === 'cross' && sFrom.category !== 'cross') isDimmed = true;
+        }
 
         const sp = getStationPixel(track.from);
         if (!sp) return;
@@ -1766,6 +1853,7 @@
             ? (activeHighlightedRoad.isAlert ? '#ff9900' : '#00f2fe')
             : (activeHighlightedRoad.isAlert ? '#ff1744' : '#00e676');
 
+          ctx.globalAlpha = 1.0;
           ctx.beginPath();
           ctx.moveTo(sp.x, sp.y);
           ctx.lineTo(lapnetP.x, lapnetP.y);
@@ -1812,19 +1900,21 @@
           }
         } else {
           // Standard Dedicated Bank Line to LAPNet
+          ctx.globalAlpha = isDimmed ? 0.08 : 1.0;
           ctx.beginPath();
           ctx.moveTo(sp.x, sp.y);
           ctx.lineTo(lapnetP.x, lapnetP.y);
-          ctx.strokeStyle = track.color + '25';
-          ctx.lineWidth = 5;
+          ctx.strokeStyle = track.color + '22';
+          ctx.lineWidth = 4;
           ctx.stroke();
 
           ctx.beginPath();
           ctx.moveTo(sp.x, sp.y);
           ctx.lineTo(lapnetP.x, lapnetP.y);
-          ctx.strokeStyle = track.color + '88';
-          ctx.lineWidth = 1.8;
+          ctx.strokeStyle = track.color + '77';
+          ctx.lineWidth = 1.4;
           ctx.stroke();
+          ctx.globalAlpha = 1.0;
         }
       });
 
@@ -1837,17 +1927,21 @@
 
       // 4. Draw Stations (Junctions & Hubs)
       Object.keys(STATIONS).forEach(key => {
-        // Apply filter if active
         const s = STATIONS[key];
-        if (key !== "LAPNET") {
-          if (currentMapFilter === 'local' && s.isCross) return;
-          if (currentMapFilter === 'cross' && !s.isCross) return;
+        const isHubStation = s.isHub;
+
+        // Apply category filter dimming
+        let isDimmed = false;
+        if (currentMapFilter !== 'all' && !isHubStation) {
+          if (currentMapFilter === 'banks' && s.category !== 'banks') isDimmed = true;
+          if (currentMapFilter === 'wallets' && s.category !== 'wallets') isDimmed = true;
+          if (currentMapFilter === 'gov' && s.category !== 'gov') isDimmed = true;
+          if (currentMapFilter === 'cross' && s.category !== 'cross') isDimmed = true;
         }
 
         const p = getStationPixel(key);
         const isRoadSrc = activeHighlightedRoad && activeHighlightedRoad.from === key;
         const isRoadDst = activeHighlightedRoad && activeHighlightedRoad.to === key;
-        const isHubStation = s.isHub;
 
         // Expanding Ripple for Active Road Stations or LAPNet Pulse
         if ((isRoadSrc || isRoadDst) || (isHubStation && lapnetPulse > 0.1)) {
@@ -1860,6 +1954,8 @@
           ctx.stroke();
           ctx.globalAlpha = 1.0;
         }
+
+        ctx.globalAlpha = isDimmed ? 0.15 : 1.0;
 
         if (isHubStation) {
           // Central LAPNET CORE Switch Ring & Radar Tick Marks
@@ -1894,41 +1990,60 @@
           ctx.fillText("VM1 & VM2 DUAL-SWITCH", p.x, p.y + 28);
           ctx.textAlign = 'start';
         } else {
-          // Bank Stations & Cross-Border Gateways
-          const r = s.isCross ? 6.5 : 5.5;
+          // Member Stations: Banks, Wallets, Gov, Cross-Border Gateways
+          const isCross = s.category === 'cross';
+          const isInner = s.tier === 'inner';
+          const r = isCross ? 6.0 : (isInner ? 5.2 : 4.0);
 
           ctx.beginPath();
-          ctx.arc(p.x, p.y, r + 2.5, 0, Math.PI * 2);
+          ctx.arc(p.x, p.y, r + 2, 0, Math.PI * 2);
           ctx.fillStyle = 'rgba(4, 14, 22, 0.95)';
           ctx.strokeStyle = isRoadSrc ? '#00f2fe' : (isRoadDst ? '#00e676' : s.color);
-          ctx.lineWidth = 2;
+          ctx.lineWidth = isInner ? 2.0 : 1.5;
           ctx.fill();
           ctx.stroke();
 
           ctx.beginPath();
-          ctx.arc(p.x, p.y, r - 1.5, 0, Math.PI * 2);
-          ctx.fillStyle = isRoadSrc ? '#00f2fe' : (isRoadDst ? '#00e676' : (s.isCross ? '#ff9900' : '#ffffff'));
+          ctx.arc(p.x, p.y, r - 1.2, 0, Math.PI * 2);
+          ctx.fillStyle = isRoadSrc ? '#00f2fe' : (isRoadDst ? '#00e676' : (isCross ? '#ff9900' : (isInner ? '#ffffff' : s.color)));
           ctx.shadowColor = ctx.fillStyle;
-          ctx.shadowBlur = 8;
+          ctx.shadowBlur = isInner || isCross ? 8 : 4;
           ctx.fill();
           ctx.shadowBlur = 0;
 
           // Bank Station Text Tag
-          ctx.font = '700 9px "JetBrains Mono", monospace';
-          ctx.fillStyle = isRoadSrc ? '#00f2fe' : (isRoadDst ? '#00e676' : '#eceff1');
+          const fontSize = isCross ? 8.5 : (isInner ? 8.5 : 7.2);
+          ctx.font = `${isInner || isCross ? '700' : '600'} ${fontSize}px "JetBrains Mono", monospace`;
+          ctx.fillStyle = isRoadSrc ? '#00f2fe' : (isRoadDst ? '#00e676' : (isDimmed ? '#546e7a' : (isCross ? '#ffb74d' : '#e0e0e0')));
 
           // Position label gracefully based on position relative to center
-          let textX = p.x + r + 6;
-          let textY = p.y + 3;
-          if (s.x > 0.55) {
-            textX = p.x - r - 6;
-            ctx.textAlign = 'right';
-          } else {
+          let textX, textY;
+          if (s.x > 0.54) {
+            textX = p.x + r + 5;
+            textY = p.y + 3;
             ctx.textAlign = 'left';
+            if (s.x > 0.85) {
+              textX = p.x - r - 5;
+              ctx.textAlign = 'right';
+            }
+          } else if (s.x < 0.46) {
+            textX = p.x - r - 5;
+            textY = p.y + 3;
+            ctx.textAlign = 'right';
+            if (s.x < 0.15) {
+              textX = p.x + r + 5;
+              ctx.textAlign = 'left';
+            }
+          } else {
+            textX = p.x;
+            textY = s.y < 0.5 ? p.y - r - 5 : p.y + r + 10;
+            ctx.textAlign = 'center';
           }
           ctx.fillText(s.label, textX, textY);
           ctx.textAlign = 'start';
         }
+
+        ctx.globalAlpha = 1.0;
       });
 
       if (lapnetPulse > 0.02) lapnetPulse -= 0.02;
