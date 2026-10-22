@@ -1,6 +1,6 @@
 # Bank and Institution Geo-Coordinates Dictionary
 # Format: [Longitude, Latitude] (GeoJSON standard: [lon, lat])
-# Distributed realistically across National Hubs in Laos & Cross-Border Partners
+# National Lao Financial Institutions + ASEAN & Global Correspondent Gateways
 
 INSTITUTION_COORDINATES = {
     # Central Switching Hub
@@ -12,7 +12,7 @@ INSTITUTION_COORDINATES = {
         "country": "LA"
     },
     
-    # Major Lao Commercial Banks (Vientiane & Provincial Regional Hubs)
+    # Major Lao Commercial Banks
     "BCEL": {
         "name": "BCEL Bank HQ",
         "hub": "Vientiane Capital",
@@ -56,28 +56,28 @@ INSTITUTION_COORDINATES = {
         "country": "LA"
     },
     "PSV": {
-        "name": "Phongsavanh Bank (Central Hub)",
+        "name": "Phongsavanh Bank",
         "hub": "Khammouane",
         "coords": [104.8300, 17.4000],
         "type": "bank",
         "country": "LA"
     },
     "IDB": {
-        "name": "Indochina Bank (North-Central Hub)",
+        "name": "Indochina Bank",
         "hub": "Vang Vieng",
         "coords": [102.4480, 18.9250],
         "type": "bank",
         "country": "LA"
     },
     "STB": {
-        "name": "ST Bank (North Hub)",
+        "name": "ST Bank",
         "hub": "Oudomxay",
         "coords": [101.9800, 20.6900],
         "type": "bank",
         "country": "LA"
     },
     "BIC": {
-        "name": "BIC Bank (South Hub)",
+        "name": "BIC Bank Lao",
         "hub": "Attapeu",
         "coords": [106.8300, 14.8100],
         "type": "bank",
@@ -98,7 +98,7 @@ INSTITUTION_COORDINATES = {
         "country": "LA"
     },
     "VMB": {
-        "name": "VietinBank (Highland Hub)",
+        "name": "VietinBank Lao",
         "hub": "Xieng Khouang",
         "coords": [103.2200, 19.4500],
         "type": "bank",
@@ -112,7 +112,7 @@ INSTITUTION_COORDINATES = {
         "country": "LA"
     },
     "BOC": {
-        "name": "Bank of China",
+        "name": "Bank of China Vientiane",
         "hub": "Vientiane East",
         "coords": [102.6380, 17.9670],
         "type": "bank",
@@ -170,14 +170,14 @@ INSTITUTION_COORDINATES = {
 
     # Mobile Wallets & FinTech
     "Umoney.MB": {
-        "name": "Star Telecom U-Money (South Hub)",
+        "name": "Star Telecom U-Money",
         "hub": "Champasak / Pakse",
         "coords": [105.7800, 15.1200],
         "type": "wallet",
         "country": "LA"
     },
     "Mmoney.JDB": {
-        "name": "Lao Telecom M-Money (Mekong Hub)",
+        "name": "Lao Telecom M-Money",
         "hub": "Bolikhamxay / Paksan",
         "coords": [103.6500, 18.3800],
         "type": "wallet",
@@ -214,39 +214,69 @@ INSTITUTION_COORDINATES = {
 
     # Cross-Border & Regional Switching Gateways
     "ITMX": {
-        "name": "National ITMX PromptPay (Thailand)",
+        "name": "National ITMX PromptPay",
         "hub": "Bangkok",
         "coords": [100.5018, 13.7563],
         "type": "cross_border",
         "country": "TH"
     },
     "NAPAS": {
-        "name": "NAPAS Switching (Vietnam)",
+        "name": "NAPAS Switching Network",
         "hub": "Hanoi",
         "coords": [105.8542, 21.0285],
         "type": "cross_border",
         "country": "VN"
     },
     "CAMBODIA": {
-        "name": "NBC Bakong (Cambodia)",
+        "name": "National Bank of Cambodia Bakong",
         "hub": "Phnom Penh",
         "coords": [104.9282, 11.5564],
         "type": "cross_border",
         "country": "KH"
     },
     "UPI": {
-        "name": "UnionPay Gateway (China)",
-        "hub": "Kunming / Yunnan",
+        "name": "UnionPay International Gateway",
+        "hub": "Kunming / Shanghai",
         "coords": [102.7097, 25.0453],
         "type": "cross_border",
         "country": "CN"
     },
     "e-CNY": {
-        "name": "Digital Yuan e-CNY Hub (China)",
-        "hub": "Beijing / Shanghai",
+        "name": "Digital Yuan e-CNY Hub",
+        "hub": "Beijing",
         "coords": [116.4074, 39.9042],
         "type": "cross_border",
         "country": "CN"
+    },
+
+    # Global Correspondent Financial Nodes (For USD / International Settlements)
+    "SG.NETS": {
+        "name": "NETS / MAS Gateway",
+        "hub": "Singapore",
+        "coords": [103.8198, 1.3521],
+        "type": "global",
+        "country": "SG"
+    },
+    "JP.BOJ": {
+        "name": "Bank of Japan Clearing",
+        "hub": "Tokyo",
+        "coords": [139.6917, 35.6895],
+        "type": "global",
+        "country": "JP"
+    },
+    "SWIFT.EU": {
+        "name": "SWIFT European Settlement",
+        "hub": "Frankfurt / Zurich",
+        "coords": [8.6821, 50.1109],
+        "type": "global",
+        "country": "EU"
+    },
+    "FED.US": {
+        "name": "Federal Reserve USD Wire",
+        "hub": "New York",
+        "coords": [-74.0060, 40.7128],
+        "type": "global",
+        "country": "US"
     }
 }
 

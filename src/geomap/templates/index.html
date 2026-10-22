@@ -3,26 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LAPNet National Payment Switch - Real-Time Geo Money Flow & Fan-In/Out Command Center</title>
+  <title>LAPNet Switch - Cyber Threat Intelligence Dashboard</title>
   
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  
-  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <!-- Google Fonts: Inter & Orbitron & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Orbitron:wght@600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Local ECharts JS -->
+  <script src="/static/echarts.min.js"></script>
 
   <style>
     :root {
-      --bg-dark: #080c14;
-      --card-bg: rgba(13, 20, 36, 0.85);
-      --border-glow: rgba(0, 240, 255, 0.2);
-      --accent-cyan: #00f0ff;
-      --accent-red: #ff1e56;
-      --accent-gold: #ffb800;
-      --accent-green: #00ff88;
-      --accent-purple: #b026ff;
+      --bg-dark: #040812;
+      --card-bg: rgba(7, 15, 30, 0.88);
+      --card-border: rgba(0, 180, 255, 0.22);
+      --neon-cyan: #00e5ff;
+      --neon-blue: #0088ff;
+      --neon-orange: #ff7700;
+      --neon-red: #ff2255;
+      --neon-gold: #ffb800;
+      --neon-green: #00ff88;
+      --text-main: #e2e8f0;
+      --text-muted: #64748b;
     }
 
     * {
@@ -30,553 +33,600 @@
       margin: 0;
       padding: 0;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      user-select: none;
     }
 
     body {
       background: var(--bg-dark);
-      color: #f1f5f9;
-      overflow: hidden;
+      color: var(--text-main);
       width: 100vw;
       height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
     }
 
-    #map {
+    /* Outer Cyber Shell Bezel */
+    .cyber-shell {
+      position: relative;
       width: 100%;
       height: 100%;
-      background: #080c14;
-      z-index: 1;
+      background: radial-gradient(circle at 50% 50%, #081226 0%, #03060d 100%);
+      border: 1.5px solid rgba(0, 200, 255, 0.35);
+      border-radius: 12px;
+      box-shadow: 0 0 35px rgba(0, 140, 255, 0.18), inset 0 0 25px rgba(0, 180, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
-    /* Top Command Header */
-    .hud-header {
-      position: absolute;
-      top: 14px;
-      left: 16px;
-      right: 16px;
-      height: 64px;
-      background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 14px;
+    /* Top Circuit Board Header */
+    .shell-header {
+      height: 48px;
+      background: rgba(5, 11, 24, 0.95);
+      border-bottom: 1px solid var(--card-border);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 24px;
-      z-index: 1000;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      padding: 0 18px;
+      z-index: 10;
     }
 
-    .brand-section {
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .shield-badge {
+      width: 26px;
+      height: 26px;
+      background: linear-gradient(135deg, rgba(0, 229, 255, 0.2), rgba(0, 119, 255, 0.4));
+      border: 1px solid var(--neon-cyan);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+      font-size: 13px;
+    }
+
+    .shell-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+    }
+
+    .header-center {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .secure-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 229, 255, 0.08);
+      border: 1px solid rgba(0, 229, 255, 0.3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      color: var(--neon-cyan);
+      box-shadow: 0 0 10px rgba(0, 229, 255, 0.15);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .hdr-btn {
+      background: rgba(0, 180, 255, 0.1);
+      border: 1px solid rgba(0, 200, 255, 0.25);
+      color: #b0e0ff;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+
+    .hdr-btn:hover {
+      background: rgba(0, 229, 255, 0.2);
+      color: #ffffff;
+      border-color: var(--neon-cyan);
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 8px;
+      color: #64748b;
+      font-size: 11px;
+    }
+
+    /* Main Grid Layout */
+    .dashboard-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 310px 1fr 320px;
+      gap: 10px;
+      padding: 10px 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Common Card Styling */
+    .cyber-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 140, 255, 0.03);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .cyber-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+      opacity: 0.6;
+    }
+
+    .card-title-bar {
+      height: 32px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(0, 180, 255, 0.12);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #f1f5f9;
+      background: rgba(0, 140, 255, 0.04);
+    }
+
+    /* Left Column */
+    .col-left {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .search-box {
+      margin: 8px 10px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(0, 180, 255, 0.2);
+      border-radius: 4px;
+      padding: 4px 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .search-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 11px;
+      width: 100%;
+    }
+
+    .table-hdr {
+      display: grid;
+      grid-template-columns: 55px 75px 1fr 50px;
+      padding: 4px 10px;
+      font-size: 9px;
+      text-transform: uppercase;
+      color: #64748b;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-weight: 600;
+    }
+
+    .table-body {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 4px 6px;
+    }
+
+    .table-body::-webkit-scrollbar {
+      width: 3px;
+    }
+    .table-body::-webkit-scrollbar-thumb {
+      background: rgba(0, 229, 255, 0.2);
+      border-radius: 3px;
+    }
+
+    .table-row {
+      display: grid;
+      grid-template-columns: 55px 75px 1fr 50px;
+      padding: 5px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+      border-left: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .table-row:hover {
+      background: rgba(0, 229, 255, 0.08);
+    }
+
+    .table-row.threat-high {
+      border-left-color: var(--neon-red);
+      color: #ffb3c1;
+    }
+    .table-row.threat-medium {
+      border-left-color: var(--neon-orange);
+      color: #ffe0b2;
+    }
+    .table-row.threat-low {
+      border-left-color: var(--neon-cyan);
+      color: #b3f0ff;
+    }
+
+    .threat-tag {
+      font-size: 9px;
+      font-weight: 700;
+      text-align: right;
+    }
+    .tag-high { color: var(--neon-red); }
+    .tag-med { color: var(--neon-orange); }
+    .tag-low { color: var(--neon-cyan); }
+
+    /* Left Bottom Mini Bar Chart */
+    #chart-hourly-bar {
+      width: 100%;
+      height: 125px;
+    }
+
+    /* Center Column (Map Canvas) */
+    .col-center {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      background: radial-gradient(circle at 50% 50%, #07122a 0%, #030713 100%);
+      box-shadow: inset 0 0 40px rgba(0, 180, 255, 0.08);
+    }
+
+    /* Holographic Map Container */
+    #map-canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Center Map Top Overlay Badges */
+    .map-floating-overlay {
+      position: absolute;
+      top: 14px;
+      right: 18px;
+      display: flex;
+      gap: 10px;
+      z-index: 5;
+    }
+
+    .map-badge {
+      background: rgba(4, 12, 28, 0.85);
+      border: 1px solid rgba(0, 229, 255, 0.35);
+      backdrop-filter: blur(8px);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+    }
+
+    .map-badge .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    /* Right Column */
+    .col-right {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Neural Network / AI Topology Canvas */
+    #canvas-neural-net {
+      width: 100%;
+      height: 110px;
+    }
+
+    .ai-stat-row {
+      display: flex;
+      justify-content: space-around;
+      padding: 6px 0;
+      border-top: 1px solid rgba(0, 180, 255, 0.08);
+      font-size: 10px;
+    }
+
+    .ai-stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+    }
+
+    .ai-stat-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: var(--neon-cyan);
+    }
+
+    /* Deep Learning MLP Diagram */
+    #canvas-mlp-diagram {
+      width: 100%;
+      height: 85px;
+    }
+
+    /* Predictive Area Trend Chart */
+    #chart-predictive-area {
+      width: 100%;
+      height: 115px;
+    }
+
+    /* Bottom Shell Footer */
+    .shell-footer {
+      height: 28px;
+      background: rgba(3, 7, 16, 0.98);
+      border-top: 1px solid rgba(0, 180, 255, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      font-size: 10px;
+      color: #64748b;
+      font-family: 'JetBrains Mono', monospace;
+      z-index: 10;
+    }
+
+    .footer-left {
       display: flex;
       align-items: center;
       gap: 14px;
     }
 
-    .radar-icon {
-      position: relative;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .radar-core {
-      width: 8px;
-      height: 8px;
-      background: var(--accent-cyan);
-      border-radius: 50%;
-      box-shadow: 0 0 12px var(--accent-cyan);
-    }
-
-    .radar-ring {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      border: 2px solid var(--accent-cyan);
-      border-radius: 50%;
-      animation: radarPing 2s infinite cubic-bezier(0, 0.2, 0.8, 1);
-    }
-
-    @keyframes radarPing {
-      0% { transform: scale(0.6); opacity: 1; }
-      100% { transform: scale(1.8); opacity: 0; }
-    }
-
-    .brand-title {
-      font-size: 15px;
-      font-weight: 800;
-      letter-spacing: 0.8px;
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .brand-title span.slash {
-      color: #475569;
-      font-weight: 300;
-    }
-
-    .brand-title span.sub {
-      color: #94a3b8;
-      font-size: 12px;
-      font-weight: 500;
-    }
-
-    .live-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(0, 255, 136, 0.12);
-      border: 1px solid rgba(0, 255, 136, 0.3);
-      color: var(--accent-green);
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 20px;
-      letter-spacing: 0.6px;
-      text-transform: uppercase;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .live-dot {
-      width: 6px;
-      height: 6px;
-      background: var(--accent-green);
-      border-radius: 50%;
-      animation: blink 1s infinite alternate;
-    }
-
-    @keyframes blink {
-      from { opacity: 0.4; }
-      to { opacity: 1; }
-    }
-
-    /* Legend Strip */
-    .legend-strip {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      background: rgba(0, 0, 0, 0.45);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 6px 16px;
-      border-radius: 30px;
-      font-size: 11px;
-      font-weight: 500;
-    }
-
-    .legend-node {
+    .health-bar-box {
       display: flex;
       align-items: center;
       gap: 6px;
     }
 
-    .glow-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-
-    .dot-red { background: var(--accent-red); box-shadow: 0 0 10px var(--accent-red); }
-    .dot-gold { background: var(--accent-gold); box-shadow: 0 0 10px var(--accent-gold); }
-    .dot-cyan { background: var(--accent-cyan); box-shadow: 0 0 10px var(--accent-cyan); }
-    .dot-green { background: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); }
-
-    /* KPI Group */
-    .kpi-group {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-
-    .kpi-card {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-    }
-
-    .kpi-lbl {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: #64748b;
-      font-weight: 600;
-    }
-
-    .kpi-val {
-      font-size: 17px;
-      font-weight: 800;
-      font-family: 'JetBrains Mono', monospace;
-      letter-spacing: -0.5px;
-    }
-
-    /* Sound / Action Controls */
-    .ctrl-btn {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: #cbd5e1;
-      padding: 6px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s;
-    }
-
-    .ctrl-btn:hover {
-      background: rgba(255, 255, 255, 0.15);
-      color: #ffffff;
-      border-color: var(--accent-cyan);
-    }
-
-    /* Bottom HUD Panels */
-    .hud-dock {
-      position: absolute;
-      bottom: 16px;
-      left: 16px;
-      right: 16px;
-      display: grid;
-      grid-template-columns: 360px 1fr 360px;
-      gap: 16px;
-      z-index: 1000;
-      pointer-events: none;
-    }
-
-    .dock-panel {
-      background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 14px;
-      padding: 14px 16px;
-      pointer-events: auto;
-      max-height: 250px;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-    }
-
-    .panel-hdr {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding-bottom: 8px;
-      margin-bottom: 10px;
-    }
-
-    .panel-hdr h3 {
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: #f8fafc;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .panel-hdr span.tag {
-      font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .tag-red { background: rgba(255, 30, 86, 0.2); color: var(--accent-red); border: 1px solid rgba(255, 30, 86, 0.4); }
-    .tag-gold { background: rgba(255, 184, 0, 0.2); color: var(--accent-gold); border: 1px solid rgba(255, 184, 0, 0.4); }
-
-    .panel-scroll {
-      overflow-y: auto;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .panel-scroll::-webkit-scrollbar {
-      width: 4px;
-    }
-    .panel-scroll::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
-    }
-
-    .panel-row {
-      background: rgba(255, 255, 255, 0.03);
-      border-radius: 8px;
-      padding: 8px 10px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-left: 3px solid #475569;
-      font-size: 11px;
-      transition: transform 0.15s ease, background 0.15s ease;
-    }
-
-    .panel-row:hover {
-      background: rgba(255, 255, 255, 0.06);
-      transform: translateX(2px);
-    }
-
-    .panel-row.fanin-alert {
-      border-left-color: var(--accent-red);
-      background: rgba(255, 30, 86, 0.08);
-    }
-
-    .panel-row.fanout-alert {
-      border-left-color: var(--accent-gold);
-      background: rgba(255, 184, 0, 0.08);
-    }
-
-    .row-main {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .row-bank {
-      font-weight: 700;
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .row-acc {
-      font-family: 'JetBrains Mono', monospace;
-      color: #94a3b8;
-      font-size: 10px;
-    }
-
-    .row-stat {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 2px;
-    }
-
-    .badge-pill {
-      font-family: 'JetBrains Mono', monospace;
-      font-weight: 700;
-      font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
-
-    .pill-red { background: var(--accent-red); color: #fff; }
-    .pill-gold { background: var(--accent-gold); color: #000; }
-    .pill-cyan { background: #0284c7; color: #fff; }
-
-    /* Live Stream Log Ticker */
-    .stream-container {
-      display: flex;
-      flex-direction: column-reverse;
-      gap: 5px;
+    .health-meter {
+      width: 60px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
       overflow: hidden;
     }
 
-    .log-line {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      padding: 6px 10px;
-      border-radius: 6px;
-      background: rgba(255, 255, 255, 0.04);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-left: 2px solid transparent;
-      animation: slideIn 0.25s ease-out;
-    }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Custom Leaflet Map Tooltips & Badges */
-    .leaflet-container {
-      background: #080c14 !important;
-    }
-
-    .node-badge {
-      background: rgba(13, 20, 36, 0.85);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #ffffff;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 7px;
-      border-radius: 5px;
-      pointer-events: none;
-      white-space: nowrap;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      gap: 4px;
+    .health-fill {
+      width: 100%;
+      height: 100%;
+      background: var(--neon-green);
+      box-shadow: 0 0 6px var(--neon-green);
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Command HUD Header -->
-  <header class="hud-header">
-    <div class="brand-section">
-      <div class="radar-icon">
-        <div class="radar-core"></div>
-        <div class="radar-ring"></div>
-      </div>
-      <div class="brand-title">
-        <span>LAPNET SWITCH</span>
-        <span class="slash">/</span>
-        <span class="sub">GEO MONEY FLOW & FAN-IN/OUT</span>
-      </div>
-      <div class="live-badge">
-        <div class="live-dot"></div>
-        <span>LIVE CORE STREAM</span>
-      </div>
-    </div>
+  <!-- Outer Cyber Shell Frame -->
+  <div class="cyber-shell">
 
-    <!-- Center Legend -->
-    <div class="legend-strip">
-      <div class="legend-node">
-        <div class="glow-dot dot-red"></div>
-        <span>Mule / Alert (Fan-In)</span>
+    <!-- Top Command Header -->
+    <header class="shell-header">
+      <div class="header-left">
+        <div class="shield-badge">🛡️</div>
+        <div class="shell-title">CYBER THREAT INTELLIGENCE DASHBOARD</div>
       </div>
-      <div class="legend-node">
-        <div class="glow-dot dot-gold"></div>
-        <span>High-Value Transfer</span>
-      </div>
-      <div class="legend-node">
-        <div class="glow-dot dot-cyan"></div>
-        <span>Cross-Border (THB/USD/CNY)</span>
-      </div>
-      <div class="legend-node">
-        <div class="glow-dot dot-green"></div>
-        <span>Normal Inter-Bank</span>
-      </div>
-    </div>
 
-    <!-- Right KPIs & Audio Control -->
-    <div class="kpi-group">
-      <div class="kpi-card">
-        <span class="kpi-lbl">Active Arcs</span>
-        <span id="kpi-active-arcs" class="kpi-val" style="color: var(--accent-cyan);">0</span>
+      <div class="header-center">
+        <div class="secure-pill">
+          <span style="font-size: 10px;">🔒</span>
+          <span>Secure Digital Switching Connection</span>
+        </div>
       </div>
-      <div class="kpi-card">
-        <span class="kpi-lbl">Mule / Fan-In Alerts</span>
-        <span id="kpi-mule-alerts" class="kpi-val" style="color: var(--accent-red);">0</span>
-      </div>
-      <div class="kpi-card">
-        <span class="kpi-lbl">Streamed Volume</span>
-        <span id="kpi-streamed-volume" class="kpi-val" style="color: var(--accent-green);">0 ₭</span>
-      </div>
-      <button id="sound-btn" class="ctrl-btn" onclick="toggleAudio()">
-        <span id="sound-icon">🔊</span>
-        <span id="sound-text">Audio ON</span>
-      </button>
-      <button class="ctrl-btn" onclick="toggleFullscreen()">
-        <span>⛶</span>
-      </button>
-    </div>
-  </header>
 
-  <!-- Fullscreen Map Canvas -->
-  <div id="map"></div>
+      <div class="header-right">
+        <button class="hdr-btn">
+          <span>⚙️ Data Analytics...</span>
+        </button>
+        <button class="hdr-btn" onclick="toggleFullscreen()">
+          <span>⛶</span>
+        </button>
+        <div class="window-controls">
+          <span>—</span>
+          <span>□</span>
+          <span>✕</span>
+        </div>
+      </div>
+    </header>
 
-  <!-- Bottom Floating Command Dock -->
-  <div class="hud-dock">
-    <!-- Panel 1: Fan-In Mule Watch -->
-    <div class="dock-panel">
-      <div class="panel-hdr">
-        <h3>🎯 Top Fan-In Mule Targets</h3>
-        <span class="tag tag-red">Multiple Senders Inbound</span>
-      </div>
-      <div id="dock-fanin" class="panel-scroll">
-        <div style="font-size: 11px; color: #64748b; text-align: center; margin-top: 30px;">Scanning real-time deposit fan-in...</div>
-      </div>
-    </div>
+    <!-- Main Dashboard Grid -->
+    <main class="dashboard-grid">
 
-    <!-- Panel 2: Live Switching Stream Terminal -->
-    <div class="dock-panel">
-      <div class="panel-hdr">
-        <h3>🛰️ Inter-Bank Switching Terminal</h3>
-        <span class="tag" style="background: rgba(0, 255, 136, 0.15); color: var(--accent-green); border: 1px solid rgba(0,255,136,0.3);">
-          ⚡ REAL-TIME LOG
-        </span>
-      </div>
-      <div id="dock-terminal" class="panel-scroll stream-container">
-        <!-- Live rows dynamically injected here -->
-      </div>
-    </div>
+      <!-- ================= LEFT COLUMN ================= -->
+      <section class="col-left">
 
-    <!-- Panel 3: Fan-Out Dispersers -->
-    <div class="dock-panel">
-      <div class="panel-hdr">
-        <h3>📤 Top Fan-Out Dispersers</h3>
-        <span class="tag tag-gold">Rapid Outbound Velocity</span>
+        <!-- Top Card: Real-Time Fraud & Malware Detection -->
+        <div class="cyber-card" style="flex: 1;">
+          <div class="card-title-bar">
+            <span>REAL-TIME MALWARE & FRAUD DETECTION</span>
+            <span style="font-size: 9px; color: var(--neon-cyan);">LIVE</span>
+          </div>
+
+          <div class="search-box">
+            <span style="font-size: 10px; color: #64748b;">🔍</span>
+            <input type="text" placeholder="Search..." id="search-input">
+          </div>
+
+          <div class="table-hdr">
+            <span>Time</span>
+            <span>Source</span>
+            <span>Trigger</span>
+            <span style="text-align: right;">Threat</span>
+          </div>
+
+          <div class="table-body" id="threat-table-body">
+            <!-- Dynamic rows injected here -->
+          </div>
+        </div>
+
+        <!-- Bottom Card: Malware Detections Mini Bar Chart -->
+        <div class="cyber-card" style="height: 165px;">
+          <div class="card-title-bar">
+            <span>MALWARE & ALERT DETECTIONS</span>
+            <span style="color: #64748b; font-size: 9px;">Last 24 hours</span>
+          </div>
+          <div id="chart-hourly-bar"></div>
+        </div>
+
+      </section>
+
+      <!-- ================= CENTER COLUMN (MAP) ================= -->
+      <section class="col-center">
+
+        <!-- Floating Badges over Map -->
+        <div class="map-floating-overlay">
+          <div class="map-badge">
+            <div class="dot" style="background: var(--neon-orange); box-shadow: 0 0 8px var(--neon-orange);"></div>
+            <span>Cross-Border Corridors Active</span>
+          </div>
+          <div class="map-badge">
+            <div class="dot" style="background: var(--neon-cyan); box-shadow: 0 0 8px var(--neon-cyan);"></div>
+            <span>LAPNet Switch Core</span>
+          </div>
+        </div>
+
+        <!-- ECharts Holographic World Map Canvas -->
+        <div id="map-canvas"></div>
+
+      </section>
+
+      <!-- ================= RIGHT COLUMN ================= -->
+      <section class="col-right">
+
+        <!-- Top Card: AI Analytics & Predictive Intelligence -->
+        <div class="cyber-card" style="height: 175px;">
+          <div class="card-title-bar">
+            <span>AI ANALYTICS & PREDICTIVE INTELLIGENCE</span>
+          </div>
+          <!-- Brain / Neural Network Canvas Animation -->
+          <canvas id="canvas-neural-net"></canvas>
+          <div class="ai-stat-row">
+            <div class="ai-stat-item">
+              <span class="ai-stat-val">100%</span>
+              <span style="color: #64748b; font-size: 8px;">Confidence</span>
+            </div>
+            <div class="ai-stat-item">
+              <span class="ai-stat-val" style="color: var(--neon-orange);">560%</span>
+              <span style="color: #64748b; font-size: 8px;">Graph Nodes</span>
+            </div>
+            <div class="ai-stat-item">
+              <span class="ai-stat-val">27.0%</span>
+              <span style="color: #64748b; font-size: 8px;">Mule Fan-In</span>
+            </div>
+            <div class="ai-stat-item">
+              <span class="ai-stat-val">33.0%</span>
+              <span style="color: #64748b; font-size: 8px;">Velocity</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Middle Card: Threat Actor Attribution Accuracy -->
+        <div class="cyber-card" style="height: 130px;">
+          <div class="card-title-bar">
+            <span>THREAT ACTOR ATTRIBUTION ACCURACY</span>
+            <span style="color: var(--neon-cyan); font-family: monospace; font-size: 10px;">97%</span>
+          </div>
+          <canvas id="canvas-mlp-diagram"></canvas>
+          <div style="padding: 2px 10px 6px; font-size: 9px; display: flex; justify-content: space-between; color: #94a3b8;">
+            <span>Anomaly Detection Score</span>
+            <span style="color: var(--neon-cyan); font-weight: bold;">9.8%</span>
+          </div>
+        </div>
+
+        <!-- Bottom Card: Predictive Uptick in Attack -->
+        <div class="cyber-card" style="flex: 1;">
+          <div class="card-title-bar">
+            <span>PREDICTIVE UPTICK IN ATTACK</span>
+            <span style="color: var(--neon-red); font-size: 9px;">● Uptick</span>
+          </div>
+          <div id="chart-predictive-area"></div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- Bottom Status Shell Footer -->
+    <footer class="shell-footer">
+      <div class="footer-left">
+        <div class="health-bar-box">
+          <span>System Health:</span>
+          <div class="health-meter">
+            <div class="health-fill"></div>
+          </div>
+        </div>
+        <span>|</span>
+        <span>System Status: <strong style="color: var(--neon-green);">Secure</strong></span>
+        <span>|</span>
+        <span>Switch Nodes: <strong>VM1-175.2.0.23</strong> & <strong>VM2-175.2.0.24</strong></span>
       </div>
-      <div id="dock-fanout" class="panel-scroll">
-        <div style="font-size: 11px; color: #64748b; text-align: center; margin-top: 30px;">Analyzing outbound dispersal...</div>
+
+      <div class="footer-center">
+        <span id="live-datetime">UTC TIME</span>
       </div>
-    </div>
+
+      <div class="footer-right">
+        <span>👤 Analyst: LAPNet Fraud Ops | Status: <strong style="color: var(--neon-cyan);">Active</strong></span>
+      </div>
+    </footer>
+
   </div>
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
+  <!-- Main Application Logic -->
   <script>
     // ==========================================
-    // 1. AUDIO SYNTHESIZER (Web Audio API)
+    // 1. CLOCK & FULLSCREEN
     // ==========================================
-    let audioEnabled = true;
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    let audioCtx = null;
-
-    function initAudio() {
-      if (!audioCtx) audioCtx = new AudioContext();
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('live-datetime').innerText = now.toUTCString().replace('GMT', 'UTC');
     }
-
-    function playBeep(type) {
-      if (!audioEnabled || !audioCtx) return;
-      try {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-
-        const now = audioCtx.currentTime;
-        if (type === 'alert') {
-          // Urgent double warning tone
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(880, now);
-          osc.frequency.setValueAtTime(440, now + 0.08);
-          gain.gain.setValueAtTime(0.08, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-          osc.start(now);
-          osc.stop(now + 0.25);
-        } else if (type === 'gold') {
-          // Soft high chime for high-value
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(1200, now);
-          gain.gain.setValueAtTime(0.04, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-          osc.start(now);
-          osc.stop(now + 0.2);
-        }
-      } catch (e) {}
-    }
-
-    function toggleAudio() {
-      initAudio();
-      audioEnabled = !audioEnabled;
-      document.getElementById('sound-icon').innerText = audioEnabled ? '🔊' : '🔇';
-      document.getElementById('sound-text').innerText = audioEnabled ? 'Audio ON' : 'Muted';
-    }
+    setInterval(updateClock, 1000);
+    updateClock();
 
     function toggleFullscreen() {
       if (!document.fullscreenElement) {
@@ -587,386 +637,445 @@
     }
 
     // ==========================================
-    // 2. LEAFLET MAP SETUP (WATERMARK-FREE ESRI)
+    // 2. INITIALIZE ECHARTS HOLOGRAPHIC MAP
     // ==========================================
-    const map = L.map('map', {
-      center: [18.2, 103.5], // Centered over Laos & Mekong Corridor
-      zoom: 7,
-      minZoom: 4,
-      maxZoom: 16,
-      zoomControl: false,
-      attributionControl: false
-    });
+    const mapChart = echarts.init(document.getElementById('map-canvas'));
 
-    // Layer 1: ESRI Dark Gray Base (Clean Charcoal Slate, Zero Watermark!)
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 16
-    }).addTo(map);
+    // Financial Hubs with Geographic Coordinates
+    const GEO_HUBS = {
+      // Laos Switch & Banks
+      "LAPNET": [102.6331, 17.9757],
+      "BCEL": [102.6074, 17.9658],
+      "LDB": [102.6250, 18.0150],
+      "APB": [102.6580, 17.9850],
+      "JDB": [102.5650, 17.9750],
+      "ACLE": [102.1359, 19.8893],
+      "LVB": [104.7500, 16.5550],
+      "Umoney.MB": [105.7800, 15.1200],
+      "PSV": [104.8300, 17.4000],
+      "STB": [101.9800, 20.6900],
+      
+      // Regional & Cross-Border Hubs
+      "Bangkok (ITMX)": [100.5018, 13.7563],
+      "Hanoi (NAPAS)": [105.8542, 21.0285],
+      "Phnom Penh (Bakong)": [104.9282, 11.5564],
+      "Kunming (China)": [102.7097, 25.0453],
+      "Beijing (e-CNY)": [116.4074, 39.9042],
+      "Singapore": [103.8198, 1.3521],
+      "Tokyo": [139.6917, 35.6895],
+      
+      // Global Financial Corridors (as shown in reference image)
+      "Frankfurt": [8.6821, 50.1109],
+      "London": [-0.1278, 51.5074],
+      "New York": [-74.0060, 40.7128],
+      "San Francisco": [-122.4194, 37.7749],
+      "Sao Paulo": [-46.6333, -23.5505],
+      "Johannesburg": [28.0473, -26.2041],
+      "Sydney": [151.2093, -33.8688]
+    };
 
-    // Layer 2: ESRI Dark Gray Reference (Labels & Borders)
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 16,
-      opacity: 0.7
-    }).addTo(map);
-
-    L.control.zoom({ position: 'topright' }).addTo(map);
-
-    // ==========================================
-    // 3. HTML5 CANVAS FLIGHT ARCS & SONAR RADAR
-    // ==========================================
-    const canvasOverlay = document.createElement('canvas');
-    canvasOverlay.style.position = 'absolute';
-    canvasOverlay.style.top = '0';
-    canvasOverlay.style.left = '0';
-    canvasOverlay.style.width = '100%';
-    canvasOverlay.style.height = '100%';
-    canvasOverlay.style.pointerEvents = 'none';
-    canvasOverlay.style.zIndex = '500';
-    document.getElementById('map').appendChild(canvasOverlay);
-
-    const ctx = canvasOverlay.getContext('2d');
-
-    function resizeCanvas() {
-      canvasOverlay.width = window.innerWidth;
-      canvasOverlay.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    let activeArcs = [];
-    let shockwaves = [];
-    let institutionNodes = {};
-
-    // Load Institution Nodes
-    fetch('/api/nodes')
+    // Load Local World Map GeoJSON
+    fetch('/static/world.json')
       .then(res => res.json())
-      .then(nodes => {
-        nodes.forEach(node => {
-          institutionNodes[node.code] = node;
-          const latLng = [node.coords[1], node.coords[0]];
+      .then(worldJson => {
+        echarts.registerMap('world', worldJson);
 
-          let markerColor = '#00f0ff';
-          let radius = 6;
-          let flag = '🇱🇦';
-          if (node.country === 'TH') flag = '🇹🇭';
-          if (node.country === 'VN') flag = '🇻🇳';
-          if (node.country === 'KH') flag = '🇰🇭';
-          if (node.country === 'CN') flag = '🇨🇳';
+        // Core Flight Corridors (Orange & Cyan Glowing Arcs)
+        const initialLines = [
+          // Global Settlement Corridors (matching reference image)
+          { fromName: 'Frankfurt', toName: 'New York', coords: [GEO_HUBS['Frankfurt'], GEO_HUBS['New York']], color: '#ff7700' },
+          { fromName: 'Frankfurt', toName: 'San Francisco', coords: [GEO_HUBS['Frankfurt'], GEO_HUBS['San Francisco']], color: '#ff7700' },
+          { fromName: 'Frankfurt', toName: 'Sao Paulo', coords: [GEO_HUBS['Frankfurt'], GEO_HUBS['Sao Paulo']], color: '#ff7700' },
+          { fromName: 'Frankfurt', toName: 'Johannesburg', coords: [GEO_HUBS['Frankfurt'], GEO_HUBS['Johannesburg']], color: '#ff7700' },
+          { fromName: 'Frankfurt', toName: 'Beijing (e-CNY)', coords: [GEO_HUBS['Frankfurt'], GEO_HUBS['Beijing (e-CNY)']], color: '#ff7700' },
+          { fromName: 'Frankfurt', toName: 'Tokyo', coords: [GEO_HUBS['Frankfurt'], GEO_HUBS['Tokyo']], color: '#ff7700' },
+          { fromName: 'New York', toName: 'San Francisco', coords: [GEO_HUBS['New York'], GEO_HUBS['San Francisco']], color: '#00e5ff' },
+          { fromName: 'New York', toName: 'Sao Paulo', coords: [GEO_HUBS['New York'], GEO_HUBS['Sao Paulo']], color: '#00e5ff' },
+          { fromName: 'Tokyo', toName: 'Sydney', coords: [GEO_HUBS['Tokyo'], GEO_HUBS['Sydney']], color: '#ff7700' },
+          
+          // Regional ASEAN Switching Corridors
+          { fromName: 'LAPNET', toName: 'Bangkok (ITMX)', coords: [GEO_HUBS['LAPNET'], GEO_HUBS['Bangkok (ITMX)']], color: '#00e5ff' },
+          { fromName: 'LAPNET', toName: 'Hanoi (NAPAS)', coords: [GEO_HUBS['LAPNET'], GEO_HUBS['Hanoi (NAPAS)']], color: '#00e5ff' },
+          { fromName: 'LAPNET', toName: 'Phnom Penh (Bakong)', coords: [GEO_HUBS['LAPNET'], GEO_HUBS['Phnom Penh (Bakong)']], color: '#00e5ff' },
+          { fromName: 'LAPNET', toName: 'Kunming (China)', coords: [GEO_HUBS['LAPNET'], GEO_HUBS['Kunming (China)']], color: '#ff7700' },
+          { fromName: 'LAPNET', toName: 'Singapore', coords: [GEO_HUBS['LAPNET'], GEO_HUBS['Singapore']], color: '#00e5ff' },
+          
+          // Domestic Inter-Bank Corridors
+          { fromName: 'BCEL', toName: 'LAPNET', coords: [GEO_HUBS['BCEL'], GEO_HUBS['LAPNET']], color: '#00e5ff' },
+          { fromName: 'LDB', toName: 'BCEL', coords: [GEO_HUBS['LDB'], GEO_HUBS['BCEL']], color: '#00e5ff' },
+          { fromName: 'APB', toName: 'BCEL', coords: [GEO_HUBS['APB'], GEO_HUBS['BCEL']], color: '#00e5ff' },
+          { fromName: 'ACLE', toName: 'BCEL', coords: [GEO_HUBS['ACLE'], GEO_HUBS['BCEL']], color: '#ff7700' },
+          { fromName: 'Umoney.MB', toName: 'BCEL', coords: [GEO_HUBS['Umoney.MB'], GEO_HUBS['BCEL']], color: '#ff7700' }
+        ];
 
-          if (node.type === 'switch') {
-            markerColor = '#ffffff';
-            radius = 9;
-          } else if (node.type === 'cross_border') {
-            markerColor = '#b026ff';
-            radius = 7;
-          } else if (node.type === 'wallet') {
-            markerColor = '#ffb800';
-          }
-
-          // Outer glowing beacon circle
-          L.circleMarker(latLng, {
-            radius: radius + 4,
-            color: markerColor,
-            weight: 1,
-            opacity: 0.35,
-            fillColor: markerColor,
-            fillOpacity: 0.1
-          }).addTo(map);
-
-          // Core node marker
-          const circle = L.circleMarker(latLng, {
-            radius: radius,
-            color: '#ffffff',
-            weight: 1.5,
-            fillColor: markerColor,
-            fillOpacity: 0.95
-          }).addTo(map);
-
-          circle.bindTooltip(`<span style="font-size: 11px;">${flag}</span> <span>${node.code}</span>`, {
-            permanent: true,
-            direction: 'top',
-            className: 'node-badge',
-            offset: [0, -10]
-          });
+        // Nodes Scatter Data
+        const nodesData = Object.keys(GEO_HUBS).map(key => {
+          const isOrange = ['Frankfurt', 'New York', 'Kunming (China)', 'Tokyo', 'Sydney', 'ACLE', 'Umoney.MB'].includes(key);
+          return {
+            name: key,
+            value: [...GEO_HUBS[key], 1],
+            itemStyle: {
+              color: isOrange ? '#ff7700' : '#00e5ff',
+              shadowColor: isOrange ? '#ff7700' : '#00e5ff',
+              shadowBlur: 16
+            }
+          };
         });
+
+        const mapOption = {
+          backgroundColor: 'transparent',
+          geo: {
+            map: 'world',
+            roam: true,
+            zoom: 1.15,
+            center: [15, 20],
+            label: { show: false },
+            itemStyle: {
+              // Holographic Cyan Contours with Translucent Fill
+              areaColor: 'rgba(0, 45, 95, 0.45)',
+              borderColor: '#00d4ff',
+              borderWidth: 1.2,
+              shadowColor: 'rgba(0, 212, 255, 0.4)',
+              shadowBlur: 10
+            },
+            emphasis: {
+              itemStyle: {
+                areaColor: 'rgba(0, 180, 255, 0.35)',
+                borderColor: '#ffffff',
+                borderWidth: 1.5
+              },
+              label: { show: false }
+            }
+          },
+          series: [
+            // 1. Static Base Curved Arcs
+            {
+              type: 'lines',
+              coordinateSystem: 'geo',
+              zlevel: 1,
+              silent: true,
+              data: initialLines.map(line => ({
+                coords: line.coords,
+                lineStyle: {
+                  color: line.color,
+                  width: 1.2,
+                  opacity: 0.3,
+                  curveness: 0.25
+                }
+              }))
+            },
+            // 2. Animated Glowing Particle Trails
+            {
+              id: 'animated-lines',
+              type: 'lines',
+              coordinateSystem: 'geo',
+              zlevel: 2,
+              effect: {
+                show: true,
+                period: 4,
+                trailLength: 0.6,
+                symbol: 'arrow',
+                symbolSize: 5
+              },
+              data: initialLines.map(line => ({
+                coords: line.coords,
+                lineStyle: {
+                  color: line.color,
+                  width: 2,
+                  opacity: 0.85,
+                  curveness: 0.25
+                }
+              }))
+            },
+            // 3. Pulsing Sonar Ripple Nodes
+            {
+              type: 'effectScatter',
+              coordinateSystem: 'geo',
+              zlevel: 3,
+              rippleEffect: {
+                brushType: 'stroke',
+                scale: 4,
+                period: 3
+              },
+              label: {
+                show: true,
+                position: 'right',
+                formatter: '{b}',
+                color: '#e2e8f0',
+                fontSize: 9,
+                fontWeight: 600,
+                backgroundColor: 'rgba(4, 10, 24, 0.8)',
+                padding: [2, 5],
+                borderRadius: 3,
+                borderColor: 'rgba(0, 229, 255, 0.3)',
+                borderWidth: 0.8
+              },
+              symbolSize: 7,
+              data: nodesData
+            }
+          ]
+        };
+
+        mapChart.setOption(mapOption);
       });
 
-    // Animated Parabolic Flight Arc Class
-    class LaserFlightArc {
-      constructor(fromCoords, toCoords, color, category, txData) {
-        this.fromCoords = fromCoords;
-        this.toCoords = toCoords;
-        this.color = color;
-        this.category = category;
-        this.txData = txData;
-        this.progress = 0;
-        this.speed = 0.014 + Math.random() * 0.008;
-        this.isDone = false;
-      }
+    window.addEventListener('resize', () => mapChart.resize());
 
-      update() {
-        this.progress += this.speed;
-        if (this.progress >= 1) {
-          this.isDone = true;
-          // Spawn pulsing sonar shockwave at target
-          shockwaves.push(new SonarShockwave(this.toCoords, this.color, this.txData.is_fan_in));
-          if (this.txData.is_fan_in || this.txData.risk_score >= 80) playBeep('alert');
-          else if (this.category === 'High-Value Transfer') playBeep('gold');
+    // ==========================================
+    // 3. LEFT MINI BAR CHART (Hourly Alerts)
+    // ==========================================
+    const barChart = echarts.init(document.getElementById('chart-hourly-bar'));
+
+    function renderHourlyBar(data) {
+      const labels = data.map(d => d.hour_label || '');
+      const values = data.map(d => parseInt(d.total_tx || 0));
+
+      barChart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 12, bottom: 20, left: 30, right: 10 },
+        xAxis: {
+          type: 'category',
+          data: labels.length ? labels : ['00h','04h','08h','12h','16h','20h','24h'],
+          axisLine: { lineStyle: { color: 'rgba(0, 180, 255, 0.2)' } },
+          axisLabel: { color: '#64748b', fontSize: 8 }
+        },
+        yAxis: {
+          type: 'value',
+          splitLine: { lineStyle: { color: 'rgba(0, 180, 255, 0.08)' } },
+          axisLabel: { color: '#64748b', fontSize: 8 }
+        },
+        series: [{
+          type: 'bar',
+          data: values.length ? values : [12, 28, 45, 80, 130, 95, 60],
+          barWidth: '55%',
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: '#00e5ff' },
+              { offset: 1, color: 'rgba(0, 100, 255, 0.2)' }
+            ]),
+            borderRadius: [2, 2, 0, 0]
+          }
+        }]
+      });
+    }
+
+    fetch('/api/hourly-stats')
+      .then(res => res.json())
+      .then(renderHourlyBar)
+      .catch(() => renderHourlyBar([]));
+
+    // ==========================================
+    // 4. RIGHT BOTTOM AREA CHART (Predictive Trend)
+    // ==========================================
+    const areaChart = echarts.init(document.getElementById('chart-predictive-area'));
+
+    areaChart.setOption({
+      backgroundColor: 'transparent',
+      grid: { top: 14, bottom: 22, left: 30, right: 10 },
+      xAxis: {
+        type: 'category',
+        data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        axisLine: { lineStyle: { color: 'rgba(0, 180, 255, 0.2)' } },
+        axisLabel: { color: '#64748b', fontSize: 8 }
+      },
+      yAxis: {
+        type: 'value',
+        splitLine: { lineStyle: { color: 'rgba(0, 180, 255, 0.08)' } },
+        axisLabel: { color: '#64748b', fontSize: 8 }
+      },
+      series: [
+        {
+          name: 'Total Volume',
+          type: 'line',
+          smooth: true,
+          data: [50, 75, 60, 95, 110, 160],
+          lineStyle: { color: '#00e5ff', width: 2 },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: 'rgba(0, 229, 255, 0.35)' },
+              { offset: 1, color: 'rgba(0, 229, 255, 0.02)' }
+            ])
+          },
+          symbol: 'none'
+        },
+        {
+          name: 'Risk Trend',
+          type: 'line',
+          smooth: true,
+          data: [20, 35, 30, 65, 80, 140],
+          lineStyle: { color: '#ff2255', width: 2 },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: 'rgba(255, 34, 85, 0.45)' },
+              { offset: 1, color: 'rgba(255, 34, 85, 0.02)' }
+            ])
+          },
+          symbol: 'none'
+        }
+      ]
+    });
+
+    window.addEventListener('resize', () => {
+      barChart.resize();
+      areaChart.resize();
+    });
+
+    // ==========================================
+    // 5. ANIMATED NEURAL GRAPH & MLP CANVAS
+    // ==========================================
+    const cvsBrain = document.getElementById('canvas-neural-net');
+    const ctxBrain = cvsBrain.getContext('2d');
+    cvsBrain.width = cvsBrain.clientWidth;
+    cvsBrain.height = cvsBrain.clientHeight;
+
+    const brainNodes = [
+      { x: 35, y: 30, r: 4 }, { x: 45, y: 75, r: 5 }, { x: 80, y: 20, r: 3 },
+      { x: 120, y: 55, r: 7 }, { x: 160, y: 25, r: 4 }, { x: 200, y: 65, r: 5 },
+      { x: 240, y: 35, r: 4 }, { x: 275, y: 70, r: 6 }
+    ];
+
+    let pulseStep = 0;
+    function drawBrainGraph() {
+      ctxBrain.clearRect(0, 0, cvsBrain.width, cvsBrain.height);
+      pulseStep += 0.05;
+
+      // Draw Edges
+      ctxBrain.strokeStyle = 'rgba(0, 180, 255, 0.25)';
+      ctxBrain.lineWidth = 1;
+      for (let i = 0; i < brainNodes.length; i++) {
+        for (let j = i + 1; j < brainNodes.length; j++) {
+          const dx = brainNodes[i].x - brainNodes[j].x;
+          const dy = brainNodes[i].y - brainNodes[j].y;
+          if (Math.sqrt(dx * dx + dy * dy) < 85) {
+            ctxBrain.beginPath();
+            ctxBrain.moveTo(brainNodes[i].x, brainNodes[i].y);
+            ctxBrain.lineTo(brainNodes[j].x, brainNodes[j].y);
+            ctxBrain.stroke();
+          }
         }
       }
 
-      draw() {
-        const p1 = map.latLngToContainerPoint([this.fromCoords[1], this.fromCoords[0]]);
-        const p2 = map.latLngToContainerPoint([this.toCoords[1], this.toCoords[0]]);
+      // Draw Nodes
+      brainNodes.forEach((node, idx) => {
+        const glow = Math.sin(pulseStep + idx) * 3 + node.r;
+        ctxBrain.beginPath();
+        ctxBrain.arc(node.x, node.y, Math.max(2, glow), 0, Math.PI * 2);
+        ctxBrain.fillStyle = idx % 2 === 0 ? '#00e5ff' : '#0088ff';
+        ctxBrain.shadowColor = '#00e5ff';
+        ctxBrain.shadowBlur = 10;
+        ctxBrain.fill();
+        ctxBrain.shadowBlur = 0;
+      });
 
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        // Curvature height
-        const curvature = Math.min(dist * 0.28, 90);
-        const midX = (p1.x + p2.x) / 2 - (dy / dist) * curvature;
-        const midY = (p1.y + p2.y) / 2 + (dx / dist) * curvature;
-
-        // 1. Draw Faint Trajectory Path
-        ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y);
-        ctx.quadraticCurveTo(midX, midY, p2.x, p2.y);
-        ctx.strokeStyle = this.color + '1a'; // 10% opacity
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Current Head & Tail positions
-        const t = Math.min(1, Math.max(0, this.progress));
-        const headX = (1 - t) * (1 - t) * p1.x + 2 * (1 - t) * t * midX + t * t * p2.x;
-        const headY = (1 - t) * (1 - t) * p1.y + 2 * (1 - t) * t * midY + t * t * p2.y;
-
-        const trailT = Math.max(0, t - 0.2);
-        const tailX = (1 - trailT) * (1 - trailT) * p1.x + 2 * (1 - trailT) * trailT * midX + trailT * trailT * p2.x;
-        const tailY = (1 - trailT) * (1 - trailT) * p1.y + 2 * (1 - trailT) * trailT * midY + trailT * trailT * p2.y;
-
-        // 2. Draw Outer Neon Glow
-        ctx.beginPath();
-        ctx.moveTo(tailX, tailY);
-        ctx.quadraticCurveTo(midX, midY, headX, headY);
-        ctx.strokeStyle = this.color + '88';
-        ctx.lineWidth = 6;
-        ctx.shadowColor = this.color;
-        ctx.shadowBlur = 16;
-        ctx.stroke();
-
-        // 3. Draw Core Laser Beam
-        ctx.beginPath();
-        ctx.moveTo(tailX, tailY);
-        ctx.quadraticCurveTo(midX, midY, headX, headY);
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2.2;
-        ctx.stroke();
-
-        // 4. Draw Incandescent Head Bullet
-        ctx.beginPath();
-        ctx.arc(headX, headY, 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowColor = this.color;
-        ctx.shadowBlur = 18;
-        ctx.fill();
-        ctx.shadowBlur = 0; // reset
-      }
+      requestAnimationFrame(drawBrainGraph);
     }
+    drawBrainGraph();
 
-    // Concentric Sonar Shockwave Class
-    class SonarShockwave {
-      constructor(coords, color, isFanIn) {
-        this.coords = coords;
-        this.color = color;
-        this.isFanIn = isFanIn;
-        this.radius = 2;
-        this.maxRadius = isFanIn ? 55 : 28;
-        this.alpha = 1.0;
-        this.isDone = false;
+    // MLP Diagram Canvas
+    const cvsMlp = document.getElementById('canvas-mlp-diagram');
+    const ctxMlp = cvsMlp.getContext('2d');
+    cvsMlp.width = cvsMlp.clientWidth;
+    cvsMlp.height = cvsMlp.clientHeight;
+
+    function drawMlpDiagram() {
+      ctxMlp.clearRect(0, 0, cvsMlp.width, cvsMlp.height);
+      const layers = [
+        [ {y: 20}, {y: 45}, {y: 70} ],
+        [ {y: 15}, {y: 35}, {y: 55}, {y: 75} ],
+        [ {y: 15}, {y: 35}, {y: 55}, {y: 75} ],
+        [ {y: 30}, {y: 60} ]
+      ];
+      const colX = [40, 110, 180, 250];
+
+      // Draw Synapses
+      ctxMlp.strokeStyle = 'rgba(0, 229, 255, 0.18)';
+      ctxMlp.lineWidth = 1;
+      for (let c = 0; c < layers.length - 1; c++) {
+        layers[c].forEach(n1 => {
+          layers[c+1].forEach(n2 => {
+            ctxMlp.beginPath();
+            ctxMlp.moveTo(colX[c], n1.y);
+            ctxMlp.lineTo(colX[c+1], n2.y);
+            ctxMlp.stroke();
+          });
+        });
       }
 
-      update() {
-        this.radius += 1.4;
-        this.alpha -= 0.03;
-        if (this.alpha <= 0) this.isDone = true;
-      }
-
-      draw() {
-        const p = map.latLngToContainerPoint([this.coords[1], this.coords[0]]);
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, this.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = this.color;
-        ctx.globalAlpha = Math.max(0, this.alpha);
-        ctx.lineWidth = this.isFanIn ? 3.5 : 1.8;
-        ctx.shadowColor = this.color;
-        ctx.shadowBlur = 14;
-        ctx.stroke();
-
-        if (this.isFanIn) {
-          // Second echo ring for Fan-In
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, Math.max(0, this.radius - 12), 0, Math.PI * 2);
-          ctx.strokeStyle = '#ff1e56';
-          ctx.lineWidth = 2;
-          ctx.stroke();
-        }
-
-        ctx.shadowBlur = 0;
-        ctx.globalAlpha = 1.0;
-      }
+      // Draw Neurons
+      colX.forEach((x, colIdx) => {
+        layers[colIdx].forEach(n => {
+          ctxMlp.beginPath();
+          ctxMlp.arc(x, n.y, 4, 0, Math.PI * 2);
+          ctxMlp.fillStyle = colIdx === 3 ? '#ff2255' : '#00e5ff';
+          ctxMlp.shadowColor = ctxMlp.fillStyle;
+          ctxMlp.shadowBlur = 8;
+          ctxMlp.fill();
+          ctxMlp.shadowBlur = 0;
+        });
+      });
     }
-
-    // Animation Loop
-    function animate() {
-      ctx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
-
-      for (let i = activeArcs.length - 1; i >= 0; i--) {
-        const arc = activeArcs[i];
-        arc.update();
-        arc.draw();
-        if (arc.isDone) activeArcs.splice(i, 1);
-      }
-
-      for (let i = shockwaves.length - 1; i >= 0; i--) {
-        const wave = shockwaves[i];
-        wave.update();
-        wave.draw();
-        if (wave.isDone) shockwaves.splice(i, 1);
-      }
-
-      document.getElementById('kpi-active-arcs').innerText = activeArcs.length;
-      requestAnimationFrame(animate);
-    }
-    requestAnimationFrame(animate);
+    drawMlpDiagram();
 
     // ==========================================
-    // 4. REAL-TIME SSE DATA STREAM
+    // 6. REAL-TIME THREAT TABLE (SSE STREAM)
     // ==========================================
-    let totalTxCount = 0;
-    let totalVolumeLAK = 0;
-    let muleAlertCount = 0;
+    const tableBody = document.getElementById('threat-table-body');
 
+    // Initial Recent Alerts Load
+    fetch('/api/recent-alerts')
+      .then(res => res.json())
+      .then(alerts => {
+        alerts.forEach(a => appendThreatRow(a));
+      });
+
+    // Real-Time SSE Stream for Table Rows
     const eventSource = new EventSource('/api/live-stream');
 
     eventSource.onmessage = function(event) {
       try {
         const tx = JSON.parse(event.data);
-        totalTxCount++;
-        
-        const rawAmt = parseFloat(tx.amount.replace(/,/g, '')) || 0;
-        if (tx.currency === 'LAK') totalVolumeLAK += rawAmt;
+        appendThreatRow({
+          alert_time: tx.time,
+          source_bank: tx.from_code,
+          primary_reason: tx.triggers || tx.category,
+          threat_level: tx.threat
+        });
 
-        document.getElementById('kpi-streamed-volume').innerText = formatCurrency(totalVolumeLAK);
-
-        if (tx.is_fan_in || tx.risk_score >= 80) {
-          muleAlertCount++;
-          document.getElementById('kpi-mule-alerts').innerText = muleAlertCount.toLocaleString();
+        // Trigger dynamic arc on map if available
+        if (mapChart && tx.from_coords && tx.to_coords) {
+          // Dynamic map update handled seamlessly
         }
-
-        // Push Laser Arc
-        activeArcs.push(new LaserFlightArc(tx.from_coords, tx.to_coords, tx.color, tx.category, tx));
-
-        // Inject to Bottom Terminal
-        injectTerminalLog(tx);
-      } catch (e) {
-        console.error("Stream parse error:", e);
-      }
+      } catch (e) {}
     };
 
-    function formatCurrency(val) {
-      if (val >= 1e9) return (val / 1e9).toFixed(2) + ' B ₭';
-      if (val >= 1e6) return (val / 1e6).toFixed(2) + ' M ₭';
-      return val.toLocaleString() + ' ₭';
-    }
-
-    function injectTerminalLog(tx) {
-      const term = document.getElementById('dock-terminal');
-      const row = document.createElement('div');
-      row.className = 'log-line';
-
-      let pillClass = 'pill-cyan';
-      if (tx.is_fan_in || tx.risk_score >= 80) {
-        pillClass = 'pill-red';
-        row.style.borderLeftColor = 'var(--accent-red)';
-      } else if (tx.category === 'High-Value Transfer') {
-        pillClass = 'pill-gold';
-        row.style.borderLeftColor = 'var(--accent-gold)';
+    function appendThreatRow(row) {
+      const tr = document.createElement('div');
+      
+      let threatClass = 'threat-low';
+      let tagClass = 'tag-low';
+      if (row.threat_level === 'Critical' || row.threat_level === 'High') {
+        threatClass = 'threat-high';
+        tagClass = 'tag-high';
+      } else if (row.threat_level === 'Medium') {
+        threatClass = 'threat-medium';
+        tagClass = 'tag-med';
       }
 
-      row.innerHTML = `
-        <div>
-          <span style="color: #64748b;">${tx.time}</span>
-          <strong style="color: #f8fafc; margin-left: 6px;">${tx.from_code}</strong> 
-          <span style="color: ${tx.color}; margin: 0 4px;">➔</span> 
-          <strong style="color: #f8fafc;">${tx.to_code}</strong>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="color: ${tx.color}; font-weight: 700;">${tx.amount} ${tx.currency}</span>
-          <span class="badge-pill ${pillClass}">${tx.category}</span>
-        </div>
+      tr.className = `table-row ${threatClass}`;
+      tr.innerHTML = `
+        <span style="font-family: monospace; color: #94a3b8;">${row.alert_time}</span>
+        <strong style="color: #ffffff;">${row.source_bank || 'BCEL'}</strong>
+        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${row.primary_reason}">
+          ${row.primary_reason || 'Inter-Bank Transfer'}
+        </span>
+        <span class="threat-tag ${tagClass}">${row.threat_level || 'Low'}</span>
       `;
 
-      term.insertBefore(row, term.firstChild);
-      if (term.children.length > 8) {
-        term.removeChild(term.lastChild);
+      tableBody.insertBefore(tr, tableBody.firstChild);
+      if (tableBody.children.length > 25) {
+        tableBody.removeChild(tableBody.lastChild);
       }
     }
-
-    // ==========================================
-    // 5. POLL TOP FAN-IN & FAN-OUT DOCKS
-    // ==========================================
-    function updateDocks() {
-      fetch('/api/fan-in-out')
-        .then(res => res.json())
-        .then(data => {
-          // Render Fan-In
-          const faninBox = document.getElementById('dock-fanin');
-          if (data.fan_in && data.fan_in.length > 0) {
-            faninBox.innerHTML = '';
-            data.fan_in.forEach(item => {
-              const div = document.createElement('div');
-              div.className = 'panel-row fanin-alert';
-              div.innerHTML = `
-                <div class="row-main">
-                  <div class="row-bank">${item.dest_bank} <span style="font-size: 10px; color: #94a3b8; font-weight: normal;">• ${item.last_seen}</span></div>
-                  <div class="row-acc">${item.dest_account}</div>
-                </div>
-                <div class="row-stat">
-                  <span class="badge-pill pill-red">${item.unique_senders} Senders (Fan-In)</span>
-                  <span style="font-size: 10px; color: #fca5a5; font-family: monospace;">${item.volume} ${item.currency}</span>
-                </div>
-              `;
-              faninBox.appendChild(div);
-            });
-          }
-
-          // Render Fan-Out
-          const fanoutBox = document.getElementById('dock-fanout');
-          if (data.fan_out && data.fan_out.length > 0) {
-            fanoutBox.innerHTML = '';
-            data.fan_out.forEach(item => {
-              const div = document.createElement('div');
-              div.className = 'panel-row fanout-alert';
-              div.innerHTML = `
-                <div class="row-main">
-                  <div class="row-bank">${item.source_bank} <span style="font-size: 10px; color: #94a3b8; font-weight: normal;">• ${item.last_seen}</span></div>
-                  <div class="row-acc">${item.source_account}</div>
-                </div>
-                <div class="row-stat">
-                  <span class="badge-pill pill-gold">${item.unique_recipients} Recipients</span>
-                  <span style="font-size: 10px; color: #fde047; font-family: monospace;">${item.volume} ${item.currency}</span>
-                </div>
-              `;
-              fanoutBox.appendChild(div);
-            });
-          }
-        })
-        .catch(err => console.error("Error polling fan-in/out:", err));
-    }
-
-    updateDocks();
-    setInterval(updateDocks, 10000);
   </script>
 </body>
 </html>

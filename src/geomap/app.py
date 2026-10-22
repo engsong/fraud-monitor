@@ -2,12 +2,12 @@ import os
 import json
 import time
 from datetime import datetime
-from flask import Flask, render_template, Response, jsonify
+from flask import Flask, render_template, Response, jsonify, send_from_directory
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from src.geomap.coordinates import INSTITUTION_COORDINATES, get_institution_coords
 
-app = Flask(__name__, template_folder="templates")
+app = Flask(__name__, template_folder="templates", static_folder="static")
 
 # DB Config
 DB_HOST = os.getenv("POSTGRES_HOST", "127.0.0.1")
@@ -37,6 +37,10 @@ LARGE_THRESHOLDS = {
 def index():
     return render_template("index.html")
 
+@app.route("/static/<path:filename>")
+def serve_static(filename):
+    return send_from_directory(app.static_folder, filename)
+
 @app.route("/api/nodes")
 def get_nodes():
     nodes = []
@@ -44,11 +48,70 @@ def get_nodes():
         nodes.append({
             "code": code,
             "name": data["name"],
+            "hub": data.get("hub", ""),
             "coords": data["coords"],
             "type": data["type"],
             "country": data["country"]
         })
     return jsonify(nodes)
+
+@app.route("/api/hourly-stats")
+def get_hourly_stats():
+    """Returns hourly volume and alert counts for the last 12-24 hours"""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT 
+                to_char(date_trunc('hour', timestamp), 'HH24:00') AS hour_label,
+                count(*) AS total_tx,
+                count(*) FILTER (WHERE risk_score >= 80) AS alert_tx
+            FROM fraud_monitoring.transactions
+            WHERE timestamp >= NOW() - INTERVAL '24 hours'
+            GROUP BY date_trunc('hour', timestamp)
+            ORDER BY date_trunc('hour', timestamp) ASC;
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify(rows or [])
+    except Exception as e:
+        return jsonify([])
+
+@app.route("/api/recent-alerts")
+def get_recent_alerts():
+    """Returns the latest 15 alerts for the left real-time detection table"""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT 
+                id,
+                to_char(timestamp, 'HH24:MI:SS') AS alert_time,
+                source_bank,
+                source_account,
+                dest_bank,
+                currency,
+                amount,
+                risk_score,
+                reasons[1] AS primary_reason,
+                CASE 
+                    WHEN risk_score >= 85 THEN 'Critical'
+                    WHEN risk_score >= 70 THEN 'High'
+                    WHEN risk_score >= 40 THEN 'Medium'
+                    ELSE 'Low'
+                END AS threat_level
+            FROM fraud_monitoring.transactions
+            WHERE risk_score >= 40 OR array_length(reasons, 1) > 0
+            ORDER BY id DESC
+            LIMIT 18;
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify(rows or [])
+    except Exception as e:
+        return jsonify([])
 
 @app.route("/api/fan-in-out")
 def get_fan_in_out():
@@ -57,7 +120,7 @@ def get_fan_in_out():
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # Top Fan-In (Multiple senders depositing to one destination in the last 15m)
+        # Top Fan-In (Multiple senders depositing to one destination in the last 30m)
         cur.execute("""
             SELECT 
                 dest_bank,
@@ -103,13 +166,13 @@ def get_fan_in_out():
 
         cur.close()
         conn.close()
-        return jsonify({"fan_in": fan_in, "fan_out": fan_out})
+        return jsonify({"fan_in": fan_in or [], "fan_out": fan_out or []})
     except Exception as e:
         return jsonify({"error": str(e), "fan_in": [], "fan_out": []})
 
 @app.route("/api/live-stream")
 def live_stream():
-    """SSE Real-Time Stream for Map Flight Arcs"""
+    """SSE Real-Time Stream for Map Flight Arcs and Table"""
     def generate():
         last_id = 0
         try:
@@ -118,7 +181,7 @@ def live_stream():
             cur.execute("SELECT MAX(id) AS max_id FROM fraud_monitoring.transactions;")
             row = cur.fetchone()
             if row and row["max_id"]:
-                last_id = max(0, row["max_id"] - 10) # Start with recent 10 transactions
+                last_id = max(0, row["max_id"] - 12)
             cur.close()
             conn.close()
         except Exception:
@@ -156,24 +219,28 @@ def live_stream():
                         triggers = r["triggers"] or ""
                         large_limit = LARGE_THRESHOLDS.get(ccy, 50000000.0)
 
-                        # Color determination:
-                        # 🔴 Red: Alert / Mule / Watchlist (Score >= 80 or Mule trigger)
-                        # 🟡 Gold: Large Transfer
-                        # 🔵 Cyan: Cross-border (THB, USD, CNY)
-                        # 🟢 Green: Normal
-                        is_mule = "Mule" in triggers or "Inflow" in triggers
+                        is_mule = "Mule" in triggers or "Inflow" in triggers or "Fan-In" in triggers
+                        
+                        # Color Determination:
+                        # 🔴 Red: Alert / Mule / High Risk
+                        # 🟡 Gold: Large Value
+                        # 🔵 Cyan: Normal / Cross-Border
                         if score >= 80 or is_mule:
-                            color = "#FF2244"
-                            category = "Mule / Fraud Alert"
+                            color = "#ff2244"
+                            category = "Mule / Alert"
+                            threat = "High"
                         elif amt >= large_limit:
-                            color = "#FFD700"
-                            category = "High-Value Transfer"
+                            color = "#ffb800"
+                            category = "High-Value"
+                            threat = "Medium"
                         elif ccy in ["THB", "USD", "CNY"] or src_code in ["ITMX", "NAPAS", "CAMBODIA", "UPI", "e-CNY"] or dst_code in ["ITMX", "NAPAS", "CAMBODIA", "UPI", "e-CNY"]:
-                            color = "#00E5FF"
+                            color = "#00f0ff"
                             category = "Cross-Border FX"
+                            threat = "Low"
                         else:
-                            color = "#00FF88"
-                            category = "Normal Transfer"
+                            color = "#00e5ff"
+                            category = "Inter-Bank"
+                            threat = "Low"
 
                         tx_event = {
                             "id": r["id"],
@@ -184,10 +251,11 @@ def live_stream():
                             "to_coords": dst_coords,
                             "color": color,
                             "category": category,
+                            "threat": threat,
                             "currency": ccy,
                             "amount": f"{amt:,.2f}",
                             "risk_score": score,
-                            "triggers": triggers,
+                            "triggers": triggers or category,
                             "time": r["tx_time"],
                             "is_fan_in": is_mule
                         }
