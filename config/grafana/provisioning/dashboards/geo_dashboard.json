@@ -1,0 +1,229 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "🔙 Back to Fraud Dashboard",
+      "tooltip": "Go to Main Fraud Monitoring Dashboard",
+      "type": "link",
+      "url": "/d/lapnet-fraud-live/lapnet-payment-switch-real-time-fraud-monitor"
+    }
+  ],
+  "liveNow": true,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 18,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "title": "🛰️ Real-Time Geo Money Flow Map & Animated Flight Paths (Fan-In / Fan-Out)",
+      "type": "text",
+      "options": {
+        "mode": "html",
+        "content": "<iframe src=\"http://175.0.198.10:3005\" width=\"100%\" height=\"690px\" style=\"border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: #0b0f19; overflow: hidden;\" frameborder=\"0\"></iframe>"
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 2,
+      "title": "🎯 Top Inbound Mule Targets (Fan-In Analysis)",
+      "type": "table",
+      "datasource": "PostgreSQL-FraudDB",
+      "description": "Destination accounts receiving money from multiple senders within the selected time window.",
+      "targets": [
+        {
+          "datasource": "PostgreSQL-FraudDB",
+          "format": "table",
+          "rawSql": "SELECT dest_bank AS \"Dest Bank\", CASE WHEN length(dest_account) > 28 THEN substring(dest_account from 1 for 16) || '...' || substring(dest_account from length(dest_account)-6) ELSE dest_account END AS \"Beneficiary Account/QR\", count(DISTINCT source_account) AS \"Unique Senders (Fan-In)\", count(*) AS \"Inbound Deposits\", to_char(sum(amount), 'FM999,999,999,990.00') AS \"Total Inflow Volume\", MAX(currency) AS \"Ccy\", to_char(MAX(timestamp), 'HH24:MI:SS') AS \"Last Active (UTC)\" FROM fraud_monitoring.transactions WHERE $__timeFilter(timestamp) GROUP BY dest_bank, dest_account HAVING count(DISTINCT source_account) >= 2 OR count(*) >= 3 ORDER BY \"Unique Senders (Fan-In)\" DESC, \"Inbound Deposits\" DESC LIMIT 15;",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Unique Senders (Fan-In)" },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "text", "value": null },
+                    { "color": "#FF9900", "value": 3 },
+                    { "color": "#E02F44", "value": 6 }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 3,
+      "title": "📤 Top Outbound Dispersers (Fan-Out Analysis)",
+      "type": "table",
+      "datasource": "PostgreSQL-FraudDB",
+      "description": "Source accounts distributing funds to multiple destination accounts within the selected time window.",
+      "targets": [
+        {
+          "datasource": "PostgreSQL-FraudDB",
+          "format": "table",
+          "rawSql": "SELECT source_bank AS \"Source Bank\", CASE WHEN length(source_account) > 28 THEN substring(source_account from 1 for 16) || '...' || substring(source_account from length(source_account)-6) ELSE source_account END AS \"Source Account\", count(DISTINCT dest_account) AS \"Unique Recipients (Fan-Out)\", count(*) AS \"Outbound Transfers\", to_char(sum(amount), 'FM999,999,999,990.00') AS \"Total Outflow Volume\", MAX(currency) AS \"Ccy\", to_char(MAX(timestamp), 'HH24:MI:SS') AS \"Last Active (UTC)\" FROM fraud_monitoring.transactions WHERE $__timeFilter(timestamp) GROUP BY source_bank, source_account HAVING count(DISTINCT dest_account) >= 2 OR count(*) >= 3 ORDER BY \"Unique Recipients (Fan-Out)\" DESC, \"Outbound Transfers\" DESC LIMIT 15;",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Unique Recipients (Fan-Out)" },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "text", "value": null },
+                    { "color": "#FF9900", "value": 3 },
+                    { "color": "#E02F44", "value": 6 }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 4,
+      "title": "🚨 Real-Time High-Risk Geo Corridors & Alerts Feed",
+      "type": "table",
+      "datasource": "PostgreSQL-FraudDB",
+      "targets": [
+        {
+          "datasource": "PostgreSQL-FraudDB",
+          "format": "table",
+          "rawSql": "SELECT to_char(timestamp, 'YYYY-MM-DD HH24:MI:SS') AS \"Time (UTC)\", tx_id AS \"Reference ID\", source_bank || ' ➔ ' || dest_bank AS \"Corridor\", source_bank AS \"From Bank\", source_account AS \"From Account\", dest_bank AS \"To Bank\", dest_account AS \"To Account/QR\", currency AS \"Ccy\", to_char(amount, 'FM999,999,999,990.00') AS \"Amount\", risk_score AS \"Risk Score\", array_to_string(reasons, ', ') AS \"Triggers\", alert_status AS \"Status\" FROM fraud_monitoring.fraud_alerts WHERE $__timeFilter(timestamp) ORDER BY timestamp DESC LIMIT 100;",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Risk Score" },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green", "value": 0 },
+                    { "color": "orange", "value": 50 },
+                    { "color": "red", "value": 80 }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["geo", "fan-in", "fan-out", "switching", "realtime"],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m"]
+  },
+  "timezone": "browser",
+  "title": "LAPNet Payment Switch - Real-Time Geo Money Flow & Fan-In / Fan-Out",
+  "uid": "lapnet-geo-flow",
+  "version": 1
+}

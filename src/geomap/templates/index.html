@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAPNet Switch - Real-Time Geo Money Flow & Fan-In/Out</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background: #0b0f19;
+      color: #e2e8f0;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      background: #06090e;
+      z-index: 1;
+    }
+
+    /* Top HUD Navigation Bar */
+    .hud-topbar {
+      position: absolute;
+      top: 12px;
+      left: 16px;
+      right: 16px;
+      height: 58px;
+      background: rgba(11, 15, 25, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 1000;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      background: #00ff88;
+      border-radius: 50%;
+      box-shadow: 0 0 12px #00ff88;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 20px #00ff88; }
+      100% { transform: scale(0.9); opacity: 0.8; }
+    }
+
+    .brand h1 {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand span.sub {
+      font-size: 11px;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .stats-row {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #94a3b8;
+    }
+
+    .stat-val {
+      font-size: 16px;
+      font-weight: 700;
+      font-family: monospace;
+    }
+
+    .val-green { color: #00ff88; }
+    .val-red { color: #ff2a55; }
+    .val-gold { color: #ffd700; }
+    .val-cyan { color: #00e5ff; }
+
+    /* Legend Box */
+    .legend-box {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 11px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-color {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+    }
+
+    /* Bottom Floating Fan-In / Fan-Out Panels */
+    .hud-panels {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+      display: grid;
+      grid-template-columns: 340px 1fr 340px;
+      gap: 16px;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .panel-card {
+      background: rgba(11, 15, 25, 0.88);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 14px;
+      pointer-events: auto;
+      max-height: 250px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    .panel-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #f1f5f9;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 6px;
+    }
+
+    .panel-list {
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .panel-item {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 6px;
+      padding: 8px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 3px solid #64748b;
+      font-size: 11px;
+    }
+
+    .panel-item.alert-mule {
+      border-left-color: #ff2a55;
+      background: rgba(255, 42, 85, 0.08);
+    }
+
+    .panel-item.fan-out {
+      border-left-color: #ffd700;
+      background: rgba(255, 215, 0, 0.05);
+    }
+
+    .item-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .item-bank {
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .item-acc {
+      font-family: monospace;
+      color: #94a3b8;
+      font-size: 10px;
+    }
+
+    .item-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .badge-count {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: monospace;
+    }
+
+    .badge-red { background: #ff2a55; color: #fff; }
+    .badge-gold { background: #eab308; color: #000; }
+    .badge-blue { background: #0284c7; color: #fff; }
+
+    /* Live Stream Center Ticker */
+    .stream-feed {
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 6px;
+      overflow: hidden;
+    }
+
+    .ticker-row {
+      font-size: 11px;
+      font-family: monospace;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      animation: fadeInRow 0.3s ease-out;
+    }
+
+    @keyframes fadeInRow {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Custom Leaflet Map styling */
+    .leaflet-container {
+      background: #080c14 !important;
+    }
+
+    .bank-marker-label {
+      background: rgba(11, 15, 25, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #f8fafc;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      pointer-events: none;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top HUD Bar -->
+  <div class="hud-topbar">
+    <div class="brand">
+      <div class="pulse-dot"></div>
+      <h1>LAPNET SWITCH <span style="font-weight: 400; color: #94a3b8;">|</span> REAL-TIME GEO MONEY FLOW</h1>
+      <span class="sub">LMPS Core Streaming</span>
+    </div>
+
+    <!-- Color Legend -->
+    <div class="legend-box">
+      <div class="legend-item">
+        <div class="legend-color" style="background: #ff2a55; box-shadow: 0 0 6px #ff2a55;"></div>
+        <span>Mule / Alert (Fan-In)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #ffd700; box-shadow: 0 0 6px #ffd700;"></div>
+        <span>High-Value Transfer</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #00e5ff; box-shadow: 0 0 6px #00e5ff;"></div>
+        <span>Cross-Border (THB/USD/CNY)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #00ff88; box-shadow: 0 0 6px #00ff88;"></div>
+        <span>Normal Inter-Bank</span>
+      </div>
+    </div>
+
+    <!-- Real-Time Metrics -->
+    <div class="stats-row">
+      <div class="stat-item">
+        <span class="stat-label">Active Arcs</span>
+        <span id="stat-active-arcs" class="stat-val val-cyan">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Mule / Fan-In Alerts</span>
+        <span id="stat-mule-alerts" class="stat-val val-red">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Streamed Txns</span>
+        <span id="stat-total-tx" class="stat-val val-green">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map Container -->
+  <div id="map"></div>
+
+  <!-- Bottom HUD Panels -->
+  <div class="hud-panels">
+    <!-- Panel 1: Fan-In Mule Collector Watch -->
+    <div class="panel-card">
+      <div class="panel-title">
+        <span>🎯 TOP FAN-IN HUBS (Mule Accounts)</span>
+        <span style="font-size: 10px; color: #ff2a55; font-weight: normal;">Multiple Senders Inflow</span>
+      </div>
+      <div id="fan-in-list" class="panel-list">
+        <div style="font-size: 11px; color: #64748b; text-align: center; margin-top: 20px;">Scanning incoming deposits...</div>
+      </div>
+    </div>
+
+    <!-- Panel 2: Real-Time Flow Feed Ticker -->
+    <div class="panel-card">
+      <div class="panel-title">
+        <span>🛰️ LIVE INTER-BANK SWITCHING STREAM</span>
+        <span id="stream-rate" style="font-size: 10px; color: #00ff88;">LIVE</span>
+      </div>
+      <div id="live-stream-ticker" class="panel-list stream-feed">
+        <!-- Live rows dynamically injected here -->
+      </div>
+    </div>
+
+    <!-- Panel 3: Fan-Out Velocity Watch -->
+    <div class="panel-card">
+      <div class="panel-title">
+        <span>📤 TOP FAN-OUT DISPERSERS</span>
+        <span style="font-size: 10px; color: #ffd700; font-weight: normal;">High Outbound Frequency</span>
+      </div>
+      <div id="fan-out-list" class="panel-list">
+        <div style="font-size: 11px; color: #64748b; text-align: center; margin-top: 20px;">Tracking outbound velocity...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // 1. Initialize Map
+    const map = L.map('map', {
+      center: [17.8, 103.2], // Center around Laos & Mekong Region
+      zoom: 7,
+      minZoom: 4,
+      maxZoom: 16,
+      zoomControl: false,
+      attributionControl: false
+    });
+
+    // Dark Matter Tiles (High-Tech Dark Theme)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd',
+      maxZoom: 19
+    }).addTo(map);
+
+    // Zoom control on top-right
+    L.control.zoom({ position: 'topright' }).addTo(map);
+
+    // 2. Custom Canvas Layer for Animated Flight Arcs & Shockwave Ripples
+    const canvasOverlay = document.createElement('canvas');
+    canvasOverlay.style.position = 'absolute';
+    canvasOverlay.style.top = '0';
+    canvasOverlay.style.left = '0';
+    canvasOverlay.style.width = '100%';
+    canvasOverlay.style.height = '100%';
+    canvasOverlay.style.pointerEvents = 'none';
+    canvasOverlay.style.zIndex = '500';
+    document.getElementById('map').appendChild(canvasOverlay);
+
+    const ctx = canvasOverlay.getContext('2d');
+
+    function resizeCanvas() {
+      canvasOverlay.width = window.innerWidth;
+      canvasOverlay.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Flight Arcs State
+    let activeArcs = [];
+    let shockwaves = [];
+    let institutionNodes = {};
+
+    // 3. Load Institution Nodes
+    fetch('/api/nodes')
+      .then(res => res.json())
+      .then(nodes => {
+        nodes.forEach(node => {
+          institutionNodes[node.code] = node;
+
+          // Add glowing marker
+          const latLng = [node.coords[1], node.coords[0]];
+          
+          let markerColor = '#00e5ff';
+          if (node.type === 'switch') markerColor = '#ffffff';
+          if (node.type === 'wallet') markerColor = '#ffd700';
+          if (node.type === 'cross_border') markerColor = '#a855f7';
+
+          const circle = L.circleMarker(latLng, {
+            radius: node.type === 'switch' ? 8 : (node.type === 'cross_border' ? 6 : 5),
+            color: markerColor,
+            fillColor: markerColor,
+            fillOpacity: 0.8,
+            weight: 2
+          }).addTo(map);
+
+          circle.bindTooltip(node.code, {
+            permanent: true,
+            direction: 'top',
+            className: 'bank-marker-label',
+            offset: [0, -8]
+          });
+        });
+      });
+
+    // 4. Arc Class (Parabolic curved flight path)
+    class FlightArc {
+      constructor(fromCoords, toCoords, color, category, txData) {
+        this.fromCoords = fromCoords; // [lon, lat]
+        this.toCoords = toCoords;     // [lon, lat]
+        this.color = color;
+        this.category = category;
+        this.txData = txData;
+        this.progress = 0;
+        this.speed = 0.015 + Math.random() * 0.01; // Flight speed
+        this.isDone = false;
+        this.trail = [];
+      }
+
+      update() {
+        this.progress += this.speed;
+        if (this.progress >= 1) {
+          this.isDone = true;
+          // Spawn shockwave ripple at destination
+          shockwaves.push(new Shockwave(this.toCoords, this.color, this.txData.is_fan_in));
+        }
+      }
+
+      draw() {
+        // Project LatLng to Screen Pixels
+        const p1 = map.latLngToContainerPoint([this.fromCoords[1], this.fromCoords[0]]);
+        const p2 = map.latLngToContainerPoint([this.toCoords[1], this.toCoords[0]]);
+
+        // Calculate Curved Control Point
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        // Arc height proportional to distance
+        const curvature = Math.min(dist * 0.25, 80);
+        const midX = (p1.x + p2.x) / 2 - (dy / dist) * curvature;
+        const midY = (p1.y + p2.y) / 2 + (dx / dist) * curvature;
+
+        // Draw faint base trajectory
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.quadraticCurveTo(midX, midY, p2.x, p2.y);
+        ctx.strokeStyle = this.color + '22'; // 15% opacity
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Calculate Current Head Position on Quadratic Curve
+        const t = Math.min(1, Math.max(0, this.progress));
+        const headX = (1 - t) * (1 - t) * p1.x + 2 * (1 - t) * t * midX + t * t * p2.x;
+        const headY = (1 - t) * (1 - t) * p1.y + 2 * (1 - t) * t * midY + t * t * p2.y;
+
+        // Draw animated glowing flight head and tail
+        ctx.beginPath();
+        ctx.arc(headX, headY, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        ctx.shadowBlur = 0; // reset
+
+        // Draw glowing particle trail
+        const trailT = Math.max(0, t - 0.15);
+        const tailX = (1 - trailT) * (1 - trailT) * p1.x + 2 * (1 - trailT) * trailT * midX + trailT * trailT * p2.x;
+        const tailY = (1 - trailT) * (1 - trailT) * p1.y + 2 * (1 - trailT) * trailT * midY + trailT * trailT * p2.y;
+
+        ctx.beginPath();
+        ctx.moveTo(tailX, tailY);
+        ctx.quadraticCurveTo(midX, midY, headX, headY);
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 8;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    // 5. Shockwave Ripple Class
+    class Shockwave {
+      constructor(coords, color, isFanIn) {
+        this.coords = coords;
+        this.color = color;
+        this.isFanIn = isFanIn;
+        this.radius = 2;
+        this.maxRadius = isFanIn ? 45 : 25;
+        this.alpha = 1.0;
+        this.isDone = false;
+      }
+
+      update() {
+        this.radius += 1.2;
+        this.alpha -= 0.035;
+        if (this.alpha <= 0) {
+          this.isDone = true;
+        }
+      }
+
+      draw() {
+        const p = map.latLngToContainerPoint([this.coords[1], this.coords[0]]);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, this.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = this.color;
+        ctx.globalAlpha = Math.max(0, this.alpha);
+        ctx.lineWidth = this.isFanIn ? 3 : 1.5;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 10;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1.0;
+      }
+    }
+
+    // 6. Animation Loop (60 FPS)
+    function animate() {
+      ctx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
+
+      // Update & Draw Arcs
+      for (let i = activeArcs.length - 1; i >= 0; i--) {
+        const arc = activeArcs[i];
+        arc.update();
+        arc.draw();
+        if (arc.isDone) {
+          activeArcs.splice(i, 1);
+        }
+      }
+
+      // Update & Draw Shockwaves
+      for (let i = shockwaves.length - 1; i >= 0; i--) {
+        const wave = shockwaves[i];
+        wave.update();
+        wave.draw();
+        if (wave.isDone) {
+          shockwaves.splice(i, 1);
+        }
+      }
+
+      document.getElementById('stat-active-arcs').innerText = activeArcs.length;
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+    map.on('move', () => {
+      // Re-render when zooming or panning
+    });
+
+    // 7. Connect to Real-Time SSE Stream
+    let totalTxCount = 0;
+    let muleAlertCount = 0;
+
+    const eventSource = new EventSource('/api/live-stream');
+
+    eventSource.onmessage = function(event) {
+      try {
+        const tx = JSON.parse(event.data);
+        totalTxCount++;
+        document.getElementById('stat-total-tx').innerText = totalTxCount.toLocaleString();
+
+        if (tx.is_fan_in || tx.risk_score >= 80) {
+          muleAlertCount++;
+          document.getElementById('stat-mule-alerts').innerText = muleAlertCount.toLocaleString();
+        }
+
+        // Add flight arc
+        activeArcs.push(new FlightArc(tx.from_coords, tx.to_coords, tx.color, tx.category, tx));
+
+        // Append to center live ticker
+        appendLiveTicker(tx);
+      } catch (e) {
+        console.error("Error parsing live transaction:", e);
+      }
+    };
+
+    function appendLiveTicker(tx) {
+      const feed = document.getElementById('live-stream-ticker');
+      const row = document.createElement('div');
+      row.className = 'ticker-row';
+
+      let badgeClass = 'badge-blue';
+      if (tx.is_fan_in || tx.risk_score >= 80) badgeClass = 'badge-red';
+      else if (tx.category === 'High-Value Transfer') badgeClass = 'badge-gold';
+
+      row.innerHTML = `
+        <div>
+          <span style="color: #94a3b8;">${tx.time}</span>
+          <strong style="color: #fff; margin-left: 6px;">${tx.from_code}</strong> 
+          <span style="color: ${tx.color};">➔</span> 
+          <strong style="color: #fff;">${tx.to_code}</strong>
+        </div>
+        <div>
+          <span style="color: ${tx.color}; font-weight: bold; margin-right: 8px;">${tx.amount} ${tx.currency}</span>
+          <span class="badge-count ${badgeClass}">${tx.category}</span>
+        </div>
+      `;
+
+      feed.insertBefore(row, feed.firstChild);
+      if (feed.children.length > 8) {
+        feed.removeChild(feed.lastChild);
+      }
+    }
+
+    // 8. Poll Top Fan-In / Fan-Out Panels (Every 10 seconds)
+    function fetchFanInOut() {
+      fetch('/api/fan-in-out')
+        .then(res => res.json())
+        .then(data => {
+          // Render Fan-In
+          const inList = document.getElementById('fan-in-list');
+          if (data.fan_in && data.fan_in.length > 0) {
+            inList.innerHTML = '';
+            data.fan_in.forEach(item => {
+              const div = document.createElement('div');
+              div.className = 'panel-item alert-mule';
+              div.innerHTML = `
+                <div class="item-left">
+                  <div class="item-bank">${item.dest_bank} <span style="font-size: 10px; color: #94a3b8;">(${item.last_seen})</span></div>
+                  <div class="item-acc">${item.dest_account}</div>
+                </div>
+                <div class="item-right">
+                  <span class="badge-count badge-red">${item.unique_senders} Senders (Fan-In)</span>
+                  <span style="font-size: 10px; color: #f87171;">${item.volume} ${item.currency}</span>
+                </div>
+              `;
+              inList.appendChild(div);
+            });
+          }
+
+          // Render Fan-Out
+          const outList = document.getElementById('fan-out-list');
+          if (data.fan_out && data.fan_out.length > 0) {
+            outList.innerHTML = '';
+            data.fan_out.forEach(item => {
+              const div = document.createElement('div');
+              div.className = 'panel-item fan-out';
+              div.innerHTML = `
+                <div class="item-left">
+                  <div class="item-bank">${item.source_bank} <span style="font-size: 10px; color: #94a3b8;">(${item.last_seen})</span></div>
+                  <div class="item-acc">${item.source_account}</div>
+                </div>
+                <div class="item-right">
+                  <span class="badge-count badge-gold">${item.unique_recipients} Recipients</span>
+                  <span style="font-size: 10px; color: #fde047;">${item.volume} ${item.currency}</span>
+                </div>
+              `;
+              outList.appendChild(div);
+            });
+          }
+        })
+        .catch(err => console.error("Error fetching Fan-In/Out data:", err));
+    }
+
+    fetchFanInOut();
+    setInterval(fetchFanInOut, 10000);
+  </script>
+</body>
+</html>

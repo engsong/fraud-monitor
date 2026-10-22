@@ -1,0 +1,20 @@
+[Unit]
+Description=LAPNet Switching Real-Time Geo Money Flow & Fan-In/Out Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/LAPNet/Fraud-monitor
+Environment=PYTHONPATH=/root/LAPNet/Fraud-monitor
+Environment=POSTGRES_HOST=127.0.0.1
+Environment=POSTGRES_PORT=5432
+Environment=POSTGRES_USER=lev
+Environment=POSTGRES_PASSWORD=LEV@2026
+Environment=POSTGRES_DB=lapnet_fraud_db
+ExecStart=/root/LAPNet/Fraud-monitor/venv/bin/python -m src.geomap.app
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

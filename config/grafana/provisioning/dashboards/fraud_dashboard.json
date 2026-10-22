@@ -5,9 +5,20 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": null,
-  "links": [],
-  "liveNow": true,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "globe",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "🛰️ Real-Time Geo Map (Fan-In/Out)",
+      "tooltip": "Switch to Real-Time Geo Money Flow & Fan-In/Out Map",
+      "type": "link",
+      "url": "/d/lapnet-geo-flow/lapnet-payment-switch-real-time-geo-money-flow"
+    }
+  ],
   "panels": [
     {
       "collapsed": false,

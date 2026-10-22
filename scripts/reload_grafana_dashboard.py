@@ -2,10 +2,15 @@ import json
 import urllib.request
 import os
 
-DASHBOARD_PATH = os.path.join(os.path.dirname(__file__), "..", "config", "grafana", "provisioning", "dashboards", "fraud_dashboard.json")
+DASHBOARDS_DIR = os.path.join(os.path.dirname(__file__), "..", "config", "grafana", "provisioning", "dashboards")
 
-def reload_dashboard():
-    with open(DASHBOARD_PATH, "r", encoding="utf-8") as f:
+def reload_dashboard(filename):
+    path = os.path.join(DASHBOARDS_DIR, filename)
+    if not os.path.exists(path):
+        print(f"File {path} not found.")
+        return
+
+    with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     payload = {
@@ -26,9 +31,10 @@ def reload_dashboard():
     try:
         with urllib.request.urlopen(req) as response:
             res_body = response.read().decode("utf-8")
-            print("Successfully updated Grafana dashboard:", res_body)
+            print(f"Successfully updated Grafana dashboard ({filename}):", res_body)
     except Exception as e:
-        print("Error updating dashboard:", e)
+        print(f"Error updating dashboard ({filename}):", e)
 
 if __name__ == "__main__":
-    reload_dashboard()
+    reload_dashboard("fraud_dashboard.json")
+    reload_dashboard("geo_dashboard.json")
