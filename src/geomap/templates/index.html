@@ -1533,62 +1533,49 @@
     }
 
     // Complete Roster of 37 National & Regional Member Institutions + LAPNET Core
-    // Mapped from live dual-node VM1 (175.2.0.23) and VM2 (175.2.0.24) switching ingestion
+    // Mapped with Strictly Unique Radial Angles (0-360 deg) for Clean, Non-Overlapping Lines
     const STATIONS = {
       // Central Switching Core
-      "LAPNET": { x: 0.50, y: 0.50, label: "LAPNET SWITCH CORE", isHub: true, color: "#ffffff", category: "hub", fullName: "Lao National Payment Network Core" },
+      "LAPNET": { x: 0.50, y: 0.50, angle: 0, label: "LAPNET SWITCH CORE", isHub: true, color: "#ffffff", category: "hub", fullName: "Lao National Payment Network Core" },
 
-      // Cross-Border Regional Switching Gateways (5 Perimeter Gateways)
-      "UPI": { x: 0.06, y: 0.10, label: "UNIONPAY (CN)", color: "#ff9900", category: "cross", fullName: "UnionPay International Gateway (China)" },
-      "e-CNY": { x: 0.50, y: 0.07, label: "e-CNY (CN)", color: "#ff9900", category: "cross", fullName: "Digital Yuan e-CNY Hub (China)" },
-      "NAPAS": { x: 0.94, y: 0.10, label: "NAPAS (VN)", color: "#ff9900", category: "cross", fullName: "NAPAS Switching Network (Vietnam)" },
-      "ITMX": { x: 0.06, y: 0.90, label: "ITMX (TH)", color: "#ff9900", category: "cross", fullName: "PromptPay ITMX Thailand Gateway" },
-      "BAKONG": { x: 0.94, y: 0.90, label: "BAKONG (KH)", color: "#ff9900", category: "cross", fullName: "National Bank of Cambodia Bakong Gateway" },
-
-      // ================= INNER RING: TOP 12 VOLUME CLEARING HUBS =================
-      "BCEL": { x: 0.28, y: 0.50, label: "BCEL HQ", color: "#00f2fe", category: "banks", tier: "inner", fullName: "Banque Pour Le Commerce Exterieur Lao" },
-      "JDB": { x: 0.31, y: 0.36, label: "JDB BANK", color: "#00e5ff", category: "banks", tier: "inner", fullName: "Joint Development Bank" },
-      "LDB": { x: 0.38, y: 0.25, label: "LDB NORTH", color: "#26c6da", category: "banks", tier: "inner", fullName: "Lao Development Bank" },
-      "APB": { x: 0.50, y: 0.22, label: "APB BANK", color: "#4dd0e1", category: "banks", tier: "inner", fullName: "Agricultural Promotion Bank" },
-      "LFX": { x: 0.62, y: 0.25, label: "LAO FX", color: "#69f0ae", category: "wallets", tier: "inner", fullName: "Lao Foreign Exchange Clearing" },
-      "PSV": { x: 0.69, y: 0.36, label: "PSV BANK", color: "#4facfe", category: "banks", tier: "inner", fullName: "Phongsavanh Bank" },
-      "LVB": { x: 0.72, y: 0.50, label: "LVB BANK", color: "#00c6ff", category: "banks", tier: "inner", fullName: "Lao-Viet Bank" },
-      "ACLE": { x: 0.69, y: 0.64, label: "ACLEDA", color: "#00b0ff", category: "banks", tier: "inner", fullName: "ACLEDA Bank Lao" },
-      "IDB": { x: 0.62, y: 0.75, label: "IDB BANK", color: "#29b6f6", category: "banks", tier: "inner", fullName: "Indochina Bank" },
-      "UMONEY": { x: 0.50, y: 0.78, label: "U-MONEY", color: "#00e676", category: "wallets", tier: "inner", fullName: "Star Telecom (U-Money Mobile Wallet)" },
-      "MMONEY": { x: 0.38, y: 0.75, label: "M-MONEY", color: "#00e676", category: "wallets", tier: "inner", fullName: "Lao Telecom (M-Money Mobile Wallet)" },
-      "MOFPAY": { x: 0.31, y: 0.64, label: "MOFPAY", color: "#ffd700", category: "gov", tier: "inner", fullName: "Ministry of Finance Treasury Pay" },
-
-      // ================= OUTER RING: COMMERCIAL, FOREIGN, FINTECH & GOV =================
-      // North Sector (Foreign & Commercial Banks)
-      "BOC": { x: 0.32, y: 0.15, label: "BOC CHINA", color: "#80d8ff", category: "banks", tier: "outer", fullName: "Bank of China Vientiane" },
-      "ICBC": { x: 0.42, y: 0.13, label: "ICBC BANK", color: "#80d8ff", category: "banks", tier: "outer", fullName: "Industrial & Commercial Bank of China" },
-      "KBANK": { x: 0.58, y: 0.13, label: "KASIKORN", color: "#80d8ff", category: "banks", tier: "outer", fullName: "Kasikornbank Lao" },
-      "LBB": { x: 0.68, y: 0.15, label: "LBB CHINA", color: "#80d8ff", category: "banks", tier: "outer", fullName: "Lao-China Bank" },
-      "STB": { x: 0.78, y: 0.20, label: "STB BANK", color: "#80deea", category: "banks", tier: "outer", fullName: "ST Bank" },
-
-      // East Sector (Commercial & International Banks)
-      "VTB": { x: 0.83, y: 0.34, label: "MB LAOS", color: "#82b1ff", category: "banks", tier: "outer", fullName: "Military Commercial Joint Stock Bank (MB Laos)" },
-      "SACOM": { x: 0.84, y: 0.48, label: "SACOMBANK", color: "#82b1ff", category: "banks", tier: "outer", fullName: "Sacombank Lao" },
-      "VCBLAO": { x: 0.83, y: 0.62, label: "VIETCOMBANK", color: "#82b1ff", category: "banks", tier: "outer", fullName: "Vietcombank Lao" },
-      "MJB": { x: 0.78, y: 0.76, label: "MJB BANK", color: "#00bfa5", category: "banks", tier: "outer", fullName: "Maruhan Japan Bank Lao" },
-
-      // South Sector (Commercial Banks, Wallets & Gov Portals)
-      "BIC": { x: 0.68, y: 0.85, label: "BIC BANK", color: "#26a69a", category: "banks", tier: "outer", fullName: "BIC Bank Lao" },
-      "VMB": { x: 0.58, y: 0.87, label: "VIETINBANK", color: "#26c6da", category: "banks", tier: "outer", fullName: "VietinBank Lao" },
-      "LOCAPAY": { x: 0.42, y: 0.87, label: "LOCAPAY", color: "#69f0ae", category: "wallets", tier: "outer", fullName: "LocaPay Tech FinTech Hub" },
-      "EASYTAX": { x: 0.32, y: 0.85, label: "EASYTAX", color: "#ffd700", category: "gov", tier: "outer", fullName: "National EasyTax Customs & Tax Portal" },
-      "LNSW": { x: 0.22, y: 0.78, label: "LNSW", color: "#ffd700", category: "gov", tier: "outer", fullName: "Lao National Single Window Gateway" },
-
-      // West Sector (Commercial & Foreign Banks)
-      "PBLL": { x: 0.18, y: 0.64, label: "PUBLIC BANK", color: "#80d8ff", category: "banks", tier: "outer", fullName: "Public Bank Berhad Lao" },
-      "LCNB": { x: 0.16, y: 0.50, label: "LCNB BANK", color: "#26c6da", category: "banks", tier: "outer", fullName: "Lao Construction Bank" },
-      "BFL": { x: 0.18, y: 0.36, label: "BFL BRED", color: "#26c6da", category: "banks", tier: "outer", fullName: "BFL BRED Group" },
-
-      // FinTech Satellites
-      "FINPASS": { x: 0.22, y: 0.22, label: "FINPASS", color: "#69f0ae", category: "wallets", tier: "outer", fullName: "FinPass Payment Gateway" },
-      "FINLINK": { x: 0.86, y: 0.56, label: "FINLINK", color: "#69f0ae", category: "wallets", tier: "outer", fullName: "FinLink Digital Gateway" },
-      "FINA": { x: 0.74, y: 0.27, label: "FINA", color: "#69f0ae", category: "wallets", tier: "outer", fullName: "Fina FinTech Hub (LBB)" }
+      // All 37 National & Regional Member Institutions (Strictly Unique Angles - Zero Overlapping Lines!)
+      "LVB": { x: 0.880, y: 0.500, angle: 0, label: "LVB BANK", color: "#00c6ff", category: "banks", tier: "outer", fullName: "Lao-Viet Bank" },
+      "PSV": { x: 0.717, y: 0.462, angle: 9, label: "PSV BANK", color: "#4facfe", category: "banks", tier: "inner", fullName: "Phongsavanh Bank" },
+      "STB": { x: 0.861, y: 0.383, angle: 18, label: "STB BANK", color: "#80deea", category: "banks", tier: "outer", fullName: "ST Bank" },
+      "FINA": { x: 0.694, y: 0.387, angle: 28, label: "FINA", color: "#69f0ae", category: "wallets", tier: "inner", fullName: "Fina FinTech Hub (LBB)" },
+      "NAPAS": { x: 0.847, y: 0.241, angle: 38, label: "NAPAS (VN)", color: "#ff9900", category: "cross", tier: "outer_far", fullName: "NAPAS Vietnam Switch Gateway" },
+      "LBB": { x: 0.744, y: 0.209, angle: 50, label: "LBB CHINA", color: "#80d8ff", category: "banks", tier: "outer", fullName: "Lao-China Bank" },
+      "LFX": { x: 0.603, y: 0.288, angle: 62, label: "LAO FX", color: "#69f0ae", category: "wallets", tier: "inner", fullName: "Lao Foreign Exchange Clearing" },
+      "KBANK": { x: 0.617, y: 0.139, angle: 72, label: "KASIKORN", color: "#80d8ff", category: "banks", tier: "outer", fullName: "Kasikornbank Lao" },
+      "APB": { x: 0.531, y: 0.262, angle: 82, label: "APB BANK", color: "#4dd0e1", category: "banks", tier: "inner", fullName: "Agricultural Promotion Bank" },
+      "e-CNY": { x: 0.469, y: 0.081, angle: 94, label: "e-CNY (CN)", color: "#ff9900", category: "cross", tier: "outer_far", fullName: "Digital Yuan e-CNY Hub (China)" },
+      "ICBC": { x: 0.395, y: 0.135, angle: 106, label: "ICBC BANK", color: "#80d8ff", category: "banks", tier: "outer", fullName: "Industrial & Commercial Bank of China" },
+      "BOC": { x: 0.397, y: 0.288, angle: 118, label: "BOC CHINA", color: "#80d8ff", category: "banks", tier: "inner", fullName: "Bank of China Vientiane" },
+      "LDB": { x: 0.266, y: 0.201, angle: 128, label: "LDB NORTH", color: "#26c6da", category: "banks", tier: "outer", fullName: "Lao Development Bank" },
+      "FINPASS": { x: 0.342, y: 0.333, angle: 136, label: "FINPASS", color: "#69f0ae", category: "wallets", tier: "inner", fullName: "FinPass Payment Gateway" },
+      "UPI": { x: 0.153, y: 0.241, angle: 142, label: "UNIONPAY (CN)", color: "#ff9900", category: "cross", tier: "outer_far", fullName: "UnionPay International Gateway" },
+      "BFL": { x: 0.171, y: 0.310, angle: 150, label: "BFL BRED", color: "#26c6da", category: "banks", tier: "outer", fullName: "BFL BRED Group" },
+      "JDB": { x: 0.296, y: 0.410, angle: 158, label: "JDB BANK", color: "#00e5ff", category: "banks", tier: "inner", fullName: "Joint Development Bank" },
+      "LCNB": { x: 0.128, y: 0.421, angle: 168, label: "LCNB BANK", color: "#26c6da", category: "banks", tier: "outer", fullName: "Lao Construction Bank" },
+      "BCEL": { x: 0.280, y: 0.492, angle: 178, label: "BCEL HQ", color: "#00f2fe", category: "banks", tier: "inner", fullName: "Banque Pour Le Commerce Exterieur Lao" },
+      "PBLL": { x: 0.124, y: 0.553, angle: 188, label: "PUBLIC BANK", color: "#80d8ff", category: "banks", tier: "outer", fullName: "Public Bank Berhad Lao" },
+      "MOFPAY": { x: 0.291, y: 0.574, angle: 198, label: "MOFPAY", color: "#ffd700", category: "gov", tier: "inner", fullName: "Ministry of Finance Treasury Pay" },
+      "LNSW": { x: 0.164, y: 0.678, angle: 208, label: "LNSW", color: "#ffd700", category: "gov", tier: "outer", fullName: "Lao National Single Window Gateway" },
+      "ITMX": { x: 0.153, y: 0.759, angle: 218, label: "ITMX (TH)", color: "#ff9900", category: "cross", tier: "outer_far", fullName: "PromptPay ITMX Thailand Gateway" },
+      "EASYTAX": { x: 0.347, y: 0.673, angle: 226, label: "EASYTAX", color: "#ffd700", category: "gov", tier: "inner", fullName: "National EasyTax Customs & Tax Portal" },
+      "MMONEY": { x: 0.277, y: 0.807, angle: 234, label: "M-MONEY", color: "#00e676", category: "wallets", tier: "outer", fullName: "Lao Telecom (M-Money Mobile Wallet)" },
+      "LOCAPAY": { x: 0.404, y: 0.716, angle: 244, label: "LOCAPAY", color: "#69f0ae", category: "wallets", tier: "inner", fullName: "LocaPay Tech FinTech Hub" },
+      "VMB": { x: 0.395, y: 0.865, angle: 254, label: "VIETINBANK", color: "#26c6da", category: "banks", tier: "outer", fullName: "VietinBank Lao" },
+      "UMONEY": { x: 0.477, y: 0.739, angle: 264, label: "U-MONEY", color: "#00e676", category: "wallets", tier: "inner", fullName: "Star Telecom (U-Money Mobile Wallet)" },
+      "BIC": { x: 0.513, y: 0.880, angle: 272, label: "BIC BANK", color: "#26a69a", category: "banks", tier: "outer", fullName: "BIC Bank Lao" },
+      "IDB": { x: 0.546, y: 0.735, angle: 282, label: "IDB BANK", color: "#29b6f6", category: "banks", tier: "inner", fullName: "Indochina Bank" },
+      "MJB": { x: 0.642, y: 0.852, angle: 292, label: "MJB BANK", color: "#00bfa5", category: "banks", tier: "outer", fullName: "Maruhan Japan Bank Lao" },
+      "ACLE": { x: 0.617, y: 0.704, angle: 302, label: "ACLEDA", color: "#00b0ff", category: "banks", tier: "inner", fullName: "ACLEDA Bank Lao" },
+      "VCBLAO": { x: 0.754, y: 0.782, angle: 312, label: "VIETCOMBANK", color: "#82b1ff", category: "banks", tier: "outer", fullName: "Vietcombank Lao" },
+      "BAKONG": { x: 0.847, y: 0.759, angle: 322, label: "BAKONG (KH)", color: "#ff9900", category: "cross", tier: "outer_far", fullName: "National Bank of Cambodia Bakong Gateway" },
+      "FINLINK": { x: 0.694, y: 0.613, angle: 332, label: "FINLINK", color: "#69f0ae", category: "wallets", tier: "inner", fullName: "FinLink Digital Gateway" },
+      "VTB": { x: 0.861, y: 0.617, angle: 342, label: "MB LAOS", color: "#82b1ff", category: "banks", tier: "outer", fullName: "Military Commercial Joint Stock Bank (MB Laos)" },
+      "SACOM": { x: 0.717, y: 0.538, angle: 351, label: "SACOMBANK", color: "#82b1ff", category: "banks", tier: "inner", fullName: "Sacombank Lao" }
     };
 
     // Calculate actual pixel position with guaranteed safe margins so NO bank is EVER clipped off
@@ -1899,21 +1886,35 @@
             ctx.shadowBlur = 0;
           }
         } else {
-          // Standard Dedicated Bank Line to LAPNet
+          // Standard Dedicated Bank Line to LAPNet with Sleek Cyber Circuit Glow
           ctx.globalAlpha = isDimmed ? 0.08 : 1.0;
+
+          // Outer subtle aura
           ctx.beginPath();
           ctx.moveTo(sp.x, sp.y);
           ctx.lineTo(lapnetP.x, lapnetP.y);
-          ctx.strokeStyle = track.color + '22';
-          ctx.lineWidth = 4;
+          ctx.strokeStyle = track.color + '18';
+          ctx.lineWidth = 3.5;
           ctx.stroke();
 
+          // Core fiber line
           ctx.beginPath();
           ctx.moveTo(sp.x, sp.y);
           ctx.lineTo(lapnetP.x, lapnetP.y);
-          ctx.strokeStyle = track.color + '77';
-          ctx.lineWidth = 1.4;
+          ctx.strokeStyle = track.color + '66';
+          ctx.lineWidth = 1.3;
           ctx.stroke();
+
+          // Subtle station junction tick on the line near station
+          ctx.beginPath();
+          const tickT = 0.88;
+          const tx = lapnetP.x + (sp.x - lapnetP.x) * tickT;
+          const ty = lapnetP.y + (sp.y - lapnetP.y) * tickT;
+          ctx.arc(tx, ty, 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = track.color;
+          ctx.globalAlpha = isDimmed ? 0.1 : 0.6;
+          ctx.fill();
+
           ctx.globalAlpha = 1.0;
         }
       });
@@ -2016,29 +2017,44 @@
           ctx.font = `${isInner || isCross ? '700' : '600'} ${fontSize}px "JetBrains Mono", monospace`;
           ctx.fillStyle = isRoadSrc ? '#00f2fe' : (isRoadDst ? '#00e676' : (isDimmed ? '#546e7a' : (isCross ? '#ffb74d' : '#e0e0e0')));
 
-          // Position label gracefully based on position relative to center
+          // Dynamic Label Position using the station's exact angle
+          const ang = s.angle !== undefined ? s.angle : 0;
           let textX, textY;
-          if (s.x > 0.54) {
-            textX = p.x + r + 5;
+
+          if (ang >= 340 || ang <= 20) {
+            textX = p.x + r + 6;
             textY = p.y + 3;
             ctx.textAlign = 'left';
-            if (s.x > 0.85) {
-              textX = p.x - r - 5;
-              ctx.textAlign = 'right';
-            }
-          } else if (s.x < 0.46) {
+          } else if (ang > 20 && ang < 75) {
+            textX = p.x + r + 5;
+            textY = p.y + 2;
+            ctx.textAlign = 'left';
+          } else if (ang >= 75 && ang <= 105) {
+            textX = p.x;
+            textY = p.y - r - 6;
+            ctx.textAlign = 'center';
+          } else if (ang > 105 && ang < 160) {
+            textX = p.x - r - 5;
+            textY = p.y + 2;
+            ctx.textAlign = 'right';
+          } else if (ang >= 160 && ang <= 200) {
+            textX = p.x - r - 6;
+            textY = p.y + 3;
+            ctx.textAlign = 'right';
+          } else if (ang > 200 && ang < 255) {
             textX = p.x - r - 5;
             textY = p.y + 3;
             ctx.textAlign = 'right';
-            if (s.x < 0.15) {
-              textX = p.x + r + 5;
-              ctx.textAlign = 'left';
-            }
-          } else {
+          } else if (ang >= 255 && ang <= 285) {
             textX = p.x;
-            textY = s.y < 0.5 ? p.y - r - 5 : p.y + r + 10;
+            textY = p.y + r + 11;
             ctx.textAlign = 'center';
+          } else {
+            textX = p.x + r + 5;
+            textY = p.y + 3;
+            ctx.textAlign = 'left';
           }
+
           ctx.fillText(s.label, textX, textY);
           ctx.textAlign = 'start';
         }
