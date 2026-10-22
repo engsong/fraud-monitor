@@ -621,6 +621,398 @@
       width: 100%;
       height: 100%;
     }
+
+    /* Clickable Rows & Cards */
+    .sched-row {
+      cursor: pointer;
+    }
+    .sched-row:hover {
+      background: rgba(0, 242, 254, 0.15) !important;
+      border-color: rgba(0, 242, 254, 0.4) !important;
+      transform: translateX(2px);
+    }
+    .alert-card {
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .alert-card:hover {
+      background: rgba(255, 51, 102, 0.16) !important;
+      border-color: rgba(255, 51, 102, 0.5) !important;
+      transform: translateX(-2px);
+    }
+    .acc-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      color: var(--neon-cyan);
+      background: rgba(0, 242, 254, 0.08);
+      border: 1px solid rgba(0, 242, 254, 0.2);
+      padding: 1px 4px;
+      border-radius: 3px;
+      display: inline-block;
+      max-width: 110px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Active Road Overlay on Canvas */
+    .map-active-road-hud {
+      position: absolute;
+      top: 38px;
+      left: 12px;
+      right: 12px;
+      background: rgba(8, 25, 40, 0.94);
+      border: 1px solid var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 242, 254, 0.25);
+      border-radius: 6px;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10px;
+      z-index: 5;
+      animation: fadeInHud 0.2s ease-out;
+    }
+    @keyframes fadeInHud {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Modal Overlay & Cyber Window */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 7, 12, 0.82);
+      backdrop-filter: blur(8px);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: fadeInModal 0.2s ease-out;
+    }
+    @keyframes fadeInModal {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-window {
+      width: 820px;
+      max-width: 96vw;
+      background: #061623;
+      border: 1.5px solid var(--border-light);
+      border-radius: 12px;
+      box-shadow: 0 0 50px rgba(0, 220, 255, 0.25), inset 0 0 25px rgba(0, 180, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .modal-hdr {
+      height: 48px;
+      background: #092032;
+      border-bottom: 1.5px solid var(--border-blue);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+    }
+
+    .threat-badge-pill {
+      font-size: 9px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--neon-red);
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.6px;
+      box-shadow: 0 0 10px rgba(255, 51, 102, 0.5);
+    }
+
+    .modal-close-btn {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #cfd8dc;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .modal-close-btn:hover {
+      background: rgba(255, 51, 102, 0.25);
+      border-color: var(--neon-red);
+      color: #fff;
+    }
+
+    /* 5-Step Visual Roadmap Breadcrumb */
+    .roadmap-track-container {
+      background: #040e17;
+      border-bottom: 1px solid rgba(0, 200, 255, 0.15);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .roadmap-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 125px;
+      gap: 3px;
+    }
+
+    .step-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      font-weight: 800;
+      color: var(--neon-cyan);
+      background: rgba(0, 242, 254, 0.12);
+      padding: 1px 6px;
+      border-radius: 10px;
+      border: 1px solid rgba(0, 242, 254, 0.3);
+    }
+
+    .step-icon-box {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: #081d2e;
+      border: 1.5px solid var(--border-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      margin: 2px 0;
+      box-shadow: 0 0 10px rgba(0, 200, 255, 0.1);
+    }
+
+    .step-hub .step-icon-box {
+      border-color: var(--neon-cyan);
+      background: rgba(0, 242, 254, 0.15);
+      box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+    }
+
+    .step-target .step-icon-box {
+      border-color: var(--neon-red);
+      background: rgba(255, 51, 102, 0.15);
+      box-shadow: 0 0 15px rgba(255, 51, 102, 0.4);
+    }
+
+    .step-title {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #cfd8dc;
+      text-transform: uppercase;
+    }
+
+    .step-desc {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: var(--neon-teal);
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .roadmap-arrow {
+      color: rgba(0, 220, 255, 0.4);
+      font-size: 14px;
+      font-weight: 800;
+      animation: pulseArrow 1.5s infinite;
+    }
+    @keyframes pulseArrow {
+      0%, 100% { opacity: 0.4; transform: translateX(0); }
+      50% { opacity: 1; transform: translateX(3px); color: var(--neon-cyan); }
+    }
+
+    /* Modal 3-Column Info Cards */
+    .modal-grid {
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: 1fr 1.1fr 1fr;
+      gap: 12px;
+      background: #05131f;
+    }
+
+    .detail-card {
+      background: #081d2c;
+      border: 1px solid var(--border-blue);
+      border-radius: 8px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .detail-card-center {
+      border-color: rgba(0, 242, 254, 0.35);
+      background: #092235;
+      box-shadow: 0 0 15px rgba(0, 200, 255, 0.08);
+    }
+
+    .detail-card-title {
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      color: #90a4ae;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(0, 200, 255, 0.12);
+      padding-bottom: 4px;
+      margin-bottom: 2px;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 9.5px;
+      gap: 8px;
+    }
+
+    .d-label {
+      color: var(--text-dim);
+      font-size: 9px;
+      white-space: nowrap;
+    }
+
+    .d-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      font-weight: 600;
+      color: #f8fafc;
+      text-align: right;
+      max-width: 155px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .text-cyan { color: var(--neon-cyan) !important; }
+    .text-teal { color: var(--neon-teal) !important; }
+    .text-amber { color: var(--neon-amber) !important; }
+    .text-red { color: var(--neon-red) !important; }
+    .text-green { color: var(--neon-green) !important; }
+    .font-bold { font-weight: 800 !important; }
+
+    .mini-action-btn {
+      margin-top: 4px;
+      background: rgba(0, 242, 254, 0.1);
+      border: 1px solid rgba(0, 242, 254, 0.25);
+      color: var(--neon-cyan);
+      font-size: 8.5px;
+      font-weight: 700;
+      padding: 3px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      align-self: flex-start;
+      transition: all 0.15s;
+    }
+    .mini-action-btn:hover {
+      background: rgba(0, 242, 254, 0.25);
+      border-color: var(--neon-cyan);
+    }
+
+    /* Modal Footer */
+    .modal-footer {
+      height: 48px;
+      background: #071927;
+      border-top: 1.5px solid var(--border-blue);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+    }
+
+    .btn-action {
+      font-size: 9.5px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+      border: none;
+    }
+
+    .btn-trace {
+      background: rgba(0, 242, 254, 0.18);
+      border: 1px solid var(--neon-cyan);
+      color: #ffffff;
+    }
+    .btn-trace:hover {
+      background: var(--neon-cyan);
+      color: #040e17;
+      box-shadow: 0 0 12px var(--neon-cyan);
+    }
+
+    .btn-copy {
+      background: #092437;
+      border: 1px solid var(--border-blue);
+      color: #eceff1;
+    }
+    .btn-copy:hover {
+      background: #0e334d;
+      border-color: var(--neon-teal);
+    }
+
+    .btn-flag {
+      background: rgba(255, 51, 102, 0.18);
+      border: 1px solid var(--neon-red);
+      color: #ff80ab;
+    }
+    .btn-flag:hover {
+      background: var(--neon-red);
+      color: #ffffff;
+      box-shadow: 0 0 12px var(--neon-red);
+    }
+
+    .btn-close {
+      background: #11283a;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cfd8dc;
+    }
+    .btn-close:hover {
+      background: #1a3c57;
+      color: #ffffff;
+    }
+
+    /* Toast Notification */
+    #toast-notification {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #092336;
+      border: 1.5px solid var(--neon-cyan);
+      box-shadow: 0 0 25px rgba(0, 242, 254, 0.35);
+      border-radius: 8px;
+      padding: 9px 16px;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      z-index: 100000;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      animation: toastPop 0.2s ease-out;
+    }
+    @keyframes toastPop {
+      from { transform: translateY(12px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -776,6 +1168,19 @@
             </div>
           </div>
 
+          <!-- Active Road Inspector HUD (shown when inspecting a transaction road) -->
+          <div id="map-active-road-hud" class="map-active-road-hud" style="display: none;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="threat-badge-pill" id="hud-road-pill">ROAD AUDIT</span>
+              <strong id="hud-road-title" style="color: #fff; font-family: 'JetBrains Mono', monospace;">BCEL ➔ LAPNET ➔ JDB</strong>
+              <span id="hud-road-desc" style="color: var(--neon-cyan); font-family: monospace;">28,637,000 LAK</span>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button class="mini-action-btn" onclick="reopenActiveModal()">🔍 Open Inspector</button>
+              <button class="mini-action-btn" style="border-color: rgba(255,51,102,0.4); color: var(--neon-red);" onclick="clearActiveRoad()">✕ Clear Road</button>
+            </div>
+          </div>
+
           <!-- HTML5 Canvas Transit/Switching Network Map -->
           <canvas id="canvas-network-map"></canvas>
 
@@ -914,6 +1319,163 @@
 
   </div>
 
+  <!-- ==========================================
+       ROAD OF TRANSACTION & CYBER AUDIT MODAL
+       ========================================== -->
+  <div id="modal-road-inspector" class="modal-overlay" style="display: none;" onclick="if(event.target === this) closeRoadInspector();">
+    <div class="modal-window">
+      <!-- Modal Header -->
+      <div class="modal-hdr">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span class="threat-badge-pill" id="m-threat-badge">CRITICAL ALERT</span>
+          <span style="font-size: 13px; font-weight: 800; color: #ffffff; letter-spacing: 0.6px; text-transform: uppercase;">
+            TRANSACTION ROAD & CYBER AUDIT INSPECTOR
+          </span>
+          <span id="m-tx-id" style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--neon-cyan);">TX-84920</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeRoadInspector()" title="Close Inspector">✕</button>
+      </div>
+
+      <!-- 5-Step Visual Roadmap Breadcrumb -->
+      <div class="roadmap-track-container">
+        <!-- Step 1: Origin Client / Account -->
+        <div class="roadmap-step">
+          <div class="step-num">STEP 01</div>
+          <div class="step-icon-box">👤</div>
+          <div class="step-title">ORIGIN SENDER</div>
+          <div class="step-desc" id="m-step1-acc">...</div>
+        </div>
+        <div class="roadmap-arrow">➔</div>
+
+        <!-- Step 2: Source Bank Gateway -->
+        <div class="roadmap-step">
+          <div class="step-num">STEP 02</div>
+          <div class="step-icon-box">🏦</div>
+          <div class="step-title">SOURCE GATEWAY</div>
+          <div class="step-desc" id="m-step2-bank">...</div>
+        </div>
+        <div class="roadmap-arrow">➔</div>
+
+        <!-- Step 3: LAPNet Central Switch (Central Hub) -->
+        <div class="roadmap-step step-hub">
+          <div class="step-num">STEP 03</div>
+          <div class="step-icon-box">⚡</div>
+          <div class="step-title">LAPNET CORE SWITCH</div>
+          <div class="step-desc" id="m-step3-node">...</div>
+        </div>
+        <div class="roadmap-arrow">➔</div>
+
+        <!-- Step 4: Destination Bank Gateway -->
+        <div class="roadmap-step">
+          <div class="step-num">STEP 04</div>
+          <div class="step-icon-box">🏦</div>
+          <div class="step-title">DEST GATEWAY</div>
+          <div class="step-desc" id="m-step4-bank">...</div>
+        </div>
+        <div class="roadmap-arrow">➔</div>
+
+        <!-- Step 5: Beneficiary / Recipient Mule Account -->
+        <div class="roadmap-step step-target">
+          <div class="step-num">STEP 05</div>
+          <div class="step-icon-box">🎯</div>
+          <div class="step-title">BENEFICIARY ACCOUNT</div>
+          <div class="step-desc" id="m-step5-acc">...</div>
+        </div>
+      </div>
+
+      <!-- 3-Column Info Cards -->
+      <div class="modal-grid">
+        <!-- Column 1: Sender & Source Bank -->
+        <div class="detail-card">
+          <div class="detail-card-title">1. ORIGINATING SENDER ACCOUNT</div>
+          <div class="detail-row">
+            <span class="d-label">ACCOUNT / CARD:</span>
+            <span class="d-val text-cyan" id="m-sender-acc">...</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">SENDING BANK:</span>
+            <span class="d-val" id="m-sender-bank">...</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">TRANSIT CHANNEL:</span>
+            <span class="d-val">Mobile App / ISO 8583</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">INITIATED TIME:</span>
+            <span class="d-val text-mono" id="m-tx-time">...</span>
+          </div>
+          <button class="mini-action-btn" onclick="copySenderAccount()">📋 Copy Sender Account</button>
+        </div>
+
+        <!-- Column 2: LAPNet Clearing Core Switch -->
+        <div class="detail-card detail-card-center">
+          <div class="detail-card-title">2. LAPNET SWITCH & FRAUD ENGINE</div>
+          <div class="detail-row">
+            <span class="d-label">INGESTION NODE:</span>
+            <span class="d-val text-teal font-bold" id="m-lapnet-node">...</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">SWITCH LATENCY:</span>
+            <span class="d-val">2.4ms (Fast Wire Speed)</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">RISK SCORE:</span>
+            <span class="d-val text-red font-bold" id="m-risk-score">...</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">FRAUD ENGINE RULE:</span>
+            <span class="d-val text-amber" id="m-triggers">...</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">SWITCH DECISION:</span>
+            <span class="d-val text-red font-bold" id="m-decision">FLAGGED & MONITORED</span>
+          </div>
+        </div>
+
+        <!-- Column 3: Beneficiary & Dest Bank -->
+        <div class="detail-card">
+          <div class="detail-card-title">3. BENEFICIARY / RECIPIENT</div>
+          <div class="detail-row">
+            <span class="d-label">ACCOUNT / LAO QR:</span>
+            <span class="d-val text-cyan" id="m-dest-acc">...</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">RECEIVING BANK:</span>
+            <span class="d-val" id="m-dest-bank">...</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">SETTLEMENT AMOUNT:</span>
+            <span class="d-val text-green font-bold" id="m-amount">...</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">FAN-IN MULE RISK:</span>
+            <span class="d-val text-red" id="m-mule-status">Inbound Surge Monitored</span>
+          </div>
+          <button class="mini-action-btn" onclick="copyDestAccount()">📋 Copy Beneficiary Account</button>
+        </div>
+      </div>
+
+      <!-- Modal Footer Action Bar -->
+      <div class="modal-footer">
+        <div style="font-size: 10px; color: var(--text-dim);">
+          Transit Road: <strong style="color: #ffffff;" id="m-route-path">BCEL ➔ LAPNET CORE ➔ JDB</strong>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-action btn-trace" onclick="traceOnMapAndClose()">📍 Focus & Trace on Map</button>
+          <button class="btn-action btn-copy" onclick="copyAuditJSON()">📄 Copy Audit JSON</button>
+          <button class="btn-action btn-flag" onclick="flagWatchlistAccount()">⚠️ Flag to Mule Watchlist</button>
+          <button class="btn-action btn-close" onclick="closeRoadInspector()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Popup -->
+  <div id="toast-notification">
+    <span id="toast-icon">✓</span>
+    <span id="toast-text">Action completed successfully</span>
+  </div>
+
   <!-- Main JavaScript Logic -->
   <script>
     // ==========================================
@@ -955,108 +1517,172 @@
     window.addEventListener('resize', resizeMap);
     resizeMap();
 
-    // Schematic Metro/Transit Stations & Coordinates
+    // Schematic Metro/Transit Stations & Dedicated Radial Positions
     const STATIONS = {
-      // Central Switch Interchange
-      "LAPNET": { x: 0.50, y: 0.46, label: "LAPNET CORE", isHub: true },
+      // Central Switching Interchange
+      "LAPNET": { x: 0.50, y: 0.48, label: "LAPNET SWITCH CORE", isHub: true, color: "#ffffff", fullName: "Lao National Payment Network" },
 
-      // West Capital Line (Cyan Track)
-      "BCEL": { x: 0.36, y: 0.44, label: "BCEL HQ", isHub: true },
-      "JDB": { x: 0.22, y: 0.40, label: "JDB WEST" },
-      "BFL": { x: 0.12, y: 0.36, label: "BFL TERMINAL" },
+      // West Corridor (Cyan Tracks)
+      "BCEL": { x: 0.28, y: 0.48, label: "BCEL HQ", color: "#00f2fe", fullName: "Banque Pour Le Commerce Exterieur Lao" },
+      "JDB": { x: 0.23, y: 0.36, label: "JDB BANK", color: "#00e5ff", fullName: "Joint Development Bank" },
+      "BFL": { x: 0.21, y: 0.24, label: "BFL BRED", color: "#26c6da", fullName: "BFL BRED Group" },
+      "MOFPAY": { x: 0.23, y: 0.60, label: "MOFPAY", color: "#69f0ae", fullName: "Ministry of Finance FinPay" },
+      "UMONEY": { x: 0.30, y: 0.72, label: "UMONEY", color: "#00e676", fullName: "Star Telecom (U-Money)" },
 
-      // North Express Line (Teal Track)
-      "LDB": { x: 0.48, y: 0.26, label: "LDB NORTH" },
-      "IDB": { x: 0.40, y: 0.18, label: "IDB VANG VIENG" },
-      "ACLE": { x: 0.28, y: 0.12, label: "ACLEDA LUANG PRABANG", isHub: true },
-      "STB": { x: 0.18, y: 0.08, label: "STB OUDOMXAY" },
+      // North Corridor (Teal Tracks)
+      "LDB": { x: 0.36, y: 0.20, label: "LDB NORTH", color: "#26c6da", fullName: "Lao Development Bank" },
+      "APB": { x: 0.50, y: 0.16, label: "APB BANK", color: "#4dd0e1", fullName: "Agricultural Promotion Bank" },
+      "STB": { x: 0.64, y: 0.20, label: "STB BANK", color: "#80deea", fullName: "ST Bank" },
 
-      // South Corridor (Blue Track)
-      "APB": { x: 0.58, y: 0.58, label: "APB EAST" },
-      "PSV": { x: 0.68, y: 0.70, label: "PSV THAKHEK" },
-      "LVB": { x: 0.78, y: 0.80, label: "LVB SAVANNAKHET", isHub: true },
-      "UMONEY": { x: 0.88, y: 0.88, label: "UMONEY PAKSE" },
+      // East Corridor (Blue Tracks)
+      "LBB": { x: 0.79, y: 0.24, label: "LBB CHINA", color: "#80d8ff", fullName: "Lao-China Bank" },
+      "PSV": { x: 0.77, y: 0.36, label: "PSV BANK", color: "#4facfe", fullName: "Phongsavanh Bank" },
+      "LVB": { x: 0.72, y: 0.48, label: "LVB BANK", color: "#00c6ff", fullName: "Lao-Viet Bank" },
+      "ACLE": { x: 0.77, y: 0.60, label: "ACLEDA", color: "#00b0ff", fullName: "ACLEDA Bank Lao" },
 
-      // Cross-Border Gateway (Amber Track)
-      "ITMX": { x: 0.30, y: 0.78, label: "ITMX BANGKOK (TH)", isCross: true },
-      "NAPAS": { x: 0.72, y: 0.28, label: "NAPAS HANOI (VN)", isCross: true },
-      "BAKONG": { x: 0.62, y: 0.85, label: "NBC BAKONG (KH)", isCross: true },
-      "UPI": { x: 0.85, y: 0.35, label: "UNIONPAY (CN)", isCross: true }
+      // South Corridor (Aqua / Seafoam Tracks)
+      "IDB": { x: 0.70, y: 0.72, label: "IDB BANK", color: "#29b6f6", fullName: "Indochina Bank" },
+      "BIC": { x: 0.58, y: 0.80, label: "BIC BANK", color: "#26a69a", fullName: "BIC Bank Lao" },
+      "MJB": { x: 0.42, y: 0.80, label: "MJB BANK", color: "#00bfa5", fullName: "Maruhan Japan Bank Lao" },
+
+      // Cross-Border Regional Gateways (Amber Tracks at Corners)
+      "UPI": { x: 0.10, y: 0.14, label: "UNIONPAY (CN)", color: "#ff9900", isCross: true, fullName: "UnionPay International Gateway" },
+      "NAPAS": { x: 0.90, y: 0.14, label: "NAPAS (VN)", color: "#ff9900", isCross: true, fullName: "NAPAS Vietnam Switch Gateway" },
+      "ITMX": { x: 0.10, y: 0.86, label: "ITMX (TH)", color: "#ff9900", isCross: true, fullName: "PromptPay ITMX Thailand Gateway" },
+      "BAKONG": { x: 0.90, y: 0.86, label: "BAKONG (KH)", color: "#ff9900", isCross: true, fullName: "NBC Bakong Cambodia Gateway" }
     };
 
-    // Tracks (Railway Lines) Connecting Stations
-    const TRACKS = [
-      // Line 1: Northern Trunk Line (Teal)
-      { from: "STB", to: "ACLE", color: "#26c6da" },
-      { from: "ACLE", to: "IDB", color: "#26c6da" },
-      { from: "IDB", to: "LDB", color: "#26c6da" },
-      { from: "LDB", to: "LAPNET", color: "#26c6da" },
+    // Each bank has its own dedicated, separated track connecting directly to LAPNET!
+    const TRACKS = Object.keys(STATIONS)
+      .filter(k => k !== "LAPNET")
+      .map(k => ({
+        from: k,
+        to: "LAPNET",
+        color: STATIONS[k].color,
+        isCross: STATIONS[k].isCross || false
+      }));
 
-      // Line 2: Western Capital Line (Cyan)
-      { from: "BFL", to: "JDB", color: "#00f2fe" },
-      { from: "JDB", to: "BCEL", color: "#00f2fe" },
-      { from: "BCEL", to: "LAPNET", color: "#00f2fe" },
+    function normalizeBankCode(code) {
+      if (!code) return "BCEL";
+      const c = String(code).toUpperCase().trim();
+      if (c.includes("BCEL")) return "BCEL";
+      if (c.includes("JDB")) return "JDB";
+      if (c.includes("LDB")) return "LDB";
+      if (c.includes("APB")) return "APB";
+      if (c.includes("PSV") || c.includes("PHONGSAVANH")) return "PSV";
+      if (c.includes("LVB") || c.includes("LAO-VIET")) return "LVB";
+      if (c.includes("ACLE") || c.includes("ACLEDA")) return "ACLE";
+      if (c.includes("STB") || c.includes("ST BANK")) return "STB";
+      if (c.includes("IDB") || c.includes("INDOCHINA")) return "IDB";
+      if (c.includes("BFL") || c.includes("BRED")) return "BFL";
+      if (c.includes("BIC")) return "BIC";
+      if (c.includes("MJB") || c.includes("MARUHAN")) return "MJB";
+      if (c.includes("UMO") || c.includes("UMONEY") || c.includes("UNITEL")) return "UMONEY";
+      if (c.includes("MOF") || c.includes("MOFPAY")) return "MOFPAY";
+      if (c.includes("LBB") || c.includes("LAO-CHINA") || c.includes("BOC") || c.includes("ICBC")) return "LBB";
+      if (c.includes("ITMX") || c.includes("PROMPTPAY") || c.includes("THB") || c.includes("THAI")) return "ITMX";
+      if (c.includes("NAPAS") || c.includes("VIET")) return "NAPAS";
+      if (c.includes("BAKONG") || c.includes("CAMBODIA") || c.includes("NBC")) return "BAKONG";
+      if (c.includes("UPI") || c.includes("UNIONPAY") || c.includes("CNY") || c.includes("CHINA")) return "UPI";
+      return "BCEL";
+    }
 
-      // Line 3: Southern Spine Line (Light Blue)
-      { from: "LAPNET", to: "APB", color: "#4facfe" },
-      { from: "APB", to: "PSV", color: "#4facfe" },
-      { from: "PSV", to: "LVB", color: "#4facfe" },
-      { from: "LVB", to: "UMONEY", color: "#4facfe" },
-
-      // Line 4: Cross-Border Gateway Diagonal (Amber)
-      { from: "ITMX", to: "BCEL", color: "#ff9900" },
-      { from: "LAPNET", to: "NAPAS", color: "#ff9900" },
-      { from: "PSV", to: "BAKONG", color: "#ff9900" },
-      { from: "NAPAS", to: "UPI", color: "#ff9900" }
-    ];
-
-    // Animated Trains / Data Packets on Tracks
+    // Animated Trains / Packets routing in 2 Hops (Source -> LAPNet -> Dest)
     let movingPackets = [];
+    let lapnetPulse = 0;
+    let activeHighlightedRoad = null;
+    let activeTxData = null;
+    let animChevronOffset = 0;
 
-    class MetroPacket {
-      constructor(track, color) {
-        this.track = track;
-        this.color = color || track.color;
+    class HopPacket {
+      constructor(fromCode, toCode, color, isAlert, txData) {
+        this.fromCode = fromCode;
+        this.toCode = toCode;
+        this.color = color || '#00f2fe';
+        this.isAlert = isAlert || false;
+        this.txData = txData || null;
+        this.hop = 1; // 1: from -> LAPNET, 2: LAPNET -> to
         this.progress = 0;
-        this.speed = 0.008 + Math.random() * 0.006;
+        this.speed = isAlert ? 0.016 : (0.009 + Math.random() * 0.005);
+        this.tail = [];
       }
 
       update() {
         this.progress += this.speed;
-        return this.progress < 1;
+        if (this.progress >= 1) {
+          if (this.hop === 1 && this.fromCode !== this.toCode) {
+            this.hop = 2;
+            this.progress = 0;
+            lapnetPulse = 1.0;
+            return true;
+          }
+          return false; // completed
+        }
+        return true;
       }
 
       draw() {
-        const s1 = STATIONS[this.track.from];
-        const s2 = STATIONS[this.track.to];
-        if (!s1 || !s2) return;
+        const startStation = this.hop === 1 ? STATIONS[this.fromCode] : STATIONS["LAPNET"];
+        const endStation = this.hop === 1 ? STATIONS["LAPNET"] : STATIONS[this.toCode];
+        if (!startStation || !endStation) return;
 
         const w = cvsMap.width;
         const h = cvsMap.height;
 
-        const x = (s1.x + (s2.x - s1.x) * this.progress) * w;
-        const y = (s1.y + (s2.y - s1.y) * this.progress) * h;
+        const curX = (startStation.x + (endStation.x - startStation.x) * this.progress) * w;
+        const curY = (startStation.y + (endStation.y - startStation.y) * this.progress) * h;
 
+        this.tail.push({ x: curX, y: curY });
+        if (this.tail.length > 5) this.tail.shift();
+
+        // Draw particle tail
+        for (let i = 0; i < this.tail.length; i++) {
+          const t = this.tail[i];
+          const alpha = (i + 1) / this.tail.length;
+          ctx.beginPath();
+          ctx.arc(t.x, t.y, (this.isAlert ? 3.5 : 2.2) * alpha, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.globalAlpha = alpha * 0.65;
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
+        }
+
+        // Head particle
         ctx.beginPath();
-        ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+        ctx.arc(curX, curY, this.isAlert ? 4.5 : 3.2, 0, Math.PI * 2);
         ctx.fillStyle = '#ffffff';
         ctx.shadowColor = this.color;
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = this.isAlert ? 15 : 9;
         ctx.fill();
         ctx.shadowBlur = 0;
       }
     }
 
-    // Periodically spawn trains
+    // Periodically spawn ambient background packets on random bank routes
     setInterval(() => {
-      const randTrack = TRACKS[Math.floor(Math.random() * TRACKS.length)];
-      movingPackets.push(new MetroPacket(randTrack));
-    }, 400);
+      const bankKeys = Object.keys(STATIONS).filter(k => k !== "LAPNET");
+      const src = bankKeys[Math.floor(Math.random() * bankKeys.length)];
+      let dst = bankKeys[Math.floor(Math.random() * bankKeys.length)];
+      if (dst === src) dst = "BCEL";
+
+      movingPackets.push(new HopPacket(src, dst, STATIONS[src].color, false));
+
+      // If a road is actively inspected, spawn extra packets along its exact road
+      if (activeHighlightedRoad) {
+        movingPackets.push(new HopPacket(
+          activeHighlightedRoad.from,
+          activeHighlightedRoad.to,
+          activeHighlightedRoad.color,
+          activeHighlightedRoad.isAlert
+        ));
+      }
+    }, 450);
 
     function drawNetworkMap() {
       ctx.clearRect(0, 0, cvsMap.width, cvsMap.height);
       const w = cvsMap.width;
       const h = cvsMap.height;
+      animChevronOffset = (animChevronOffset + 0.6) % 24;
 
       // 1. Draw Background Grid Matrix
       ctx.strokeStyle = 'rgba(0, 200, 255, 0.04)';
@@ -1075,79 +1701,236 @@
         ctx.stroke();
       }
 
-      // 2. Draw Tracks (Railway lines)
+      // 2. Draw Separated Tracks (Each Bank's dedicated line directly to LAPNET)
+      const lapnetS = STATIONS["LAPNET"];
+      const lx = lapnetS.x * w;
+      const ly = lapnetS.y * h;
+
       TRACKS.forEach(track => {
-        const s1 = STATIONS[track.from];
-        const s2 = STATIONS[track.to];
-        if (!s1 || !s2) return;
+        const s = STATIONS[track.from];
+        if (!s) return;
 
-        const x1 = s1.x * w;
-        const y1 = s1.y * h;
-        const x2 = s2.x * w;
-        const y2 = s2.y * h;
+        const sx = s.x * w;
+        const sy = s.y * h;
 
-        // Faint outer track glow
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.strokeStyle = track.color + '44';
-        ctx.lineWidth = 6;
-        ctx.stroke();
+        const isRoadSrc = activeHighlightedRoad && activeHighlightedRoad.from === track.from;
+        const isRoadDst = activeHighlightedRoad && activeHighlightedRoad.to === track.from;
+        const isTrackActive = isRoadSrc || isRoadDst;
 
-        // Core track line
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.strokeStyle = track.color;
-        ctx.lineWidth = 2.5;
-        ctx.shadowColor = track.color;
-        ctx.shadowBlur = 8;
-        ctx.stroke();
-        ctx.shadowBlur = 0;
+        if (isTrackActive) {
+          // Intense Laser Beam for Active Highlighted Road
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(lx, ly);
+          ctx.strokeStyle = activeHighlightedRoad.color + '66';
+          ctx.lineWidth = 9;
+          ctx.shadowColor = activeHighlightedRoad.color;
+          ctx.shadowBlur = 18;
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(lx, ly);
+          ctx.strokeStyle = activeHighlightedRoad.color;
+          ctx.lineWidth = 3.5;
+          ctx.shadowColor = '#ffffff';
+          ctx.shadowBlur = 10;
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+
+          // Animated Flow Direction Chevrons
+          const dist = Math.hypot(lx - sx, ly - sy);
+          const steps = Math.floor(dist / 24);
+          for (let i = 1; i < steps; i++) {
+            let t = (i * 24 + animChevronOffset) / dist;
+            if (t > 1) t -= 1;
+
+            // If Source: arrow towards LAPNet; If Dest: arrow towards Bank
+            let px, py;
+            if (isRoadSrc) {
+              px = sx + (lx - sx) * t;
+              py = sy + (ly - sy) * t;
+            } else {
+              px = lx + (sx - lx) * t;
+              py = ly + (sy - ly) * t;
+            }
+
+            ctx.beginPath();
+            ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = activeHighlightedRoad.color;
+            ctx.shadowBlur = 8;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          }
+        } else {
+          // Standard Dedicated Track Line
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(lx, ly);
+          ctx.strokeStyle = track.color + '22';
+          ctx.lineWidth = 5;
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(lx, ly);
+          ctx.strokeStyle = track.color + '88';
+          ctx.lineWidth = 1.8;
+          ctx.stroke();
+        }
       });
 
-      // 3. Update & Draw Packets (Trains)
+      // 3. Update & Draw Data Packets
       movingPackets = movingPackets.filter(p => {
         const alive = p.update();
         if (alive) p.draw();
         return alive;
       });
 
-      // 4. Draw Stations (Junctions)
+      // 4. Draw Stations (Junctions & Hubs)
       Object.keys(STATIONS).forEach(key => {
         const s = STATIONS[key];
         const x = s.x * w;
         const y = s.y * h;
 
-        const r = s.isHub ? 7 : (s.isCross ? 6 : 4.5);
+        const isRoadSrc = activeHighlightedRoad && activeHighlightedRoad.from === key;
+        const isRoadDst = activeHighlightedRoad && activeHighlightedRoad.to === key;
+        const isHubStation = s.isHub;
 
-        // Outer Station Ring
-        ctx.beginPath();
-        ctx.arc(x, y, r + 3, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(5, 16, 26, 0.9)';
-        ctx.strokeStyle = s.isCross ? '#ff9900' : (s.isHub ? '#00f2fe' : '#26c6da');
-        ctx.lineWidth = 2;
-        ctx.fill();
-        ctx.stroke();
+        // Expanding Ripple for Active Road Stations or LAPNet Pulse
+        if ((isRoadSrc || isRoadDst) || (isHubStation && lapnetPulse > 0.1)) {
+          const ripR = (isHubStation ? 22 : 16) + (1 - (isHubStation ? lapnetPulse : (Date.now() % 1000) / 1000)) * 14;
+          ctx.beginPath();
+          ctx.arc(x, y, ripR, 0, Math.PI * 2);
+          ctx.strokeStyle = isRoadSrc ? '#ff3366' : (isRoadDst ? '#00e676' : '#00f2fe');
+          ctx.globalAlpha = isHubStation ? lapnetPulse * 0.8 : 0.6;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.globalAlpha = 1.0;
+        }
 
-        // Inner Station Core
-        ctx.beginPath();
-        ctx.arc(x, y, r - 1.5, 0, Math.PI * 2);
-        ctx.fillStyle = s.isCross ? '#ff9900' : (s.isHub ? '#ffffff' : '#26c6da');
-        ctx.shadowColor = ctx.fillStyle;
-        ctx.shadowBlur = 8;
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        if (isHubStation) {
+          // Central LAPNET CORE Switch Ring & Radar Tick Marks
+          ctx.beginPath();
+          ctx.arc(x, y, 16, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(6, 22, 35, 0.95)';
+          ctx.strokeStyle = 'var(--neon-cyan)';
+          ctx.lineWidth = 2.5;
+          ctx.shadowColor = 'var(--neon-cyan)';
+          ctx.shadowBlur = 14;
+          ctx.fill();
+          ctx.stroke();
+          ctx.shadowBlur = 0;
 
-        // Station Label
-        ctx.font = '700 8.5px "JetBrains Mono", monospace';
-        ctx.fillStyle = '#f8fafc';
-        ctx.fillText(s.label, x + r + 5, y + 3);
+          // Inner Core Pulse
+          ctx.beginPath();
+          ctx.arc(x, y, 7, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.shadowColor = '#00f2fe';
+          ctx.shadowBlur = 12;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          // Station Label
+          ctx.font = '800 10px "JetBrains Mono", monospace';
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.fillText(s.label, x, y - 22);
+
+          ctx.font = '700 8px "JetBrains Mono", monospace';
+          ctx.fillStyle = 'var(--neon-cyan)';
+          ctx.fillText("VM1 & VM2 DUAL-SWITCH", x, y + 26);
+          ctx.textAlign = 'start';
+        } else {
+          // Bank Stations & Cross-Border Gateways
+          const r = s.isCross ? 6 : 5;
+
+          ctx.beginPath();
+          ctx.arc(x, y, r + 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(4, 14, 22, 0.95)';
+          ctx.strokeStyle = isRoadSrc ? '#ff3366' : (isRoadDst ? '#00e676' : s.color);
+          ctx.lineWidth = 2;
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(x, y, r - 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = isRoadSrc ? '#ff3366' : (isRoadDst ? '#00e676' : (s.isCross ? '#ff9900' : '#ffffff'));
+          ctx.shadowColor = ctx.fillStyle;
+          ctx.shadowBlur = 8;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          // Bank Station Text Tag
+          ctx.font = '700 8.5px "JetBrains Mono", monospace';
+          ctx.fillStyle = isRoadSrc ? '#ff5577' : (isRoadDst ? '#69f0ae' : '#cfd8dc');
+
+          // Position label gracefully based on quadrant
+          let textX = x + r + 5;
+          let textY = y + 3;
+          if (s.x > 0.65) {
+            textX = x - r - 6;
+            ctx.textAlign = 'right';
+          } else {
+            ctx.textAlign = 'left';
+          }
+          ctx.fillText(s.label, textX, textY);
+          ctx.textAlign = 'start';
+        }
       });
+
+      if (lapnetPulse > 0.02) lapnetPulse -= 0.02;
 
       requestAnimationFrame(drawNetworkMap);
     }
     drawNetworkMap();
+
+    // Canvas Click Listener for Stations & Road Highlight
+    cvsMap.addEventListener('click', (e) => {
+      const rect = cvsMap.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      const w = cvsMap.width;
+      const h = cvsMap.height;
+
+      let clickedStation = null;
+      for (const [code, s] of Object.entries(STATIONS)) {
+        const sx = s.x * w;
+        const sy = s.y * h;
+        const dist = Math.hypot(clickX - sx, clickY - sy);
+        if (dist <= 18) {
+          clickedStation = code;
+          break;
+        }
+      }
+
+      if (clickedStation) {
+        if (clickedStation === 'LAPNET') {
+          lapnetPulse = 1.0;
+          showToast('⚡ LAPNET National Switch Center: VM1 & VM2 Ingestion Active');
+        } else {
+          const sampleTx = {
+            id: 'AUDIT-' + Date.now().toString().slice(-5),
+            from_code: clickedStation,
+            to_code: clickedStation === 'BCEL' ? 'JDB' : 'BCEL',
+            from_account: '966011' + Math.floor(1000000000 + Math.random() * 9000000000),
+            to_account: '000201010211' + Math.floor(1000000000 + Math.random() * 9000000000),
+            amount: '28,637,000.00',
+            currency: 'LAK',
+            threat: 'High',
+            status: 'ALERT',
+            color: '#ff3366',
+            risk_score: 85,
+            triggers: 'Bank Trunk Routing Inspection & High Fan-In Velocity',
+            node: 'VM2',
+            full_node: 'VM2 (175.2.0.24)',
+            time: new Date().toTimeString().slice(0, 8)
+          };
+          openRoadInspector(sampleTx);
+        }
+      }
+    });
 
     // ==========================================
     // 3. BOTTOM FLOW & SERVICE TREND (ECHARTS)
@@ -1275,10 +2058,163 @@
     });
 
     // ==========================================
-    // 5. SSE LIVE TRANSACTION CLEARING SCHEDULE
+    // 5. ROAD OF TRANSACTION INSPECTOR & SSE FEED
     // ==========================================
     const schedTable = document.getElementById('schedule-table-body');
     const alertList = document.getElementById('alert-card-list');
+    const modalRoad = document.getElementById('modal-road-inspector');
+    const roadHud = document.getElementById('map-active-road-hud');
+
+    function openRoadInspector(tx) {
+      if (!tx) return;
+      activeTxData = tx;
+
+      const srcCode = normalizeBankCode(tx.from_code || tx.source_bank);
+      const dstCode = normalizeBankCode(tx.to_code || tx.dest_bank);
+      const isAlert = tx.threat === 'High' || tx.status === 'ALERT' || (tx.threat_level && tx.threat_level !== 'Low');
+      const roadColor = isAlert ? '#ff3366' : (tx.status === 'HIGH-VAL' ? '#ff9900' : '#00f2fe');
+
+      // Highlight active road on the map
+      activeHighlightedRoad = {
+        from: srcCode,
+        to: dstCode,
+        color: roadColor,
+        isAlert: isAlert
+      };
+
+      // Update Active Road HUD on Canvas
+      roadHud.style.display = 'flex';
+      document.getElementById('hud-road-title').innerText = `${srcCode} ➔ LAPNET CORE ➔ ${dstCode}`;
+      document.getElementById('hud-road-desc').innerText = `${tx.amount} ${tx.currency} | ${tx.time || ''}`;
+      const hudPill = document.getElementById('hud-road-pill');
+      hudPill.innerText = isAlert ? 'FRAUD ALERT TRACE' : 'CLEARING TRACE';
+      hudPill.style.background = isAlert ? 'var(--neon-red)' : 'var(--neon-teal)';
+
+      // Populate Modal Fields
+      document.getElementById('m-tx-id').innerText = tx.tx_id || ('TX-' + (tx.id || 'LIVE'));
+      const badge = document.getElementById('m-threat-badge');
+      badge.innerText = isAlert ? 'CRITICAL FRAUD ALERT' : (tx.status === 'HIGH-VAL' ? 'HIGH-VALUE SETTLEMENT' : 'LMPS CLEARING AUDIT');
+      badge.style.background = isAlert ? 'var(--neon-red)' : (tx.status === 'HIGH-VAL' ? 'var(--neon-amber)' : 'var(--neon-teal)');
+
+      // 5-Step Visual Roadmap Breadcrumb
+      document.getElementById('m-step1-acc').innerText = tx.from_account || '0101...';
+      document.getElementById('m-step2-bank').innerText = srcCode;
+      document.getElementById('m-step3-node').innerText = tx.node ? (tx.node + ' LMPS') : 'VM1/VM2';
+      document.getElementById('m-step4-bank').innerText = dstCode;
+      document.getElementById('m-step5-acc').innerText = tx.to_account || '0002...';
+
+      // Detail Cards
+      document.getElementById('m-sender-acc').innerText = tx.from_account || 'N/A';
+      document.getElementById('m-sender-bank').innerText = `${srcCode} (${(STATIONS[srcCode] || {}).fullName || 'Lao Bank'})`;
+      document.getElementById('m-tx-time').innerText = `${tx.time || ''} UTC`;
+
+      document.getElementById('m-lapnet-node').innerText = tx.full_node || (tx.node === 'VM1' ? 'VM1 (175.2.0.23)' : 'VM2 (175.2.0.24)');
+      document.getElementById('m-risk-score').innerText = `${tx.risk_score || 0} / 100`;
+      document.getElementById('m-triggers').innerText = tx.triggers || (isAlert ? 'High Velocity Fan-In Anomaly' : 'Standard Clearing Ingestion');
+      document.getElementById('m-decision').innerText = isAlert ? 'FLAGGED (FRAUD ENGINE ALERT)' : 'CLEARED & SETTLED';
+
+      document.getElementById('m-dest-acc').innerText = tx.to_account || 'N/A';
+      document.getElementById('m-dest-bank').innerText = `${dstCode} (${(STATIONS[dstCode] || {}).fullName || 'Lao Bank'})`;
+      document.getElementById('m-amount').innerText = `${tx.amount} ${tx.currency}`;
+      document.getElementById('m-mule-status').innerText = (tx.is_fan_in || (tx.triggers && tx.triggers.includes('Mule'))) 
+        ? '⚠️ High Fan-In Mule Collector Flagged' 
+        : 'Verified Beneficiary Account';
+
+      document.getElementById('m-route-path').innerText = `${srcCode} ➔ LAPNET CORE SWITCH ➔ ${dstCode}`;
+
+      // Open Modal
+      modalRoad.style.display = 'flex';
+
+      // Spawn extra animated packets along this road
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          movingPackets.push(new HopPacket(srcCode, dstCode, roadColor, isAlert));
+        }, i * 200);
+      }
+    }
+
+    function closeRoadInspector() {
+      modalRoad.style.display = 'none';
+    }
+
+    function clearActiveRoad() {
+      activeHighlightedRoad = null;
+      roadHud.style.display = 'none';
+      showToast('✓ Route trace cleared from overview map');
+    }
+
+    function reopenActiveModal() {
+      if (activeTxData) openRoadInspector(activeTxData);
+    }
+
+    function traceOnMapAndClose() {
+      closeRoadInspector();
+      showToast(`📍 Tracing Road: ${activeHighlightedRoad ? activeHighlightedRoad.from + ' ➔ ' + activeHighlightedRoad.to : 'Active'}`);
+    }
+
+    function copyAuditJSON() {
+      if (!activeTxData) return;
+      const auditPayload = {
+        audit_version: "LAPNet-CyberAudit-v2.4",
+        inspected_at: new Date().toISOString(),
+        transaction_id: activeTxData.tx_id || ('TX-' + activeTxData.id),
+        timestamp_utc: activeTxData.time,
+        source: {
+          bank_code: activeTxData.from_code,
+          bank_name: (STATIONS[normalizeBankCode(activeTxData.from_code)] || {}).fullName,
+          account_or_card: activeTxData.from_account
+        },
+        transit_switch: {
+          center: "LAPNet National Payment Network",
+          node: activeTxData.full_node,
+          latency_ms: 2.4,
+          risk_score: activeTxData.risk_score,
+          triggers: activeTxData.triggers
+        },
+        destination: {
+          bank_code: activeTxData.to_code,
+          bank_name: (STATIONS[normalizeBankCode(activeTxData.to_code)] || {}).fullName,
+          beneficiary_account: activeTxData.to_account
+        },
+        settlement: {
+          currency: activeTxData.currency,
+          amount: activeTxData.amount,
+          status: activeTxData.status
+        }
+      };
+      navigator.clipboard.writeText(JSON.stringify(auditPayload, null, 2))
+        .then(() => showToast('✓ Complete Audit Trail JSON copied to clipboard'))
+        .catch(() => showToast('Audit JSON copied'));
+    }
+
+    function copySenderAccount() {
+      if (!activeTxData || !activeTxData.from_account) return;
+      navigator.clipboard.writeText(activeTxData.from_account)
+        .then(() => showToast(`✓ Sender Account Copied: ${activeTxData.from_account}`))
+        .catch(() => {});
+    }
+
+    function copyDestAccount() {
+      if (!activeTxData || !activeTxData.to_account) return;
+      navigator.clipboard.writeText(activeTxData.to_account)
+        .then(() => showToast(`✓ Beneficiary Account Copied: ${activeTxData.to_account}`))
+        .catch(() => {});
+    }
+
+    function flagWatchlistAccount() {
+      if (!activeTxData) return;
+      const acc = activeTxData.to_account || 'Account';
+      showToast(`⚠️ Account [${acc}] flagged to National Mule Watchlist`);
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast-notification');
+      document.getElementById('toast-text').innerText = msg;
+      toast.style.display = 'flex';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 3200);
+    }
 
     // Initial Recent Alerts
     fetch('/api/recent-alerts')
@@ -1295,15 +2231,25 @@
         const tx = JSON.parse(event.data);
         injectScheduleRow(tx);
 
+        // Spawn packet on the transit schematic map
+        const src = normalizeBankCode(tx.from_code);
+        const dst = normalizeBankCode(tx.to_code);
+        movingPackets.push(new HopPacket(src, dst, tx.color, tx.status === 'ALERT', tx));
+
         if (tx.threat === 'High' || tx.status === 'ALERT') {
           injectAlertCard({
+            id: tx.id,
+            tx_id: tx.tx_id,
             alert_time: tx.time,
             node: tx.full_node,
             source_bank: tx.from_code,
+            source_account: tx.from_account,
             dest_bank: tx.to_code,
+            dest_account: tx.to_account,
             currency: tx.currency,
             amount: tx.amount,
             threat_level: tx.threat,
+            risk_score: tx.risk_score,
             triggers: tx.triggers
           });
         }
@@ -1327,21 +2273,38 @@
 
       const nodeTagClass = tx.node === 'VM1' ? 'tag-vm1' : 'tag-vm2';
 
+      const fromAccShort = (tx.from_account && tx.from_account !== 'N/A') 
+        ? (tx.from_account.length > 14 ? tx.from_account.slice(0, 6) + '...' + tx.from_account.slice(-4) : tx.from_account)
+        : 'CARD/ACC';
+      const toAccShort = (tx.to_account && tx.to_account !== 'N/A')
+        ? (tx.to_account.length > 14 ? tx.to_account.slice(0, 6) + '...' + tx.to_account.slice(-4) : tx.to_account)
+        : 'LAO-QR';
+
       row.className = `sched-row ${rowClass}`;
+      row.onclick = () => openRoadInspector(tx);
+      row.title = `Click to inspect transaction journey road: ${tx.from_code} ➔ LAPNET ➔ ${tx.to_code}`;
+
       row.innerHTML = `
-        <div style="display: flex; align-items: center;">
-          <span class="node-tag ${nodeTagClass}">${tx.node}</span>
-          <span style="font-family: monospace; color: #78909c;">${tx.time}</span>
-          <strong style="color: #fff; margin-left: 6px;">${tx.from_code} ➔ ${tx.to_code}</strong>
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <div style="display: flex; align-items: center;">
+            <span class="node-tag ${nodeTagClass}">${tx.node}</span>
+            <span style="font-family: monospace; color: #78909c; font-size: 8.5px;">${tx.time}</span>
+            <strong style="color: #fff; margin-left: 6px;">${tx.from_code} ➔ ${tx.to_code}</strong>
+          </div>
+          <div style="display: flex; align-items: center; gap: 4px; margin-top: 1px;">
+            <span class="acc-chip" title="Sender: ${tx.from_account}">${fromAccShort}</span>
+            <span style="color: var(--text-dim); font-size: 8px;">➔</span>
+            <span class="acc-chip" title="Beneficiary: ${tx.to_account}">${toAccShort}</span>
+          </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <span style="font-family: monospace; font-weight: 700; color: ${tx.color};">${tx.amount} ${tx.currency}</span>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+          <span style="font-family: monospace; font-weight: 700; color: ${tx.color}; font-size: 9.5px;">${tx.amount} ${tx.currency}</span>
           <span class="status-pill ${pillClass}">${tx.status}</span>
         </div>
       `;
 
       schedTable.insertBefore(row, schedTable.firstChild);
-      if (schedTable.children.length > 25) {
+      if (schedTable.children.length > 30) {
         schedTable.removeChild(schedTable.lastChild);
       }
     }
@@ -1353,6 +2316,35 @@
       const isVm1 = (a.node || '').includes('175.2.0.23');
       const nodeBadge = isVm1 ? '<span class="node-tag tag-vm1">VM1</span>' : '<span class="node-tag tag-vm2">VM2</span>';
 
+      const txObject = {
+        id: a.id,
+        tx_id: a.tx_id,
+        from_code: a.source_bank,
+        to_code: a.dest_bank || 'BCEL',
+        from_account: a.source_account || 'N/A',
+        to_account: a.dest_account || 'N/A',
+        amount: a.amount,
+        currency: a.currency,
+        threat: a.threat_level || 'High',
+        status: 'ALERT',
+        color: '#ff3366',
+        risk_score: a.risk_score || 85,
+        triggers: a.triggers || 'High Velocity Inbound / Fan-In Risk',
+        node: isVm1 ? 'VM1' : 'VM2',
+        full_node: a.node || (isVm1 ? 'VM1 (175.2.0.23)' : 'VM2 (175.2.0.24)'),
+        time: a.alert_time
+      };
+
+      card.onclick = () => openRoadInspector(txObject);
+      card.title = `Click to inspect fraud transaction road: ${a.source_bank} ➔ LAPNET ➔ ${a.dest_bank || 'BCEL'}`;
+
+      const fromAccShort = (a.source_account && a.source_account !== 'N/A')
+        ? (a.source_account.length > 14 ? a.source_account.slice(0, 6) + '...' + a.source_account.slice(-4) : a.source_account)
+        : 'ACC';
+      const toAccShort = (a.dest_account && a.dest_account !== 'N/A')
+        ? (a.dest_account.length > 14 ? a.dest_account.slice(0, 6) + '...' + a.dest_account.slice(-4) : a.dest_account)
+        : 'QR/MULE';
+
       card.innerHTML = `
         <div class="alert-hdr">
           <span>${nodeBadge} ${a.source_bank} ➔ ${a.dest_bank || 'BCEL'}</span>
@@ -1361,14 +2353,18 @@
         <div class="alert-reason" title="${a.triggers}">
           ${a.triggers || 'High Velocity Inbound / Fan-In Risk'}
         </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin: 2px 0;">
+          <span class="acc-chip" title="Sender: ${a.source_account}">Src: ${fromAccShort}</span>
+          <span class="acc-chip" style="color: var(--neon-red); border-color: rgba(255,51,102,0.3); background: rgba(255,51,102,0.1);" title="Beneficiary: ${a.dest_account}">Dst: ${toAccShort}</span>
+        </div>
         <div style="display: flex; justify-content: space-between; font-size: 9px; margin-top: 2px;">
-          <span style="color: #ffffff; font-family: monospace;">${a.amount} ${a.currency}</span>
-          <span style="color: var(--neon-red); font-weight: 700;">${a.threat_level || 'CRITICAL'}</span>
+          <span style="color: #ffffff; font-family: monospace; font-weight: 700;">${a.amount} ${a.currency}</span>
+          <span style="color: var(--neon-red); font-weight: 800; font-size: 9.5px;">${a.threat_level || 'CRITICAL'}</span>
         </div>
       `;
 
       alertList.insertBefore(card, alertList.firstChild);
-      if (alertList.children.length > 15) {
+      if (alertList.children.length > 20) {
         alertList.removeChild(alertList.lastChild);
       }
     }

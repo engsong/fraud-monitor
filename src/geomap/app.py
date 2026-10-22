@@ -136,6 +136,7 @@ def get_recent_alerts():
         cur.execute("""
             SELECT 
                 id,
+                COALESCE(tx_id, 'TX-' || id) AS tx_id,
                 to_char(timestamp, 'HH24:MI:SS') AS alert_time,
                 node,
                 source_bank,
@@ -143,7 +144,7 @@ def get_recent_alerts():
                 dest_bank,
                 dest_account,
                 currency,
-                amount,
+                to_char(amount, 'FM999,999,990.00') AS amount,
                 risk_score,
                 array_to_string(reasons, ', ') AS triggers,
                 CASE 
@@ -298,6 +299,8 @@ def live_stream():
                             "full_node": node_name,
                             "from_code": src_code,
                             "to_code": dst_code,
+                            "from_account": r["source_account"] or "N/A",
+                            "to_account": r["dest_account"] or "N/A",
                             "from_coords": src_coords,
                             "to_coords": dst_coords,
                             "color": color,
