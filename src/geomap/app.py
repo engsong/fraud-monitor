@@ -635,6 +635,21 @@ def trace_transaction_chain_logic(cur, tx_id=None, source_acc=None, dest_acc=Non
         rule_hits.append(r)
         tier3_relationship.append(r)
 
+    # Ingestion Pipeline Rule Tags synchronization (e.g. S009, S001, etc.)
+    raw_reasons = str(target_tx.get("reasons") or "")
+    pipeline_tags = re.findall(r"\[(S\d{3}|R\d{3}|SR\d{3})\]\s*([^,\[]+)", raw_reasons)
+    for tag, desc in pipeline_tags:
+        if not any(rh["id"] == tag for rh in rule_hits):
+            risk = "Critical" if tag in ["S008", "S013", "S015", "R001", "R008", "R010", "R011", "R015", "SR003", "SR004", "SR005", "SR006", "SR008", "SR010", "SR012"] else "High"
+            rule_entry = {"id": tag, "name": desc.split(":")[0].strip(), "risk": risk, "desc": desc.strip()}
+            rule_hits.append(rule_entry)
+            if tag.startswith("SR"):
+                tier3_relationship.append(rule_entry)
+            elif tag.startswith("R"):
+                tier2_receiver.append(rule_entry)
+            elif tag.startswith("S"):
+                tier1_sender.append(rule_entry)
+
     # Overall Risk Level
     if any(r["risk"] == "Critical" for r in rule_hits) or ring_detected or (target_tx.get("risk_score") or 0) >= 85:
         calc_risk_level = "Critical"
