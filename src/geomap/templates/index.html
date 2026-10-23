@@ -705,15 +705,16 @@
     }
 
     .modal-window {
-      width: 820px;
+      width: 860px;
       max-width: 96vw;
+      max-height: 92vh;
+      overflow-y: auto;
       background: #061623;
       border: 1.5px solid var(--border-light);
       border-radius: 12px;
       box-shadow: 0 0 50px rgba(0, 220, 255, 0.25), inset 0 0 25px rgba(0, 180, 255, 0.06);
       display: flex;
       flex-direction: column;
-      overflow: hidden;
     }
 
     .modal-hdr {
@@ -843,6 +844,284 @@
     @keyframes pulseArrow {
       0%, 100% { opacity: 0.4; transform: translateX(0); }
       50% { opacity: 1; transform: translateX(3px); color: var(--neon-cyan); }
+    }
+
+    /* Ring & Threat Pattern Banner */
+    .ring-banner {
+      margin: 12px 18px 4px 18px;
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 11px;
+      transition: all 0.3s ease;
+    }
+    .ring-banner-ring {
+      background: linear-gradient(90deg, rgba(255, 23, 68, 0.22) 0%, rgba(20, 6, 12, 0.95) 100%);
+      border: 1.5px solid #ff1744;
+      box-shadow: 0 0 20px rgba(255, 23, 68, 0.35);
+      animation: pulseRingAlert 2s infinite ease-in-out;
+    }
+    @keyframes pulseRingAlert {
+      0%, 100% { box-shadow: 0 0 15px rgba(255, 23, 68, 0.3); border-color: #ff1744; }
+      50% { box-shadow: 0 0 28px rgba(255, 23, 68, 0.65); border-color: #ff5252; }
+    }
+    .ring-banner-mule {
+      background: linear-gradient(90deg, rgba(255, 179, 0, 0.2) 0%, rgba(20, 15, 6, 0.95) 100%);
+      border: 1.5px solid #ffb300;
+      box-shadow: 0 0 16px rgba(255, 179, 0, 0.25);
+    }
+    .ring-banner-linear {
+      background: linear-gradient(90deg, rgba(0, 242, 254, 0.15) 0%, rgba(6, 20, 30, 0.95) 100%);
+      border: 1.5px solid rgba(0, 242, 254, 0.4);
+      box-shadow: 0 0 14px rgba(0, 242, 254, 0.15);
+    }
+    .ring-icon {
+      font-size: 24px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ring-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .ring-title {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ring-title-red { color: #ff1744; }
+    .ring-title-amber { color: #ffb300; }
+    .ring-title-cyan { color: #00f2fe; }
+    .ring-desc {
+      font-size: 9.5px;
+      color: #cfd8dc;
+      line-height: 1.4;
+    }
+    .ring-path-track {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      color: #ffffff;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-top: 2px;
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+    }
+    .ring-badge-status {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 4px;
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-ring-yes {
+      background: #ff1744;
+      color: #ffffff;
+      box-shadow: 0 0 12px rgba(255, 23, 68, 0.6);
+    }
+    .badge-ring-no {
+      background: rgba(0, 230, 118, 0.2);
+      border: 1px solid #00e676;
+      color: #00e676;
+    }
+    .badge-ring-mule {
+      background: #ffb300;
+      color: #040e17;
+      font-weight: 800;
+    }
+
+    /* Multi-Hop Journey Container */
+    .chain-hops-wrap {
+      padding: 6px 18px 8px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+    .chain-hop-card {
+      background: #081d2c;
+      border: 1px solid var(--border-blue);
+      border-radius: 7px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+    .chain-hop-card:hover {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 12px rgba(0, 242, 254, 0.15);
+    }
+    .chain-hop-target {
+      border: 1.5px solid var(--neon-cyan);
+      background: #092437;
+      box-shadow: 0 0 14px rgba(0, 242, 254, 0.2);
+    }
+    .chain-hop-closure {
+      border: 1.5px solid #ff1744 !important;
+      background: #1f0b12 !important;
+      box-shadow: 0 0 18px rgba(255, 23, 68, 0.35) !important;
+    }
+    .hop-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(0, 200, 255, 0.1);
+      padding-bottom: 4px;
+    }
+    .hop-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .hop-pill-pre {
+      background: rgba(0, 242, 254, 0.15);
+      color: var(--neon-cyan);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+    }
+    .hop-pill-target {
+      background: var(--neon-cyan);
+      color: #040e17;
+      font-weight: 800;
+    }
+    .hop-pill-out {
+      background: rgba(255, 184, 0, 0.15);
+      color: var(--neon-amber);
+      border: 1px solid rgba(255, 184, 0, 0.3);
+    }
+    .hop-pill-loop {
+      background: #ff1744;
+      color: #ffffff;
+      box-shadow: 0 0 8px rgba(255, 23, 68, 0.5);
+    }
+    .hop-main-flow {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 12px;
+    }
+    .hop-side-box {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .hop-bank-tag {
+      font-size: 11px;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .hop-acc-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: var(--neon-teal);
+      background: rgba(0, 0, 0, 0.35);
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid rgba(0, 200, 255, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 250px;
+    }
+    .hop-mid-bridge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+    }
+    .hop-amount-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--neon-green);
+    }
+    .hop-bridge-line {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      color: var(--neon-cyan);
+    }
+    .hop-lapnet-pill {
+      font-size: 8px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1px 5px;
+      border-radius: 3px;
+      color: #ffffff;
+    }
+    .hop-loopback-alert {
+      margin-top: 3px;
+      background: rgba(255, 23, 68, 0.15);
+      border: 1px dashed #ff1744;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 9px;
+      font-weight: 700;
+      color: #ff80ab;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Fan-In Mule Contributors Drawer */
+    .mule-contributors-drawer {
+      margin: 0 18px 8px 18px;
+      background: rgba(10, 28, 44, 0.6);
+      border: 1px solid rgba(255, 184, 0, 0.3);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 9.5px;
+    }
+    .mule-drawer-hdr {
+      font-weight: 800;
+      color: var(--neon-amber);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .mule-contributor-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 6px;
+    }
+    .mule-contributor-chip {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      padding: 4px 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
     /* Modal 3-Column Info Cards */
@@ -1332,50 +1611,40 @@
         <button class="modal-close-btn" onclick="closeRoadInspector()" title="Close Inspector">✕</button>
       </div>
 
-      <!-- 5-Step Visual Roadmap Breadcrumb -->
-      <div class="roadmap-track-container">
-        <!-- Step 1: Origin Client / Account -->
-        <div class="roadmap-step">
-          <div class="step-num">STEP 01</div>
-          <div class="step-icon-box">👤</div>
-          <div class="step-title">ORIGIN SENDER</div>
-          <div class="step-desc" id="m-step1-acc">...</div>
+      <!-- Dynamic Ring & Anomaly Banner -->
+      <div id="m-ring-banner" class="ring-banner ring-banner-linear">
+        <div class="ring-icon" id="m-ring-icon">⛓️</div>
+        <div class="ring-content">
+          <div class="ring-title ring-title-cyan" id="m-ring-title">
+            <span>MULTI-HOP JOURNEY & RING ANALYSIS</span>
+          </div>
+          <div class="ring-desc" id="m-ring-desc">Analyzing real-time transaction chain across VM1 & VM2...</div>
+          <div class="ring-path-track" id="m-ring-path">Route: BCEL ➔ LAPNET ➔ JDB</div>
         </div>
-        <div class="roadmap-arrow">➔</div>
+        <div class="ring-badge-status badge-ring-no" id="m-ring-badge">ANALYZING</div>
+      </div>
 
-        <!-- Step 2: Source Bank Gateway -->
-        <div class="roadmap-step">
-          <div class="step-num">STEP 02</div>
-          <div class="step-icon-box">🏦</div>
-          <div class="step-title">SOURCE GATEWAY</div>
-          <div class="step-desc" id="m-step2-bank">...</div>
+      <!-- Multi-Hop Journey Trail (Dynamic Steps) -->
+      <div style="padding: 2px 18px 0 18px; display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 9px; font-weight: 800; color: #90a4ae; letter-spacing: 0.6px; text-transform: uppercase;">
+          MULTI-HOP MONEY FLOW & ROAD SEQUENCE
+        </span>
+        <span id="m-chain-total-hops" style="font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--neon-cyan);">
+          1 HOP TRACED
+        </span>
+      </div>
+      <div id="m-chain-hops-container" class="chain-hops-wrap">
+        <!-- Injected via JavaScript -->
+      </div>
+
+      <!-- Fan-In Mule Contributors Drawer (shown when 2 or more senders deposit to this account) -->
+      <div id="m-mule-drawer" class="mule-contributors-drawer" style="display: none;">
+        <div class="mule-drawer-hdr">
+          <span>⚠️ CONVERGING SENDER ACCOUNTS (MULE INFLOW DETECTED)</span>
+          <span id="m-mule-sender-count" style="font-family: 'JetBrains Mono', monospace; font-size: 9px;">3 Senders</span>
         </div>
-        <div class="roadmap-arrow">➔</div>
-
-        <!-- Step 3: LAPNet Central Switch (Central Hub) -->
-        <div class="roadmap-step step-hub">
-          <div class="step-num">STEP 03</div>
-          <div class="step-icon-box">⚡</div>
-          <div class="step-title">LAPNET CORE SWITCH</div>
-          <div class="step-desc" id="m-step3-node">...</div>
-        </div>
-        <div class="roadmap-arrow">➔</div>
-
-        <!-- Step 4: Destination Bank Gateway -->
-        <div class="roadmap-step">
-          <div class="step-num">STEP 04</div>
-          <div class="step-icon-box">🏦</div>
-          <div class="step-title">DEST GATEWAY</div>
-          <div class="step-desc" id="m-step4-bank">...</div>
-        </div>
-        <div class="roadmap-arrow">➔</div>
-
-        <!-- Step 5: Beneficiary / Recipient Mule Account -->
-        <div class="roadmap-step step-target">
-          <div class="step-num">STEP 05</div>
-          <div class="step-icon-box">🎯</div>
-          <div class="step-title">BENEFICIARY ACCOUNT</div>
-          <div class="step-desc" id="m-step5-acc">...</div>
+        <div id="m-mule-contributor-list" class="mule-contributor-list">
+          <!-- Injected via JavaScript -->
         </div>
       </div>
 
@@ -1667,6 +1936,8 @@
     let movingPackets = [];
     let lapnetPulse = 0;
     let activeHighlightedRoad = null;
+    let activeHighlightedChain = null;
+    let currentChainData = null;
     let activeTxData = null;
     let animChevronOffset = 0;
 
@@ -1830,15 +2101,22 @@
         const sp = getStationPixel(track.from);
         if (!sp) return;
 
-        const isRoadSrc = activeHighlightedRoad && activeHighlightedRoad.from === track.from;
-        const isRoadDst = activeHighlightedRoad && activeHighlightedRoad.to === track.from;
+        const chainHop = (activeHighlightedChain && activeHighlightedChain.hops)
+          ? activeHighlightedChain.hops.find(h => h.from === track.from || h.to === track.from)
+          : null;
+        const isChainStation = !!chainHop;
+        const isRoadSrc = (activeHighlightedRoad && activeHighlightedRoad.from === track.from) || (chainHop && chainHop.from === track.from);
+        const isRoadDst = (activeHighlightedRoad && activeHighlightedRoad.to === track.from) || (chainHop && chainHop.to === track.from);
 
-        if (isRoadSrc || isRoadDst) {
-          // Intense Laser Beam for Active Highlighted Road
-          // Inbound = Cyan/Amber; Outbound = Green/Red
-          const trackColor = isRoadSrc 
-            ? (activeHighlightedRoad.isAlert ? '#ff9900' : '#00f2fe')
-            : (activeHighlightedRoad.isAlert ? '#ff1744' : '#00e676');
+        if (isRoadSrc || isRoadDst || isChainStation) {
+          // Intense Laser Beam for Active Highlighted Road or Multi-Hop Chain Leg
+          const isRing = activeHighlightedChain && activeHighlightedChain.ringDetected;
+          const isClosure = chainHop && chainHop.isClosure;
+          const trackColor = (isClosure || isRing)
+            ? '#ff1744'
+            : (isRoadSrc 
+                ? ((activeHighlightedRoad && activeHighlightedRoad.isAlert) ? '#ff9900' : '#00f2fe')
+                : '#00e676');
 
           ctx.globalAlpha = 1.0;
           ctx.beginPath();
@@ -1941,16 +2219,19 @@
         }
 
         const p = getStationPixel(key);
-        const isRoadSrc = activeHighlightedRoad && activeHighlightedRoad.from === key;
-        const isRoadDst = activeHighlightedRoad && activeHighlightedRoad.to === key;
+        const isChainStation = activeHighlightedChain && activeHighlightedChain.hops && activeHighlightedChain.hops.some(h => h.from === key || h.to === key);
+        const isRoadSrc = (activeHighlightedRoad && activeHighlightedRoad.from === key);
+        const isRoadDst = (activeHighlightedRoad && activeHighlightedRoad.to === key);
+        const isStationHighlighted = isRoadSrc || isRoadDst || isChainStation;
 
-        // Expanding Ripple for Active Road Stations or LAPNet Pulse
-        if ((isRoadSrc || isRoadDst) || (isHubStation && lapnetPulse > 0.1)) {
+        // Expanding Ripple for Active Road / Chain Stations or LAPNet Pulse
+        if (isStationHighlighted || (isHubStation && lapnetPulse > 0.1)) {
+          const isRingStation = activeHighlightedChain && activeHighlightedChain.ringDetected && isChainStation;
           const ripR = (isHubStation ? 24 : 16) + (1 - (isHubStation ? lapnetPulse : (Date.now() % 1000) / 1000)) * 14;
           ctx.beginPath();
           ctx.arc(p.x, p.y, ripR, 0, Math.PI * 2);
-          ctx.strokeStyle = isRoadSrc ? '#00f2fe' : (isRoadDst ? '#00e676' : '#ffffff');
-          ctx.globalAlpha = isHubStation ? lapnetPulse * 0.8 : 0.6;
+          ctx.strokeStyle = isRingStation ? '#ff1744' : (isRoadSrc ? '#00f2fe' : (isRoadDst ? '#00e676' : '#ffffff'));
+          ctx.globalAlpha = isHubStation ? lapnetPulse * 0.8 : 0.65;
           ctx.lineWidth = 2;
           ctx.stroke();
           ctx.globalAlpha = 1.0;
@@ -2061,6 +2342,91 @@
 
         ctx.globalAlpha = 1.0;
       });
+
+      // ==================================================
+      // DRAW DIRECT MULTI-HOP CHAIN & CIRCULAR FRAUD RING ARCS
+      // ==================================================
+      if (activeHighlightedChain && activeHighlightedChain.hops && activeHighlightedChain.hops.length > 0) {
+        const isRing = activeHighlightedChain.ringDetected;
+        const chainHops = activeHighlightedChain.hops;
+
+        chainHops.forEach((h, hIdx) => {
+          const pFrom = getStationPixel(h.from);
+          const pTo = getStationPixel(h.to);
+          if (!pFrom || !pTo) return;
+
+          // Compute midpoint with curved offset to create elegant arched circuit trails
+          const midX = (pFrom.x + pTo.x) / 2;
+          const midY = (pFrom.y + pTo.y) / 2;
+          const dx = pTo.x - pFrom.x;
+          const dy = pTo.y - pFrom.y;
+          const normDist = Math.hypot(dx, dy) || 1;
+          const curveFactor = (hIdx % 2 === 0 ? 38 : -38);
+          const ctrlX = midX - (dy / normDist) * curveFactor;
+          const ctrlY = midY + (dx / normDist) * curveFactor;
+
+          const arcColor = h.isClosure 
+            ? '#ff1744' 
+            : (isRing ? '#ff2a5f' : (h.isAlert ? '#ff9900' : '#00f2fe'));
+
+          // 1. Draw Arched Glowing Path
+          ctx.beginPath();
+          ctx.moveTo(pFrom.x, pFrom.y);
+          ctx.quadraticCurveTo(ctrlX, ctrlY, pTo.x, pTo.y);
+          ctx.strokeStyle = arcColor + '66';
+          ctx.lineWidth = 7;
+          ctx.shadowColor = arcColor;
+          ctx.shadowBlur = 16;
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(pFrom.x, pFrom.y);
+          ctx.quadraticCurveTo(ctrlX, ctrlY, pTo.x, pTo.y);
+          ctx.strokeStyle = arcColor;
+          ctx.lineWidth = 2.6;
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+
+          // 2. Continuous Cycling Laser Particles along the arc
+          const speed = 0.0006;
+          const numDots = 4;
+          for (let d = 0; d < numDots; d++) {
+            const t = ((Date.now() * speed + (d / numDots) + (hIdx * 0.25)) % 1);
+            const oneMinusT = 1 - t;
+            const dotX = oneMinusT * oneMinusT * pFrom.x + 2 * oneMinusT * t * ctrlX + t * t * pTo.x;
+            const dotY = oneMinusT * oneMinusT * pFrom.y + 2 * oneMinusT * t * ctrlY + t * t * pTo.y;
+
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, h.isClosure ? 4.5 : 3.2, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = arcColor;
+            ctx.shadowBlur = 10;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          }
+
+          // 3. Hop Badge (H1, H2, H3, or ⭕) at midpoint
+          const bX = 0.25 * pFrom.x + 0.5 * ctrlX + 0.25 * pTo.x;
+          const bY = 0.25 * pFrom.y + 0.5 * ctrlY + 0.25 * pTo.y;
+
+          ctx.beginPath();
+          ctx.arc(bX, bY, 11, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(6, 22, 35, 0.95)';
+          ctx.strokeStyle = arcColor;
+          ctx.lineWidth = 1.8;
+          ctx.shadowColor = arcColor;
+          ctx.shadowBlur = 8;
+          ctx.fill();
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+
+          ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(h.isClosure ? '⭕' : `H${hIdx + 1}`, bX, bY);
+        });
+      }
 
       if (lapnetPulse > 0.02) lapnetPulse -= 0.02;
 
@@ -2173,7 +2539,7 @@
     const modalRoad = document.getElementById('modal-road-inspector');
     const roadHud = document.getElementById('map-active-road-hud');
 
-    function openRoadInspector(tx) {
+    async function openRoadInspector(tx) {
       if (!tx) return;
       activeTxData = tx;
 
@@ -2181,56 +2547,69 @@
       const dstCode = normalizeBankCode(tx.to_code || tx.dest_bank);
       const isAlert = tx.threat === 'High' || tx.status === 'ALERT' || (tx.threat_level && tx.threat_level !== 'Low');
 
-      // Highlight active road on the map
+      // 1. Initial Map Road Highlight
       activeHighlightedRoad = {
         from: srcCode,
         to: dstCode,
         isAlert: isAlert
       };
 
-      // Update Active Road HUD on Canvas with Distinct Inbound & Outbound labels
+      // 2. Initial Canvas Road HUD
       roadHud.style.display = 'flex';
       document.getElementById('hud-road-title').innerHTML = `
         <span style="color: ${isAlert ? '#ff9900' : '#00f2fe'};">🔵 ${srcCode}</span> ➔ 
         <span style="color: #ffffff;">⚡ LAPNET</span> ➔ 
         <span style="color: ${isAlert ? '#ff1744' : '#00e676'};">🟢 ${dstCode}</span>
       `;
-      document.getElementById('hud-road-desc').innerText = `${tx.amount} ${tx.currency} | ${tx.time || ''}`;
+      document.getElementById('hud-road-desc').innerText = `${tx.amount} ${tx.currency || 'LAK'} | ${tx.time || ''}`;
       const hudPill = document.getElementById('hud-road-pill');
       hudPill.innerText = isAlert ? 'FRAUD ALERT TRACE' : 'CLEARING TRACE';
       hudPill.style.background = isAlert ? 'var(--neon-red)' : 'var(--neon-teal)';
 
-      // Populate Modal Fields
+      // 3. Populate Modal Header & Core Fields
       document.getElementById('m-tx-id').innerText = tx.tx_id || ('TX-' + (tx.id || 'LIVE'));
       const badge = document.getElementById('m-threat-badge');
       badge.innerText = isAlert ? 'CRITICAL FRAUD ALERT' : (tx.status === 'HIGH-VAL' ? 'HIGH-VALUE SETTLEMENT' : 'LMPS CLEARING AUDIT');
       badge.style.background = isAlert ? 'var(--neon-red)' : (tx.status === 'HIGH-VAL' ? 'var(--neon-amber)' : 'var(--neon-teal)');
 
-      // 5-Step Visual Roadmap Breadcrumb
-      document.getElementById('m-step1-acc').innerText = tx.from_account || '0101...';
-      document.getElementById('m-step2-bank').innerText = srcCode;
-      document.getElementById('m-step3-node').innerText = tx.node ? (tx.node + ' LMPS') : 'VM1/VM2';
-      document.getElementById('m-step4-bank').innerText = dstCode;
-      document.getElementById('m-step5-acc').innerText = tx.to_account || '0002...';
-
       // Detail Cards
-      document.getElementById('m-sender-acc').innerText = tx.from_account || 'N/A';
+      document.getElementById('m-sender-acc').innerText = tx.from_account || tx.source_account || 'N/A';
       document.getElementById('m-sender-bank').innerText = `${srcCode} (${(STATIONS[srcCode] || {}).fullName || 'Lao Bank'})`;
-      document.getElementById('m-tx-time').innerText = `${tx.time || ''} UTC`;
+      document.getElementById('m-tx-time').innerText = `${tx.time || tx.alert_time || ''} UTC`;
 
       document.getElementById('m-lapnet-node').innerText = tx.full_node || (tx.node === 'VM1' ? 'VM1 (175.2.0.23)' : 'VM2 (175.2.0.24)');
       document.getElementById('m-risk-score').innerText = `${tx.risk_score || 0} / 100`;
       document.getElementById('m-triggers').innerText = tx.triggers || (isAlert ? 'High Velocity Fan-In Anomaly' : 'Standard Clearing Ingestion');
       document.getElementById('m-decision').innerText = isAlert ? 'FLAGGED (FRAUD ENGINE ALERT)' : 'CLEARED & SETTLED';
 
-      document.getElementById('m-dest-acc').innerText = tx.to_account || 'N/A';
+      document.getElementById('m-dest-acc').innerText = tx.to_account || tx.dest_account || 'N/A';
       document.getElementById('m-dest-bank').innerText = `${dstCode} (${(STATIONS[dstCode] || {}).fullName || 'Lao Bank'})`;
-      document.getElementById('m-amount').innerText = `${tx.amount} ${tx.currency}`;
+      document.getElementById('m-amount').innerText = `${tx.amount} ${tx.currency || 'LAK'}`;
       document.getElementById('m-mule-status').innerText = (tx.is_fan_in || (tx.triggers && tx.triggers.includes('Mule'))) 
         ? '⚠️ High Fan-In Mule Collector Flagged' 
         : 'Verified Beneficiary Account';
 
       document.getElementById('m-route-path').innerText = `${srcCode} ➔ LAPNET CORE SWITCH ➔ ${dstCode}`;
+
+      // 4. Reset & Show Loading state in Ring Banner and Chain container
+      const hopsContainer = document.getElementById('m-chain-hops-container');
+      hopsContainer.innerHTML = `
+        <div style="text-align: center; padding: 20px 10px; color: var(--neon-cyan); font-family: 'JetBrains Mono', monospace; font-size: 10px;">
+          <span style="font-size: 16px; display: inline-block; animation: pulseArrow 1s infinite;">⚡</span>
+          Querying Multi-Hop Journey & Fraud Ring Analysis across VM1 & VM2...
+        </div>
+      `;
+      const ringBanner = document.getElementById('m-ring-banner');
+      ringBanner.className = 'ring-banner ring-banner-linear';
+      document.getElementById('m-ring-icon').innerText = '⏳';
+      document.getElementById('m-ring-title').innerHTML = `<span>TRACING MONEY TRAIL & FRAUD RING STATUS...</span>`;
+      document.getElementById('m-ring-desc').innerText = 'Querying upstream funding sources and downstream cashouts within 24h...';
+      document.getElementById('m-ring-path').innerText = `${srcCode} ➔ LAPNET ➔ ${dstCode}`;
+      const ringBadge = document.getElementById('m-ring-badge');
+      ringBadge.className = 'ring-badge-status badge-ring-no';
+      ringBadge.innerText = 'TRACING...';
+
+      document.getElementById('m-mule-drawer').style.display = 'none';
 
       // Open Modal
       modalRoad.style.display = 'flex';
@@ -2241,6 +2620,248 @@
           movingPackets.push(new HopPacket(srcCode, dstCode, tx, isAlert));
         }, i * 200);
       }
+
+      // 5. Fetch Multi-Hop & Circular Fraud Ring Trace from Backend
+      try {
+        const queryParams = new URLSearchParams();
+        if (tx.tx_id) queryParams.set('tx_id', tx.tx_id);
+        else if (tx.id) queryParams.set('id', tx.id);
+        if (tx.from_account || tx.source_account) queryParams.set('source_acc', tx.from_account || tx.source_account);
+        if (tx.to_account || tx.dest_account) queryParams.set('dest_acc', tx.to_account || tx.dest_account);
+
+        const resp = await fetch(`/api/trace-chain?${queryParams.toString()}`);
+        const data = await resp.json();
+        currentChainData = data;
+
+        renderChainModal(data, tx, srcCode, dstCode);
+      } catch (err) {
+        console.error('Error tracing chain:', err);
+        hopsContainer.innerHTML = `
+          <div style="color: var(--neon-red); font-size: 10px; padding: 12px; font-family: monospace;">
+            ⚠️ Unable to trace full chain: ${err.message}. Showing single-hop audit.
+          </div>
+        `;
+      }
+    }
+
+    function renderChainModal(data, seedTx, srcCode, dstCode) {
+      if (!data) return;
+      const ringBanner = document.getElementById('m-ring-banner');
+      const ringIcon = document.getElementById('m-ring-icon');
+      const ringTitle = document.getElementById('m-ring-title');
+      const ringDesc = document.getElementById('m-ring-desc');
+      const ringPath = document.getElementById('m-ring-path');
+      const ringBadge = document.getElementById('m-ring-badge');
+      const hopsContainer = document.getElementById('m-chain-hops-container');
+      const totalHopsTag = document.getElementById('m-chain-total-hops');
+
+      totalHopsTag.innerText = `${data.total_hops || (data.chain ? data.chain.length : 1)} HOPS TRACED`;
+
+      // 1. Update Ring Banner
+      if (data.ring_detected) {
+        ringBanner.className = 'ring-banner ring-banner-ring';
+        ringIcon.innerText = '⭕';
+        ringTitle.innerHTML = `<span class="ring-title-red">🚨 CLOSED CIRCULAR FRAUD RING DETECTED (${data.ring_type || 'LOOP'})</span>`;
+        ringDesc.innerText = data.ring_notes || 'Funds cycled across accounts/banks and looped back to the originating entity!';
+        ringPath.innerHTML = `Loop Sequence: <strong style="color: #ff5252;">${(data.ring_path || []).join(' ➔ ')} ➔ ${data.ring_path[0] || ''}</strong>`;
+        ringBadge.className = 'ring-badge-status badge-ring-yes';
+        ringBadge.innerText = 'FRAUD RING: DETECTED';
+      } else if (data.mule_stats && data.mule_stats.is_mule) {
+        ringBanner.className = 'ring-banner ring-banner-mule';
+        ringIcon.innerText = '⚠️';
+        ringTitle.innerHTML = `<span class="ring-title-amber">⚠️ FAN-IN MULE COLLECTOR CONVERGENCE (NO CIRCULAR RING)</span>`;
+        ringDesc.innerText = `Target beneficiary account has accumulated deposits from ${data.mule_stats.unique_senders} unique senders within 24h. Funds disperse outward without returning to origin.`;
+        ringPath.innerText = `Pattern: Fan-In Aggregation (${data.mule_stats.unique_senders} Senders ➔ 1 Beneficiary)`;
+        ringBadge.className = 'ring-badge-status badge-ring-mule';
+        ringBadge.innerText = 'FRAUD RING: NO (MULE)';
+      } else {
+        ringBanner.className = 'ring-banner ring-banner-linear';
+        ringIcon.innerText = '⛓️';
+        ringTitle.innerHTML = `<span class="ring-title-cyan">⛓️ LINEAR MULTI-HOP MONEY TRAIL (NO CIRCULAR RING)</span>`;
+        ringDesc.innerText = data.ring_notes || 'Sequential clearing through LAPNet central switch without looping back to origin accounts or banks.';
+        const pathStr = (data.chain && data.chain.length > 0)
+          ? data.chain.map(h => `${h.source_bank}➔${h.dest_bank}`).join(' | ')
+          : `${srcCode} ➔ LAPNET ➔ ${dstCode}`;
+        ringPath.innerText = `Trail: ${pathStr}`;
+        ringBadge.className = 'ring-badge-status badge-ring-no';
+        ringBadge.innerText = 'FRAUD RING: NO (LINEAR)';
+      }
+
+      // 2. Render Hops in Chain Container
+      const chain = data.chain || [];
+      if (chain.length === 0) {
+        hopsContainer.innerHTML = `
+          <div style="padding: 12px; color: var(--text-dim); font-size: 9.5px; text-align: center;">
+            No preceding or downstream hops found within 24 hours. Single-hop transaction.
+          </div>
+        `;
+      } else {
+        hopsContainer.innerHTML = chain.map((h, idx) => {
+          const isTarget = h.role === 'INSPECTED_TARGET';
+          const isClosure = h.is_ring_closure;
+          let pillClass = 'hop-pill-pre';
+          let roleLabel = h.label || 'Inflow Layering';
+
+          if (isClosure) {
+            pillClass = 'hop-pill-loop';
+            roleLabel = '⭕ LOOPBACK RETURN (RING CLOSURE)';
+          } else if (isTarget) {
+            pillClass = 'hop-pill-target';
+            roleLabel = '★ AUDITED TARGET TRANSFER';
+          } else if (h.role === 'OUTFLOW_DISPERSION' || h.role === 'OUTFLOW_HOP3') {
+            pillClass = 'hop-pill-out';
+            roleLabel = h.label || 'Outflow Dispersion';
+          }
+
+          const cardClass = isClosure 
+            ? 'chain-hop-card chain-hop-closure' 
+            : (isTarget ? 'chain-hop-card chain-hop-target' : 'chain-hop-card');
+
+          const sAccShort = (h.source_account && h.source_account.length > 18)
+            ? h.source_account.slice(0, 8) + '...' + h.source_account.slice(-6)
+            : (h.source_account || 'N/A');
+          const dAccShort = (h.dest_account && h.dest_account.length > 18)
+            ? h.dest_account.slice(0, 8) + '...' + h.dest_account.slice(-6)
+            : (h.dest_account || 'N/A');
+
+          return `
+            <div class="${cardClass}">
+              <div class="hop-header">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 8.5px; font-weight: 800; color: #cfd8dc;">HOP 0${idx + 1}</span>
+                  <span class="hop-pill ${pillClass}">${roleLabel}</span>
+                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--text-dim);">${h.tx_id}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 8.5px; color: ${h.risk_score >= 80 ? 'var(--neon-red)' : 'var(--neon-cyan)'}; font-weight: 700;">
+                    Risk: ${h.risk_score}/100
+                  </span>
+                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: #78909c;">${h.time} UTC</span>
+                </div>
+              </div>
+
+              <div class="hop-main-flow">
+                <!-- Source Side -->
+                <div class="hop-side-box">
+                  <div class="hop-bank-tag">
+                    <span>🏦</span>
+                    <span>${h.source_bank}</span>
+                  </div>
+                  <div class="hop-acc-num">
+                    <span title="${h.source_account}">${sAccShort}</span>
+                    <button class="mini-action-btn" style="margin: 0; padding: 1px 4px; font-size: 7.5px;" onclick="copyToClipboard('${h.source_account}')" title="Copy Account">📋</button>
+                  </div>
+                </div>
+
+                <!-- LAPNet Center Bridge -->
+                <div class="hop-mid-bridge">
+                  <div class="hop-amount-tag">${h.amount_fmt} ${h.currency}</div>
+                  <div class="hop-bridge-line">
+                    <span>➔</span>
+                    <span class="hop-lapnet-pill">⚡ LAPNET ${h.node || 'CORE'}</span>
+                    <span>➔</span>
+                  </div>
+                </div>
+
+                <!-- Destination Side -->
+                <div class="hop-side-box">
+                  <div class="hop-bank-tag" style="justify-content: flex-end;">
+                    <span>${h.dest_bank}</span>
+                    <span>🏦</span>
+                  </div>
+                  <div class="hop-acc-num" style="align-self: flex-end;">
+                    <span title="${h.dest_account}">${dAccShort}</span>
+                    <button class="mini-action-btn" style="margin: 0; padding: 1px 4px; font-size: 7.5px;" onclick="copyToClipboard('${h.dest_account}')" title="Copy Account">📋</button>
+                  </div>
+                </div>
+              </div>
+
+              ${isClosure ? `
+                <div class="hop-loopback-alert">
+                  <span>⭕</span>
+                  <span><strong>CLOSED FRAUD RING LOOPBACK:</strong> Funds transferred back to upstream sender account (${h.dest_account}) on ${h.dest_bank}!</span>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+      }
+
+      // 3. Render Mule Contributors Drawer (if applicable)
+      const muleDrawer = document.getElementById('m-mule-drawer');
+      const muleContributors = (data.mule_stats && data.mule_stats.contributing_senders) || [];
+      if (muleContributors.length > 0) {
+        muleDrawer.style.display = 'block';
+        document.getElementById('m-mule-sender-count').innerText = `${data.mule_stats.unique_senders} Unique Senders (Total Inflow)`;
+        const cList = document.getElementById('m-mule-contributor-list');
+        cList.innerHTML = muleContributors.map(c => {
+          const accTrunc = c.source_account.length > 14 
+            ? c.source_account.slice(0, 6) + '...' + c.source_account.slice(-4)
+            : c.source_account;
+          return `
+            <div class="mule-contributor-chip">
+              <span style="color: #ffffff; font-weight: 700;">${c.source_bank}</span>
+              <span style="color: var(--neon-cyan);">${accTrunc}</span>
+              <span style="color: var(--neon-green); font-weight: 700;">${c.amount} ${c.currency}</span>
+            </div>
+          `;
+        }).join('');
+      } else {
+        muleDrawer.style.display = 'none';
+      }
+
+      // 4. Update Global Multi-Hop Active Chain for Map
+      activeHighlightedChain = {
+        hops: chain.map(h => ({
+          from: normalizeBankCode(h.source_bank),
+          to: normalizeBankCode(h.dest_bank),
+          fromAcc: h.source_account,
+          toAcc: h.dest_account,
+          amount: h.amount_fmt,
+          currency: h.currency,
+          role: h.role,
+          isClosure: h.is_ring_closure,
+          isAlert: (h.risk_score >= 80) || h.is_ring_closure
+        })),
+        ringDetected: data.ring_detected,
+        ringType: data.ring_type,
+        ringPath: (data.ring_path && data.ring_path.length > 0) ? data.ring_path : [srcCode, dstCode],
+        ringNotes: data.ring_notes
+      };
+
+      // 5. Update Active Road HUD for canvas
+      activeHighlightedRoad = {
+        from: srcCode,
+        to: dstCode,
+        isAlert: seedTx.threat === 'High' || seedTx.status === 'ALERT' || data.ring_detected
+      };
+
+      roadHud.style.display = 'flex';
+      const hudPill = document.getElementById('hud-road-pill');
+      if (data.ring_detected) {
+        hudPill.innerText = '⭕ FRAUD RING DETECTED';
+        hudPill.style.background = 'var(--neon-red)';
+        document.getElementById('hud-road-title').innerHTML = `
+          <span style="color: #ff1744;">⭕ RING: ${data.ring_path.join(' ➔ ')} ➔ ${data.ring_path[0] || ''}</span>
+        `;
+        document.getElementById('hud-road-desc').innerText = `CLOSED LOOP | ${seedTx.amount} ${seedTx.currency || 'LAK'}`;
+      } else if (data.mule_stats && data.mule_stats.is_mule) {
+        hudPill.innerText = '⚠️ MULE CONVERGENCE';
+        hudPill.style.background = 'var(--neon-amber)';
+        document.getElementById('hud-road-title').innerHTML = `
+          <span style="color: #ffb800;">⚠️ ${data.mule_stats.unique_senders} Senders ➔ 1 Beneficiary (${dstCode})</span>
+        `;
+        document.getElementById('hud-road-desc').innerText = `Mule Collector | ${seedTx.amount} ${seedTx.currency || 'LAK'}`;
+      } else {
+        hudPill.innerText = 'CLEARING TRACE';
+        hudPill.style.background = 'var(--neon-teal)';
+        document.getElementById('hud-road-title').innerHTML = `
+          <span style="color: #00f2fe;">🔵 ${srcCode}</span> ➔ 
+          <span style="color: #ffffff;">⚡ LAPNET</span> ➔ 
+          <span style="color: #00e676;">🟢 ${dstCode}</span>
+        `;
+        document.getElementById('hud-road-desc').innerText = `${seedTx.amount} ${seedTx.currency || 'LAK'} | ${seedTx.time || ''}`;
+      }
     }
 
     function closeRoadInspector() {
@@ -2249,6 +2870,7 @@
 
     function clearActiveRoad() {
       activeHighlightedRoad = null;
+      activeHighlightedChain = null;
       roadHud.style.display = 'none';
       showToast('✓ Route trace cleared from overview map');
     }
@@ -2259,7 +2881,20 @@
 
     function traceOnMapAndClose() {
       closeRoadInspector();
-      showToast(`📍 Tracing Road: ${activeHighlightedRoad ? activeHighlightedRoad.from + ' ➔ ' + activeHighlightedRoad.to : 'Active'}`);
+      if (activeHighlightedChain && activeHighlightedChain.ringDetected) {
+        showToast(`🚨 Tracing Closed Fraud Ring: ${activeHighlightedChain.ringPath.join(' ➔ ')}`);
+      } else if (activeHighlightedChain && activeHighlightedChain.hops.length > 1) {
+        showToast(`📍 Tracing Multi-Hop Chain (${activeHighlightedChain.hops.length} Hops)`);
+      } else {
+        showToast(`📍 Tracing Road: ${activeHighlightedRoad ? activeHighlightedRoad.from + ' ➔ ' + activeHighlightedRoad.to : 'Active'}`);
+      }
+    }
+
+    function copyToClipboard(text) {
+      if (!text || text === 'N/A') return;
+      navigator.clipboard.writeText(text)
+        .then(() => showToast(`✓ Copied: ${text.length > 20 ? text.slice(0, 10) + '...' + text.slice(-6) : text}`))
+        .catch(() => {});
     }
 
     function copyAuditJSON() {

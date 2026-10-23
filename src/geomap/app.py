@@ -2,7 +2,7 @@ import os
 import json
 import time
 from datetime import datetime
-from flask import Flask, render_template, Response, jsonify, send_from_directory
+from flask import Flask, render_template, Response, jsonify, send_from_directory, request
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from src.geomap.coordinates import INSTITUTION_COORDINATES, get_institution_coords
@@ -221,6 +221,336 @@ def get_fan_in_out():
         return jsonify({"fan_in": fan_in or [], "fan_out": fan_out or []})
     except Exception as e:
         return jsonify({"error": str(e), "fan_in": [], "fan_out": []})
+
+def trace_transaction_chain_logic(cur, tx_id=None, source_acc=None, dest_acc=None):
+    """
+    Traces the multi-hop money flow for a transaction:
+    1. Locates target seed transaction
+    2. Identifies preceding inflows (layering into source_account)
+    3. Identifies downstream outflows (dispersion from dest_account)
+    4. Detects circular loops / fraud rings (account matching or bank loopback)
+    5. Calculates Fan-In mule collector metrics (multiple distinct senders)
+    """
+    target_tx = None
+    if tx_id:
+        cur.execute("""
+            SELECT id, tx_id, node, source_bank, source_account, dest_bank, dest_account,
+                   amount, currency, risk_score, array_to_string(reasons, ', ') as reasons,
+                   timestamp, created_at
+            FROM fraud_monitoring.transactions
+            WHERE tx_id = %s OR id::text = %s
+            LIMIT 1;
+        """, (str(tx_id).strip(), str(tx_id).strip()))
+        target_tx = cur.fetchone()
+    
+    if not target_tx and (source_acc or dest_acc):
+        cur.execute("""
+            SELECT id, tx_id, node, source_bank, source_account, dest_bank, dest_account,
+                   amount, currency, risk_score, array_to_string(reasons, ', ') as reasons,
+                   timestamp, created_at
+            FROM fraud_monitoring.transactions
+            WHERE (%s IS NOT NULL AND source_account = %s)
+               OR (%s IS NOT NULL AND dest_account = %s)
+            ORDER BY id DESC LIMIT 1;
+        """, (source_acc, source_acc, dest_acc, dest_acc))
+        target_tx = cur.fetchone()
+
+    if not target_tx:
+        # Fallback to latest alert or transaction if neither given
+        cur.execute("""
+            SELECT id, tx_id, node, source_bank, source_account, dest_bank, dest_account,
+                   amount, currency, risk_score, array_to_string(reasons, ', ') as reasons,
+                   timestamp, created_at
+            FROM fraud_monitoring.transactions
+            ORDER BY id DESC LIMIT 1;
+        """)
+        target_tx = cur.fetchone()
+
+    if not target_tx:
+        return {
+            "error": "No transactions found in database",
+            "chain": [],
+            "ring_detected": False,
+            "ring_type": None,
+            "ring_path": [],
+            "mule_stats": {"unique_senders": 0, "unique_recipients": 0, "is_mule": False, "contributing_senders": []}
+        }
+
+    src_acc = target_tx["source_account"] or ""
+    dst_acc = target_tx["dest_account"] or ""
+    src_bank = target_tx["source_bank"] or "LAPNET"
+    dst_bank = target_tx["dest_bank"] or "LAPNET"
+    tx_time = target_tx["timestamp"] or target_tx["created_at"] or datetime.utcnow()
+
+    chain = []
+    # Visited accounts map for circular ring detection
+    visited_accounts = {}
+    if src_acc and src_acc != "N/A":
+        visited_accounts[src_acc] = 1
+    
+    ring_detected = False
+    ring_type = None
+    ring_path = []
+    ring_notes = "Linear transaction clearing without circular loopback detected."
+
+    # 1. Check Preceding Inflows into source_account (up to 2 hops before within 24h)
+    if src_acc and src_acc != "N/A" and len(src_acc) > 4:
+        cur.execute("""
+            SELECT id, tx_id, node, source_bank, source_account, dest_bank, dest_account,
+                   amount, currency, risk_score, array_to_string(reasons, ', ') as reasons,
+                   timestamp, created_at
+            FROM fraud_monitoring.transactions
+            WHERE dest_account = %s
+              AND (timestamp <= %s OR created_at <= %s)
+              AND (timestamp >= %s - INTERVAL '24 hour' OR created_at >= %s - INTERVAL '24 hour')
+              AND id != %s
+            ORDER BY COALESCE(timestamp, created_at) DESC
+            LIMIT 2;
+        """, (src_acc, tx_time, tx_time, tx_time, tx_time, target_tx["id"]))
+        pre_inflows = cur.fetchall()
+        for p in reversed(pre_inflows):
+            p_time = p["timestamp"] or p["created_at"]
+            if p["source_account"] and p["source_account"] != "N/A":
+                visited_accounts[p["source_account"]] = 0
+            chain.append({
+                "hop_id": p["id"],
+                "tx_id": p["tx_id"] or f"TX-{p['id']}",
+                "node": "VM1" if "175.2.0.23" in (p["node"] or "") else "VM2",
+                "role": "INFLOW_PRECURSOR",
+                "label": "Prior Funding Inflow",
+                "source_bank": p["source_bank"],
+                "source_account": p["source_account"],
+                "dest_bank": p["dest_bank"],
+                "dest_account": p["dest_account"],
+                "amount": float(p["amount"] or 0),
+                "amount_fmt": f"{float(p['amount'] or 0):,.2f}",
+                "currency": p["currency"] or "LAK",
+                "time": p_time.strftime("%H:%M:%S") if p_time else "N/A",
+                "risk_score": int(p["risk_score"] or 0),
+                "reasons": p["reasons"] or "Preceding Inflow Layering",
+                "is_ring_closure": False
+            })
+
+    # 2. Add Primary Inspected Transaction
+    chain.append({
+        "hop_id": target_tx["id"],
+        "tx_id": target_tx["tx_id"] or f"TX-{target_tx['id']}",
+        "node": "VM1" if "175.2.0.23" in (target_tx["node"] or "") else "VM2",
+        "role": "INSPECTED_TARGET",
+        "label": "Primary Inspected Transfer",
+        "source_bank": target_tx["source_bank"],
+        "source_account": target_tx["source_account"],
+        "dest_bank": target_tx["dest_bank"],
+        "dest_account": target_tx["dest_account"],
+        "amount": float(target_tx["amount"] or 0),
+        "amount_fmt": f"{float(target_tx['amount'] or 0):,.2f}",
+        "currency": target_tx["currency"] or "LAK",
+        "time": tx_time.strftime("%H:%M:%S") if tx_time else "N/A",
+        "risk_score": int(target_tx["risk_score"] or 0),
+        "reasons": target_tx["reasons"] or "Audited Transaction",
+        "is_ring_closure": False
+    })
+
+    if dst_acc and dst_acc != "N/A":
+        visited_accounts[dst_acc] = 2
+
+    # 3. Check Downstream Outflows from dest_account (Hop +1)
+    if dst_acc and dst_acc != "N/A" and len(dst_acc) > 4:
+        cur.execute("""
+            SELECT id, tx_id, node, source_bank, source_account, dest_bank, dest_account,
+                   amount, currency, risk_score, array_to_string(reasons, ', ') as reasons,
+                   timestamp, created_at
+            FROM fraud_monitoring.transactions
+            WHERE source_account = %s
+              AND (timestamp >= %s OR created_at >= %s)
+              AND (timestamp <= %s + INTERVAL '24 hour' OR created_at <= %s + INTERVAL '24 hour')
+              AND id != %s
+            ORDER BY COALESCE(timestamp, created_at) ASC
+            LIMIT 3;
+        """, (dst_acc, tx_time, tx_time, tx_time, tx_time, target_tx["id"]))
+        outflows_hop1 = cur.fetchall()
+
+        for out1 in outflows_hop1:
+            out1_time = out1["timestamp"] or out1["created_at"]
+            out1_dst = out1["dest_account"]
+            out1_bank = out1["dest_bank"]
+
+            is_acc_ring = out1_dst in visited_accounts and out1_dst != "N/A"
+            is_bank_ring = (out1_bank == src_bank) and (src_bank != "LAPNET")
+            is_circle = is_acc_ring or is_bank_ring
+
+            if is_circle and not ring_detected:
+                ring_detected = True
+                if is_acc_ring:
+                    ring_type = "ACCOUNT_CIRCULAR_RING"
+                    ring_notes = f"Closed account loop detected! Funds transferred back to account {out1_dst} on {out1_bank}."
+                else:
+                    ring_type = "BANK_CIRCULAR_LOOP"
+                    ring_notes = f"Circular interbank loop detected! Funds routed back to originating bank {out1_bank}."
+                ring_path = [src_bank, dst_bank, out1_bank]
+
+            chain.append({
+                "hop_id": out1["id"],
+                "tx_id": out1["tx_id"] or f"TX-{out1['id']}",
+                "node": "VM1" if "175.2.0.23" in (out1["node"] or "") else "VM2",
+                "role": "RING_CLOSURE" if is_circle else "OUTFLOW_DISPERSION",
+                "label": "Mule Loop Return (Ring Closure)" if is_circle else "Downstream Dispersion Outflow",
+                "source_bank": out1["source_bank"],
+                "source_account": out1["source_account"],
+                "dest_bank": out1["dest_bank"],
+                "dest_account": out1["dest_account"],
+                "amount": float(out1["amount"] or 0),
+                "amount_fmt": f"{float(out1['amount'] or 0):,.2f}",
+                "currency": out1["currency"] or "LAK",
+                "time": out1_time.strftime("%H:%M:%S") if out1_time else "N/A",
+                "risk_score": int(out1["risk_score"] or 0),
+                "reasons": out1["reasons"] or ("Circular Loop Return" if is_circle else "Downstream Transfer"),
+                "is_ring_closure": is_circle
+            })
+
+            # Check Hop +2 (Hop 3) if ring not already closed and chain is short
+            if not ring_detected and out1_dst and out1_dst != "N/A" and len(out1_dst) > 4 and len(chain) < 6:
+                visited_accounts[out1_dst] = 3
+                cur.execute("""
+                    SELECT id, tx_id, node, source_bank, source_account, dest_bank, dest_account,
+                           amount, currency, risk_score, array_to_string(reasons, ', ') as reasons,
+                           timestamp, created_at
+                    FROM fraud_monitoring.transactions
+                    WHERE source_account = %s
+                      AND (timestamp >= %s OR created_at >= %s)
+                      AND (timestamp <= %s + INTERVAL '24 hour' OR created_at <= %s + INTERVAL '24 hour')
+                      AND id != %s
+                    ORDER BY COALESCE(timestamp, created_at) ASC
+                    LIMIT 2;
+                """, (out1_dst, out1_time, out1_time, out1_time, out1_time, out1["id"]))
+                outflows_hop2 = cur.fetchall()
+
+                for out2 in outflows_hop2:
+                    out2_time = out2["timestamp"] or out2["created_at"]
+                    out2_dst = out2["dest_account"]
+                    out2_bank = out2["dest_bank"]
+
+                    is_acc_ring2 = out2_dst in visited_accounts and out2_dst != "N/A"
+                    is_bank_ring2 = (out2_bank == src_bank) and (src_bank != "LAPNET")
+                    is_circle2 = is_acc_ring2 or is_bank_ring2
+
+                    if is_circle2 and not ring_detected:
+                        ring_detected = True
+                        ring_type = "MULTI_HOP_ACCOUNT_RING" if is_acc_ring2 else "MULTI_HOP_BANK_RING"
+                        ring_notes = f"3-Hop circular fraud loop detected: {src_bank} ➔ {dst_bank} ➔ {out1_bank} ➔ {out2_bank}!"
+                        ring_path = [src_bank, dst_bank, out1_bank, out2_bank]
+
+                    chain.append({
+                        "hop_id": out2["id"],
+                        "tx_id": out2["tx_id"] or f"TX-{out2['id']}",
+                        "node": "VM1" if "175.2.0.23" in (out2["node"] or "") else "VM2",
+                        "role": "RING_CLOSURE" if is_circle2 else "OUTFLOW_HOP3",
+                        "label": "Secondary Ring Return" if is_circle2 else "Secondary Dispersion Hop",
+                        "source_bank": out2["source_bank"],
+                        "source_account": out2["source_account"],
+                        "dest_bank": out2["dest_bank"],
+                        "dest_account": out2["dest_account"],
+                        "amount": float(out2["amount"] or 0),
+                        "amount_fmt": f"{float(out2['amount'] or 0):,.2f}",
+                        "currency": out2["currency"] or "LAK",
+                        "time": out2_time.strftime("%H:%M:%S") if out2_time else "N/A",
+                        "risk_score": int(out2["risk_score"] or 0),
+                        "reasons": out2["reasons"] or ("Multi-Hop Ring Closure" if is_circle2 else "Tertiary Transfer"),
+                        "is_ring_closure": is_circle2
+                    })
+
+    # 4. Check Fan-In Mule Statistics on Destination Account
+    fan_in_count = 0
+    fan_out_count = 0
+    contributors = []
+    if dst_acc and dst_acc != "N/A" and len(dst_acc) > 4:
+        cur.execute("""
+            SELECT count(DISTINCT source_account) AS senders, count(*) AS total_in
+            FROM fraud_monitoring.transactions
+            WHERE dest_account = %s 
+              AND (timestamp >= %s - INTERVAL '24 hour' OR created_at >= %s - INTERVAL '24 hour');
+        """, (dst_acc, tx_time, tx_time))
+        fi = cur.fetchone()
+        fan_in_count = fi["senders"] if fi else 0
+
+        cur.execute("""
+            SELECT count(DISTINCT dest_account) AS recipients, count(*) AS total_out
+            FROM fraud_monitoring.transactions
+            WHERE source_account = %s 
+              AND (timestamp >= %s - INTERVAL '24 hour' OR created_at >= %s - INTERVAL '24 hour');
+        """, (dst_acc, tx_time, tx_time))
+        fo = cur.fetchone()
+        fan_out_count = fo["recipients"] if fo else 0
+
+        # Fetch up to 5 other contributing senders for the mule drawer
+        cur.execute("""
+            SELECT DISTINCT ON (source_account)
+                source_bank, source_account, amount, currency,
+                to_char(timestamp, 'HH24:MI:SS') AS seen_time
+            FROM fraud_monitoring.transactions
+            WHERE dest_account = %s
+              AND (timestamp >= %s - INTERVAL '24 hour' OR created_at >= %s - INTERVAL '24 hour')
+              AND source_account != %s
+            ORDER BY source_account, id DESC
+            LIMIT 5;
+        """, (dst_acc, tx_time, tx_time, src_acc))
+        c_rows = cur.fetchall()
+        for c in c_rows:
+            contributors.append({
+                "source_bank": c["source_bank"],
+                "source_account": c["source_account"],
+                "amount": f"{float(c['amount'] or 0):,.2f}",
+                "currency": c["currency"],
+                "time": c["seen_time"]
+            })
+
+    is_mule = fan_in_count >= 3 or (fan_in_count >= 2 and fan_out_count >= 1)
+
+    return {
+        "target_tx": {
+            "id": target_tx["id"],
+            "tx_id": target_tx["tx_id"] or f"TX-{target_tx['id']}",
+            "source_bank": target_tx["source_bank"],
+            "source_account": target_tx["source_account"],
+            "dest_bank": target_tx["dest_bank"],
+            "dest_account": target_tx["dest_account"],
+            "amount": float(target_tx["amount"] or 0),
+            "amount_fmt": f"{float(target_tx['amount'] or 0):,.2f}",
+            "currency": target_tx["currency"] or "LAK",
+            "risk_score": int(target_tx["risk_score"] or 0),
+            "reasons": target_tx["reasons"] or "Inspected Transaction",
+            "time": tx_time.strftime("%H:%M:%S") if tx_time else "N/A"
+        },
+        "chain": chain,
+        "total_hops": len(chain),
+        "ring_detected": ring_detected,
+        "ring_type": ring_type,
+        "ring_path": ring_path,
+        "ring_notes": ring_notes,
+        "mule_stats": {
+            "unique_senders": fan_in_count,
+            "unique_recipients": fan_out_count,
+            "is_mule": is_mule,
+            "contributing_senders": contributors
+        }
+    }
+
+@app.route("/api/trace-chain")
+@app.route("/api/trace-chain/<path:tx_id>")
+def get_transaction_chain(tx_id=None):
+    """Traces multi-hop journey and detects circular fraud rings or mule convergence"""
+    tx_id_param = tx_id or request.args.get("tx_id") or request.args.get("id")
+    src_acc = request.args.get("source_account") or request.args.get("source_acc")
+    dst_acc = request.args.get("dest_account") or request.args.get("dest_acc")
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        data = trace_transaction_chain_logic(cur, tx_id=tx_id_param, source_acc=src_acc, dest_acc=dst_acc)
+        cur.close()
+        conn.close()
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e), "chain": [], "ring_detected": False})
 
 @app.route("/api/live-stream")
 def live_stream():
