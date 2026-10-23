@@ -224,7 +224,7 @@ def test():
 
     # Test with a known high-risk transaction or mule alert
     cur.execute("""
-        SELECT tx_id, source_account, dest_account, triggers, risk_score
+        SELECT tx_id, source_account, dest_account, array_to_string(reasons, ', ') AS triggers, risk_score
         FROM fraud_monitoring.transactions
         WHERE array_to_string(reasons, ', ') ILIKE '%Mule%' OR risk_score >= 80
         ORDER BY id DESC LIMIT 3;
