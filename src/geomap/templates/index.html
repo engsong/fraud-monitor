@@ -1124,6 +1124,146 @@
       justify-content: space-between;
     }
 
+    /* 3-Tier Rules Engine Compliance Matrix */
+    .rule-tiers-box {
+      margin: 0 18px 8px 18px;
+      background: rgba(8, 26, 41, 0.75);
+      border: 1px solid rgba(0, 200, 255, 0.25);
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .rule-tiers-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(0, 200, 255, 0.12);
+      padding-bottom: 5px;
+    }
+    .rule-tier-badge-total {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 3px;
+      background: rgba(255, 23, 68, 0.2);
+      color: #ff5252;
+      border: 1px solid rgba(255, 23, 68, 0.4);
+    }
+    .rule-tiers-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    .rule-tier-col {
+      background: rgba(4, 15, 24, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .rule-tier-col-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .tier-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7.5px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 2px;
+      letter-spacing: 0.5px;
+    }
+    .tier-pill-s {
+      background: rgba(0, 242, 254, 0.15);
+      color: var(--neon-cyan);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+    }
+    .tier-pill-r {
+      background: rgba(255, 184, 0, 0.15);
+      color: var(--neon-amber);
+      border: 1px solid rgba(255, 184, 0, 0.3);
+    }
+    .tier-pill-sr {
+      background: rgba(255, 23, 68, 0.15);
+      color: #ff5252;
+      border: 1px solid rgba(255, 23, 68, 0.3);
+    }
+    .tier-hit-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      font-weight: 700;
+      color: #90a4ae;
+    }
+    .rule-chips-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-height: 24px;
+    }
+    .rule-chip {
+      display: flex;
+      flex-direction: column;
+      padding: 4px 6px;
+      border-radius: 3px;
+      font-size: 8.5px;
+      cursor: help;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+    .rule-chip:hover {
+      transform: translateY(-1px);
+    }
+    .rule-chip-crit {
+      background: rgba(255, 23, 68, 0.15);
+      border: 1px solid #ff1744;
+      color: #ff80ab;
+    }
+    .rule-chip-crit:hover {
+      box-shadow: 0 0 8px rgba(255, 23, 68, 0.4);
+    }
+    .rule-chip-high {
+      background: rgba(255, 184, 0, 0.15);
+      border: 1px solid #ffb800;
+      color: #ffe082;
+    }
+    .rule-chip-high:hover {
+      box-shadow: 0 0 8px rgba(255, 184, 0, 0.4);
+    }
+    .rule-chip-med {
+      background: rgba(0, 242, 254, 0.12);
+      border: 1px solid #00f2fe;
+      color: #80deea;
+    }
+    .rule-chip-med:hover {
+      box-shadow: 0 0 8px rgba(0, 242, 254, 0.4);
+    }
+    .rule-chip-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5px;
+    }
+    .rule-chip-desc {
+      font-size: 7.5px;
+      color: #b0bec5;
+      margin-top: 2px;
+      line-height: 1.2;
+    }
+    .rule-none-txt {
+      font-size: 8px;
+      color: #546e7a;
+      font-style: italic;
+      padding: 4px 0;
+    }
+
     /* Modal 3-Column Info Cards */
     .modal-grid {
       padding: 14px 18px;
@@ -1645,6 +1785,55 @@
         </div>
         <div id="m-mule-contributor-list" class="mule-contributor-list">
           <!-- Injected via JavaScript -->
+        </div>
+      </div>
+
+      <!-- 3-TIER FRAUD ENGINE COMPLIANCE MATRIX (S001-S015, R001-R015, SR001-SR012) -->
+      <div id="m-rule-tiers-box" class="rule-tiers-box">
+        <div class="rule-tiers-hdr">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 11px;">🛡️</span>
+            <span style="font-weight: 800; font-size: 10px; color: #ffffff; letter-spacing: 0.5px;">3-TIER ENGINE COMPLIANCE AUDIT MATRIX</span>
+            <span class="rule-tier-badge-total" id="m-rules-hit-count">0 RULES TRIGGERED</span>
+          </div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: #78909c;">
+            SPEC v1.0 • 42 SLIDING-WINDOW RULES
+          </div>
+        </div>
+
+        <div class="rule-tiers-grid">
+          <!-- Tier 1: Sender Rules (S001-S015) -->
+          <div class="rule-tier-col">
+            <div class="rule-tier-col-hdr">
+              <span class="tier-pill tier-pill-s">TIER 1: SENDER (S001-S015)</span>
+              <span id="m-tier1-count" class="tier-hit-badge">0 Hit</span>
+            </div>
+            <div id="m-tier1-chips" class="rule-chips-list">
+              <span class="rule-none-txt">✓ No Sender Anomaly</span>
+            </div>
+          </div>
+
+          <!-- Tier 2: Receiver Rules (R001-R015) -->
+          <div class="rule-tier-col">
+            <div class="rule-tier-col-hdr">
+              <span class="tier-pill tier-pill-r">TIER 2: RECEIVER (R001-R015)</span>
+              <span id="m-tier2-count" class="tier-hit-badge">0 Hit</span>
+            </div>
+            <div id="m-tier2-chips" class="rule-chips-list">
+              <span class="rule-none-txt">✓ No Receiver Anomaly</span>
+            </div>
+          </div>
+
+          <!-- Tier 3: Relationship Rules (SR001-SR012) -->
+          <div class="rule-tier-col">
+            <div class="rule-tier-col-hdr">
+              <span class="tier-pill tier-pill-sr">TIER 3: RELATIONSHIP (SR001-SR012)</span>
+              <span id="m-tier3-count" class="tier-hit-badge">0 Hit</span>
+            </div>
+            <div id="m-tier3-chips" class="rule-chips-list">
+              <span class="rule-none-txt">✓ No Topology Anomaly</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2611,6 +2800,21 @@
 
       document.getElementById('m-mule-drawer').style.display = 'none';
 
+      // Reset 3-Tier Rule Matrix
+      const hitCountElemInit = document.getElementById('m-rules-hit-count');
+      if (hitCountElemInit) {
+        hitCountElemInit.innerText = 'EVALUATING 42 RULES...';
+        hitCountElemInit.style.background = 'rgba(0, 242, 254, 0.15)';
+        hitCountElemInit.style.color = 'var(--neon-cyan)';
+        hitCountElemInit.style.borderColor = 'rgba(0, 242, 254, 0.3)';
+      }
+      if (document.getElementById('m-tier1-count')) document.getElementById('m-tier1-count').innerText = '...';
+      if (document.getElementById('m-tier2-count')) document.getElementById('m-tier2-count').innerText = '...';
+      if (document.getElementById('m-tier3-count')) document.getElementById('m-tier3-count').innerText = '...';
+      if (document.getElementById('m-tier1-chips')) document.getElementById('m-tier1-chips').innerHTML = '<span class="rule-none-txt">Evaluating Tier 1...</span>';
+      if (document.getElementById('m-tier2-chips')) document.getElementById('m-tier2-chips').innerHTML = '<span class="rule-none-txt">Evaluating Tier 2...</span>';
+      if (document.getElementById('m-tier3-chips')) document.getElementById('m-tier3-chips').innerHTML = '<span class="rule-none-txt">Evaluating Tier 3...</span>';
+
       // Open Modal
       modalRoad.style.display = 'flex';
 
@@ -2809,6 +3013,83 @@
       } else {
         muleDrawer.style.display = 'none';
       }
+
+      // 3b. Render 3-Tier Compliance Rule Matrix (S001-S015, R001-R015, SR001-SR012)
+      const totalHits = (data.rule_hits || []).length;
+      const hitCountElem = document.getElementById('m-rules-hit-count');
+      if (hitCountElem) {
+        if (totalHits > 0) {
+          hitCountElem.innerText = `${totalHits} RULE${totalHits > 1 ? 'S' : ''} TRIGGERED`;
+          hitCountElem.style.background = 'rgba(255, 23, 68, 0.25)';
+          hitCountElem.style.color = '#ff5252';
+          hitCountElem.style.borderColor = 'rgba(255, 23, 68, 0.5)';
+        } else {
+          hitCountElem.innerText = '0 RULES TRIGGERED (CLEAN)';
+          hitCountElem.style.background = 'rgba(0, 230, 118, 0.15)';
+          hitCountElem.style.color = '#00e676';
+          hitCountElem.style.borderColor = 'rgba(0, 230, 118, 0.3)';
+        }
+      }
+
+      if (data.risk_level) {
+        const threatBadge = document.getElementById('m-threat-badge');
+        if (threatBadge) {
+          if (data.risk_level === 'Critical') {
+            threatBadge.innerText = 'CRITICAL FRAUD ALERT';
+            threatBadge.style.background = 'var(--neon-red)';
+            threatBadge.style.color = '#ffffff';
+          } else if (data.risk_level === 'High') {
+            threatBadge.innerText = 'HIGH-RISK ANOMALY';
+            threatBadge.style.background = 'var(--neon-amber)';
+            threatBadge.style.color = '#040e17';
+          } else if (data.risk_level === 'Medium') {
+            threatBadge.innerText = 'MEDIUM SUSPICIOUS';
+            threatBadge.style.background = 'var(--neon-cyan)';
+            threatBadge.style.color = '#040e17';
+          }
+        }
+      }
+
+      if (data.rule_hits && data.rule_hits.length > 0) {
+        const triggersElem = document.getElementById('m-triggers');
+        if (triggersElem) {
+          triggersElem.innerText = data.rule_hits.map(r => `[${r.id}] ${r.name}`).join(' | ');
+        }
+      }
+
+      const tb = data.tier_breakdown || {};
+      function renderTierChips(containerId, countId, rules, label) {
+        const c = document.getElementById(containerId);
+        const cnt = document.getElementById(countId);
+        if (!c || !cnt) return;
+        if (!rules || rules.length === 0) {
+          cnt.innerText = '0 Hit';
+          cnt.style.color = '#78909c';
+          c.innerHTML = `<span class="rule-none-txt">✓ No ${label} Anomaly</span>`;
+          return;
+        }
+        cnt.innerText = `${rules.length} Hit`;
+        cnt.style.color = rules.some(r => r.risk === 'Critical') ? 'var(--neon-red)' : 'var(--neon-amber)';
+        c.innerHTML = rules.map(r => {
+          let chipClass = 'rule-chip-med';
+          if (r.risk === 'Critical') chipClass = 'rule-chip-crit';
+          else if (r.risk === 'High') chipClass = 'rule-chip-high';
+          const safeDesc = (r.desc || '').replace(/"/g, '&quot;');
+          return `
+            <div class="rule-chip ${chipClass}" title="${r.id}: ${r.name} - ${safeDesc}">
+              <div class="rule-chip-hdr">
+                <span>[${r.id}] ${r.name}</span>
+                <span>${r.risk}</span>
+              </div>
+              <div class="rule-chip-desc">${r.desc || ''}</div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      renderTierChips('m-tier1-chips', 'm-tier1-count', tb.tier1_sender, 'Sender');
+      renderTierChips('m-tier2-chips', 'm-tier2-count', tb.tier2_receiver, 'Receiver');
+      renderTierChips('m-tier3-chips', 'm-tier3-count', tb.tier3_relationship, 'Topology');
 
       // 4. Update Global Multi-Hop Active Chain for Map
       activeHighlightedChain = {

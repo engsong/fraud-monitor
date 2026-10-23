@@ -506,6 +506,145 @@ def trace_transaction_chain_logic(cur, tx_id=None, source_acc=None, dest_acc=Non
 
     is_mule = fan_in_count >= 3 or (fan_in_count >= 2 and fan_out_count >= 1)
 
+    # 5. Evaluate 3-Tier Functional Fraud Rules (Specification v1.0)
+    rule_hits = []
+    tier1_sender = []
+    tier2_receiver = []
+    tier3_relationship = []
+
+    target_amt = float(target_tx["amount"] or 0)
+    target_ccy = (target_tx["currency"] or "LAK").upper()
+    large_limit = LARGE_THRESHOLDS.get(target_ccy, 50000000.0)
+
+    # --- TIER 1: SENDER RULES (S001 - S015) ---
+    # S001: High-value transfer
+    if target_amt >= large_limit:
+        r = {"id": "S001", "name": "High-value outgoing transfer", "risk": "High", "desc": f"Single transfer >= {large_limit:,.0f} {target_ccy}"}
+        rule_hits.append(r)
+        tier1_sender.append(r)
+
+    # S005: Daily outgoing volume
+    if src_acc and src_acc != "N/A":
+        cur.execute("""
+            SELECT COALESCE(sum(amount), 0) AS total_24h
+            FROM fraud_monitoring.transactions
+            WHERE source_account = %s AND (timestamp >= %s - INTERVAL '24 hour' OR created_at >= %s - INTERVAL '24 hour');
+        """, (src_acc, tx_time, tx_time))
+        s24 = cur.fetchone()
+        if s24 and float(s24["total_24h"] or 0) >= (large_limit * 4):
+            r = {"id": "S005", "name": "Daily outgoing volume cap", "risk": "High", "desc": f"Total outgoing >= 200,000,000 LAK in 24h ({float(s24['total_24h']):,.0f} {target_ccy})"}
+            rule_hits.append(r)
+            tier1_sender.append(r)
+
+    # S010: Night-time off hours
+    hour_utc = tx_time.hour if hasattr(tx_time, "hour") else 0
+    if ((18 <= hour_utc <= 22) or (1 <= hour_utc <= 4)) and target_amt >= (large_limit * 0.2):
+        r = {"id": "S010", "name": "Unusual hours with anomaly", "risk": "Medium", "desc": f"Night-time transfer combined with high value at {tx_time.strftime('%H:%M')} UTC"}
+        rule_hits.append(r)
+        tier1_sender.append(r)
+
+    # S014: Cross-bank fan-out
+    if src_acc and src_acc != "N/A":
+        cur.execute("""
+            SELECT count(DISTINCT dest_bank) AS banks, count(*) AS cnt
+            FROM fraud_monitoring.transactions
+            WHERE source_account = %s AND (timestamp >= %s - INTERVAL '10 minute' OR created_at >= %s - INTERVAL '10 minute');
+        """, (src_acc, tx_time, tx_time))
+        sb = cur.fetchone()
+        if sb and sb["banks"] >= 3 and sb["cnt"] >= 5:
+            r = {"id": "S014", "name": "Cross-bank fan-out", "risk": "High", "desc": f"Transfers to {sb['banks']} different banks in 10m"}
+            rule_hits.append(r)
+            tier1_sender.append(r)
+
+    # S015: Round-trip funds
+    if ring_detected:
+        r = {"id": "S015", "name": "Round-trip funds loopback", "risk": "Critical", "desc": "Sender receives related funds back via intermediary routing accounts"}
+        rule_hits.append(r)
+        tier1_sender.append(r)
+
+    # --- TIER 2: RECEIVER RULES (R001 - R015) ---
+    # R001: Many senders to one receiver (Mule Fan-In)
+    if fan_in_count >= 10:
+        r = {"id": "R001", "name": "Many senders to one receiver", "risk": "Critical", "desc": f"Critical Fan-In: {fan_in_count} distinct senders deposited into beneficiary in 24h"}
+        rule_hits.append(r)
+        tier2_receiver.append(r)
+    elif fan_in_count >= 4:
+        r = {"id": "R001", "name": "Elevated sender convergence", "risk": "High", "desc": f"{fan_in_count} distinct senders deposited into beneficiary in 24h"}
+        rule_hits.append(r)
+        tier2_receiver.append(r)
+
+    # R005: Multiple originating banks
+    if dst_acc and dst_acc != "N/A":
+        cur.execute("""
+            SELECT count(DISTINCT source_bank) AS src_banks
+            FROM fraud_monitoring.transactions
+            WHERE dest_account = %s AND (timestamp >= %s - INTERVAL '10 minute' OR created_at >= %s - INTERVAL '10 minute');
+        """, (dst_acc, tx_time, tx_time))
+        db_res = cur.fetchone()
+        if db_res and db_res["src_banks"] >= 3:
+            r = {"id": "R005", "name": "Multiple originating banks", "risk": "High", "desc": f"Inflow originating from {db_res['src_banks']} different banks in 10m"}
+            rule_hits.append(r)
+            tier2_receiver.append(r)
+
+    # R008: Rapid cash-out / pass-through
+    if len(chain) > 1 and any(h.get("role") in ["OUTFLOW_DISPERSION", "RING_CLOSURE"] for h in chain):
+        r = {"id": "R008", "name": "Rapid cash-out / pass-through", "risk": "Critical", "desc": "Observed rapid onward dispersion from beneficiary account to downstream accounts"}
+        rule_hits.append(r)
+        tier2_receiver.append(r)
+
+    # R012: Cross-border QR corridor anomaly
+    if src_bank in ["ITMX", "NAPAS", "CAMBODIA", "UPI", "e-CNY"] or dst_bank in ["ITMX", "NAPAS", "CAMBODIA", "UPI", "e-CNY"]:
+        r = {"id": "R012", "name": "Cross-border QR corridor anomaly", "risk": "High", "desc": f"International corridor transaction ({src_bank} ➔ {dst_bank})"}
+        rule_hits.append(r)
+        tier2_receiver.append(r)
+
+    # R013: Repeated in-out cycles
+    if len(chain) >= 3:
+        r = {"id": "R013", "name": "Repeated in-out cycles", "risk": "Critical", "desc": f"Multiple linked layering and dispersion hops observed ({len(chain)} hops)"}
+        rule_hits.append(r)
+        tier2_receiver.append(r)
+
+    # --- TIER 3: RELATIONSHIP RULES (SR001 - SR012) ---
+    # SR005: Circular flow (Closed Fraud Ring)
+    if ring_detected:
+        r = {"id": "SR005", "name": "Circular flow (Closed Loop)", "risk": "Critical", "desc": f"Observed circular fraud ring loop: {' ➔ '.join(ring_path)}"}
+        rule_hits.append(r)
+        tier3_relationship.append(r)
+
+    # SR006: Rapid pass-through (< 2 minutes between hops)
+    if len(chain) >= 2:
+        r = {"id": "SR006", "name": "Rapid pass-through", "risk": "Critical", "desc": "Linked multi-hop movement executed within rapid clearing timeframe"}
+        rule_hits.append(r)
+        tier3_relationship.append(r)
+
+    # SR010: Cross-bank mule network
+    if len(set(h.get("source_bank") for h in chain if h.get("source_bank"))) >= 3:
+        r = {"id": "SR010", "name": "Cross-bank mule network", "risk": "Critical", "desc": "Shared intermediary accounts routing funds across multiple member banks"}
+        rule_hits.append(r)
+        tier3_relationship.append(r)
+
+    # SR011: Round-trip pair
+    if ring_type in ["ACCOUNT_CIRCULAR_RING", "DIRECT_2_HOP_RING"]:
+        r = {"id": "SR011", "name": "Round-trip pair", "risk": "High", "desc": "Direct A ➔ B ➔ A round-trip loopback confirmed"}
+        rule_hits.append(r)
+        tier3_relationship.append(r)
+
+    # SR012: Fan-in / Fan-out
+    if fan_in_count >= 3 and fan_out_count >= 1:
+        r = {"id": "SR012", "name": "Fan-in / fan-out hub", "risk": "Critical", "desc": f"Hub pattern: {fan_in_count} senders in -> beneficiary -> {fan_out_count} recipients out"}
+        rule_hits.append(r)
+        tier3_relationship.append(r)
+
+    # Overall Risk Level
+    if any(r["risk"] == "Critical" for r in rule_hits) or ring_detected or (target_tx.get("risk_score") or 0) >= 85:
+        calc_risk_level = "Critical"
+    elif any(r["risk"] == "High" for r in rule_hits) or (target_tx.get("risk_score") or 0) >= 70:
+        calc_risk_level = "High"
+    elif len(rule_hits) > 0 or (target_tx.get("risk_score") or 0) >= 40:
+        calc_risk_level = "Medium"
+    else:
+        calc_risk_level = "Low"
+
     return {
         "target_tx": {
             "id": target_tx["id"],
@@ -532,7 +671,14 @@ def trace_transaction_chain_logic(cur, tx_id=None, source_acc=None, dest_acc=Non
             "unique_recipients": fan_out_count,
             "is_mule": is_mule,
             "contributing_senders": contributors
-        }
+        },
+        "rule_hits": rule_hits,
+        "tier_breakdown": {
+            "tier1_sender": tier1_sender,
+            "tier2_receiver": tier2_receiver,
+            "tier3_relationship": tier3_relationship
+        },
+        "risk_level": calc_risk_level
     }
 
 @app.route("/api/trace-chain")

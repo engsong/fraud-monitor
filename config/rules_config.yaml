@@ -1,0 +1,426 @@
+# ==============================================================================
+# LAPNet Payment Switch Fraud Transaction Monitoring Rules Configuration
+# Document: Functional Rules Specification Version 1.0
+# Tiers: 1) Sender Side (S001-S015) 
+#        2) Receiver Side (R001-R015) 
+#        3) Sender-Receiver Relationship (SR001-SR012)
+# ==============================================================================
+
+version: "1.0"
+environment: "production"
+updated_at: "2026-10-23"
+
+# Base Currency Equivalents & Multi-Currency Threshold Multipliers
+currencies:
+  LAK:
+    name: "Lao Kip"
+    high_value_threshold: 50000000.0        # S001 Default: 50M LAK
+    daily_volume_limit: 200000000.0         # S005 Default: 200M LAK
+    structuring_floor: 40000000.0          # S008 Smurfing floor (40M - 49.99M LAK)
+    new_beneficiary_threshold: 20000000.0   # S009 New pair limit
+    inbound_high_value_1h: 100000000.0      # R003 Default: 100M LAK in 1h
+    off_hours_threshold: 10000000.0         # S010 Night threshold
+    probing_micro_limit: 10000.0            # Micro-probing limit
+  THB:
+    name: "Thai Baht"
+    high_value_threshold: 80000.0
+    daily_volume_limit: 320000.0
+    structuring_floor: 65000.0
+    new_beneficiary_threshold: 32000.0
+    inbound_high_value_1h: 160000.0
+    off_hours_threshold: 16000.0
+    probing_micro_limit: 20.0
+  USD:
+    name: "US Dollar"
+    high_value_threshold: 2500.0
+    daily_volume_limit: 10000.0
+    structuring_floor: 2000.0
+    new_beneficiary_threshold: 1000.0
+    inbound_high_value_1h: 5000.0
+    off_hours_threshold: 500.0
+    probing_micro_limit: 1.0
+  CNY:
+    name: "Chinese Yuan"
+    high_value_threshold: 18000.0
+    daily_volume_limit: 72000.0
+    structuring_floor: 14000.0
+    new_beneficiary_threshold: 7200.0
+    inbound_high_value_1h: 36000.0
+    off_hours_threshold: 3600.0
+    probing_micro_limit: 5.0
+
+# ==============================================================================
+# PART 1: SENDER SIDE - FRAUD DETECTION RULES (S001 - S015)
+# ==============================================================================
+sender_rules:
+  S001:
+    name: "High-value outgoing transfer"
+    enabled: true
+    risk: "High"
+    score: 40
+    threshold_key: "high_value_threshold"
+    description: "Single transfer exceeds configured currency reporting threshold"
+
+  S002:
+    name: "Outgoing velocity"
+    enabled: true
+    risk: "Critical"
+    score: 85
+    window_seconds: 60
+    max_count: 10
+    description: ">= 10 successful outgoing transfers in 1 minute"
+
+  S003:
+    name: "Many beneficiaries"
+    enabled: true
+    risk: "High"
+    score: 65
+    window_seconds: 600
+    max_distinct_receivers: 10
+    description: ">= 10 distinct receivers in 10 minutes"
+
+  S004:
+    name: "Repeated identical amounts"
+    enabled: true
+    risk: "High"
+    score: 60
+    window_seconds: 300
+    max_count: 5
+    description: ">= 5 same-amount outgoing transfers in 5 minutes"
+
+  S005:
+    name: "Daily outgoing volume"
+    enabled: true
+    risk: "High"
+    score: 65
+    window_seconds: 86400
+    threshold_key: "daily_volume_limit"
+    description: "Total outgoing amount >= 200,000,000 LAK/day (or currency equivalent)"
+
+  S006:
+    name: "Frequency anomaly"
+    enabled: true
+    risk: "Medium"
+    score: 35
+    baseline_multiplier: 3.0
+    description: "Outgoing count >= 3x comparable historical baseline"
+
+  S007:
+    name: "Amount anomaly"
+    enabled: true
+    risk: "High"
+    score: 60
+    baseline_multiplier: 5.0
+    description: "Transfer amount >= 5x historical typical amount"
+
+  S008:
+    name: "Potential structuring (Smurfing)"
+    enabled: true
+    risk: "High"
+    score: 70
+    window_seconds: 600
+    max_count: 5
+    floor_pct: 0.80   # 80% to 99.9% of high-value threshold
+    description: ">= 5 transfers just below configured reporting threshold in 10 minutes"
+
+  S009:
+    name: "New beneficiary / large transfer"
+    enabled: true
+    risk: "High"
+    score: 60
+    threshold_key: "new_beneficiary_threshold"
+    description: "First observed sender-receiver pair >= 20,000,000 LAK (or currency equivalent)"
+
+  S010:
+    name: "Unusual hours with anomaly"
+    enabled: true
+    risk: "Medium"
+    score: 35
+    start_hour_utc: 18   # Equivalent to 01:00 AM Lao local time
+    end_hour_utc: 22     # Equivalent to 05:00 AM Lao local time
+    threshold_key: "off_hours_threshold"
+    description: "Night-time transfer combined with unusual amount or frequency"
+
+  S011:
+    name: "Rapid failed attempts"
+    enabled: true
+    risk: "Medium"
+    score: 40
+    window_seconds: 300
+    max_failed_count: 5
+    description: ">= 5 failed attempts or retries in 5 minutes"
+
+  S012:
+    name: "Dormant sender activation"
+    enabled: true
+    risk: "High"
+    score: 65
+    requires_member_data: true
+    description: "Inactive sender suddenly initiates multiple high-value transfers"
+
+  S013:
+    name: "Flagged receiver"
+    enabled: true
+    risk: "Critical"
+    score: 100
+    description: "Receiver matches verified internal fraud watchlist"
+
+  S014:
+    name: "Cross-bank fan-out"
+    enabled: true
+    risk: "High"
+    score: 70
+    window_seconds: 300
+    max_count: 10
+    min_distinct_banks: 3
+    description: ">= 10 outgoing transfers to multiple banks in 5 minutes"
+
+  S015:
+    name: "Round-trip funds"
+    enabled: true
+    risk: "Critical"
+    score: 95
+    window_seconds: 86400
+    description: "Sender receives related funds back via intermediary accounts within 24 hours"
+
+# ==============================================================================
+# PART 2: RECEIVER SIDE - FRAUD DETECTION RULES (R001 - R015)
+# ==============================================================================
+receiver_rules:
+  R001:
+    name: "Many senders to one receiver (Mule Fan-In)"
+    enabled: true
+    risk: "Critical"
+    score: 90
+    window_seconds: 300
+    max_distinct_senders: 10
+    description: ">= 10 distinct senders in 5 minutes depositing to one beneficiary"
+
+  R002:
+    name: "Incoming velocity"
+    enabled: true
+    risk: "High"
+    score: 65
+    window_seconds: 300
+    max_count: 20
+    description: ">= 20 successful incoming transfers in 5 minutes"
+
+  R003:
+    name: "High incoming value"
+    enabled: true
+    risk: "High"
+    score: 60
+    window_seconds: 3600
+    threshold_key: "inbound_high_value_1h"
+    description: "Incoming sum >= 100,000,000 LAK in 1 hour"
+
+  R004:
+    name: "Identical incoming amounts"
+    enabled: true
+    risk: "High"
+    score: 60
+    window_seconds: 600
+    max_count: 10
+    description: ">= 10 same-amount incoming transfers in 10 minutes"
+
+  R005:
+    name: "Multiple originating banks"
+    enabled: true
+    risk: "High"
+    score: 65
+    window_seconds: 600
+    max_distinct_banks: 5
+    description: ">= 5 different sending banks in 10 minutes"
+
+  R006:
+    name: "Inflow spike"
+    enabled: true
+    risk: "High"
+    score: 60
+    baseline_multiplier: 5.0
+    description: "Incoming count >= 5x comparable historical baseline"
+
+  R007:
+    name: "Dormant receiver activation"
+    enabled: true
+    risk: "High"
+    score: 65
+    requires_member_data: true
+    description: "Previously inactive receiver receives unusual high-value inflows"
+
+  R008:
+    name: "Rapid cash-out / pass-through"
+    enabled: true
+    risk: "Critical"
+    score: 90
+    window_seconds: 300
+    cashout_ratio: 0.80
+    description: ">= 80% of observed incoming value sent onward in 5 minutes"
+
+  R009:
+    name: "Sender concentration anomaly"
+    enabled: true
+    risk: "High"
+    score: 65
+    window_seconds: 1800
+    unrelated_sender_threshold: 6
+    description: "Unusual number of unrelated senders into one receiver"
+
+  R010:
+    name: "Flagged receiver"
+    enabled: true
+    risk: "Critical"
+    score: 100
+    description: "Receiver matches verified fraud blacklist"
+
+  R011:
+    name: "Receiver fan-out"
+    enabled: true
+    risk: "Critical"
+    score: 85
+    window_seconds: 600
+    max_forward_accounts: 5
+    description: "Receiver forwards funds to >= 5 accounts in 10 minutes"
+
+  R012:
+    name: "Cross-border QR inflow anomaly"
+    enabled: true
+    risk: "High"
+    score: 60
+    corridors: ["ITMX", "NAPAS", "CAMBODIA", "UPI", "e-CNY"]
+    description: "Unusual QR inflow amounts or frequency for cross-border corridor"
+
+  R013:
+    name: "Repeated in-out cycles"
+    enabled: true
+    risk: "Critical"
+    score: 95
+    window_seconds: 7200
+    description: "Multiple linked incoming and outgoing cycles in short period"
+
+  R014:
+    name: "New account inflow"
+    enabled: true
+    risk: "High"
+    score: 60
+    requires_member_data: true
+    description: "Recently opened account receives unusual high-value inflows"
+
+  R015:
+    name: "Flagged sender cluster"
+    enabled: true
+    risk: "Critical"
+    score: 100
+    window_seconds: 600
+    min_flagged_senders: 3
+    description: ">= 3 previously flagged senders pay same receiver in 10 minutes"
+
+# ==============================================================================
+# PART 3: SENDER-RECEIVER RELATIONSHIP MONITORING (SR001 - SR012)
+# ==============================================================================
+relationship_rules:
+  SR001:
+    name: "Repeated pair"
+    enabled: true
+    risk: "High"
+    score: 60
+    window_seconds: 300
+    max_count: 10
+    description: "Same sender-receiver pair >= 10 transfers in 5 minutes"
+
+  SR002:
+    name: "One-to-many"
+    enabled: true
+    risk: "High"
+    score: 65
+    window_seconds: 600
+    max_distinct_receivers: 10
+    description: "One sender pays >= 10 distinct receivers in 10 minutes"
+
+  SR003:
+    name: "Many-to-one"
+    enabled: true
+    risk: "Critical"
+    score: 90
+    window_seconds: 300
+    max_distinct_senders: 10
+    description: ">= 10 distinct senders pay one receiver in 5 minutes"
+
+  SR004:
+    name: "Dense many-to-many network"
+    enabled: true
+    risk: "Critical"
+    score: 90
+    description: "Unusual dense links among sender and receiver cluster"
+
+  SR005:
+    name: "Circular flow"
+    enabled: true
+    risk: "Critical"
+    score: 100
+    window_seconds: 86400
+    description: "Observed A -> B -> C -> A transfer cycle (Closed Circular Fraud Ring)"
+
+  SR006:
+    name: "Rapid pass-through"
+    enabled: true
+    risk: "Critical"
+    score: 90
+    max_delta_seconds: 120
+    description: "Linked A -> B -> C movement within 2 minutes"
+
+  SR007:
+    name: "Split transfers"
+    enabled: true
+    risk: "High"
+    score: 65
+    window_seconds: 600
+    min_count: 4
+    description: "One payer divides total into multiple small transfers"
+
+  SR008:
+    name: "Aggregation"
+    enabled: true
+    risk: "Critical"
+    score: 85
+    window_seconds: 1800
+    description: "Multiple small inflows followed by large outgoing transfer"
+
+  SR009:
+    name: "Fixed-value pair"
+    enabled: true
+    risk: "Medium"
+    score: 40
+    window_seconds: 600
+    max_count: 4
+    description: "Repeated identical amounts for same sender-receiver pair"
+
+  SR010:
+    name: "Cross-bank mule network"
+    enabled: true
+    risk: "Critical"
+    score: 90
+    description: "Shared intermediary accounts route funds across multiple member banks"
+
+  SR011:
+    name: "Round-trip pair"
+    enabled: true
+    risk: "High"
+    score: 80
+    window_seconds: 600
+    description: "Direct round-trip: A -> B -> A within 10 minutes"
+
+  SR012:
+    name: "Fan-in / fan-out"
+    enabled: true
+    risk: "Critical"
+    score: 95
+    window_seconds: 1800
+    description: "Many senders -> central hub account -> many receivers"
+
+# Alert Policy Thresholds
+alert_policies:
+  critical_score_threshold: 85
+  high_score_threshold: 70
+  medium_score_threshold: 40
+  auto_escalate_critical: true

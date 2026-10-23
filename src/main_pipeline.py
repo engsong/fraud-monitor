@@ -91,21 +91,8 @@ class FraudDetectionPipeline:
         is_src_bl = self.velocity_tracker.is_blacklisted(tx.source_account)
         is_dst_bl = self.velocity_tracker.is_blacklisted(tx.dest_account)
 
-        # 2a. Outbound Sender Velocity
-        vel_1m, vel_5m, amt_1h = self.velocity_tracker.record_and_get_velocity(
-            tx.source_account, tx.amount, tx_id=tx.tx_id
-        )
-        tx.velocity_1m = vel_1m
-        tx.velocity_5m = vel_5m
-        tx.amount_1h = amt_1h
-
-        # 2b. Inbound Receiver Velocity & Fan-In (Mule Account Detection)
-        dst_vel_1m, dst_vel_5m, dst_senders = self.velocity_tracker.record_and_get_dest_velocity(
-            tx.dest_account, tx.source_account, tx.amount, tx_id=tx.tx_id
-        )
-        tx.dest_velocity_1m = dst_vel_1m
-        tx.dest_velocity_5m = dst_vel_5m
-        tx.dest_unique_senders_5m = dst_senders
+        # 2. Multi-Window Velocity & Feature Extraction (1m, 5m, 10m, 60m, 24h)
+        tx = self.velocity_tracker.enrich_features(tx)
 
         # Step 3: Rules (Evaluating both Sender and Beneficiary)
         rule_score, rule_reasons = self.rule_engine.evaluate(
