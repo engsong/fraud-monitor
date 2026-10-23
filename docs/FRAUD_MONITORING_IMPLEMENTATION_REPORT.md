@@ -15,6 +15,7 @@
 
 | Version | Date / Time (GMT+7) | Category | Description of Changes | Modified Files / Modules | Deployed Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
+| **v1.0.5** | 2026-10-23 15:30 | Roadmap | Formulated strategic feature expansion roadmap (Case Management, Dynamic Blacklist API, Telegram Alerting, Deep Graph Network, and Ingestion HA). | `docs/FRAUD_MONITORING_IMPLEMENTATION_REPORT.md` | 📋 Roadmap Documented |
 | **v1.0.4** | 2026-10-23 14:15 | Configuration | Opened PostgreSQL port 5432/tcp in firewalld on `175.0.198.10` to enable direct external access for DbVisualizer / DBeaver clients. | OS Firewall (`firewalld`), PostgreSQL (`fraud-postgres`) | ✅ Verified Connected |
 | **v1.0.3** | 2026-10-23 13:20 | Bug Fix | Synchronized pipeline alert trigger tags (`[S009]`, `[S001]`, etc.) directly into 3-Tier Compliance matrix chips in Road Inspector modal. | `src/geomap/app.py`, `src/geomap/templates/index.html` | ✅ Live on 175.0.198.10 |
 | **v1.0.2** | 2026-10-23 13:08 | Enhancement | Switched OCC live header clock and modal transaction timestamps from UTC to Lao Local Time (`Asia/Vientiane`, GMT+7). | `src/geomap/templates/index.html`, `src/geomap/app.py` | ✅ Live on 175.0.198.10 |
@@ -223,6 +224,48 @@ All services were verified in live production:
    - `[S001] High-Value Transfer: 68,100,000.00 LAK exceeds reporting limit`
    - `[S009] First-Time High-Value Pair: Initial transfer of 45,000,000.00 LAK`
    - `[R001] Elevated Mule Convergence: 4 distinct senders deposited into beneficiary in 5m`
+
+---
+
+## 9. Strategic Future Roadmap & Recommended Next Modules
+
+Based on international payment switch standards (ITMX, PromptPay, PayNow, FAST, UPI) and Central Bank AML/CFT supervisory guidelines, the following **6 strategic capabilities** are recommended for the next enhancement phases:
+
+```
+                                  [STRATEGIC ROADMAP PHASES]
+
+   PHASE 1 (Operational Immediate)          PHASE 2 (Enforcement & Alerts)           PHASE 3 (Intelligence & Scale)
+   ┌─────────────────────────────┐         ┌─────────────────────────────┐         ┌─────────────────────────────┐
+   │ • Incident Case Management  │         │ • Central Blacklist/Watchlist│        │ • Deep Graph Engine (Neo4j) │
+   │ • Analyst Disposition & Notes│ ──────> │ • Telegram / Webhook Alerts │ ──────> │ • Kafka Stream Ingestion HA │
+   │ • 1-Click BOL Audit Export  │         │ • Active Interdiction API   │         │ • Continuous AI Retraining  │
+   └─────────────────────────────┘         └─────────────────────────────┘         └─────────────────────────────┘
+```
+
+### Phase 1: Operational Triage & Case Management (Priority: High)
+1. **Analyst Incident Workflow & Triage**:
+   - Current state: Alerts appear on screen and in DB, but there is no analyst disposition action.
+   - Enhancement: Add case status transitions (`NEW` $\to$ `UNDER_INVESTIGATION` $\to$ `CONFIRMED_FRAUD` / `FALSE_POSITIVE` / `CLEARED`).
+   - Analyst notes, investigator assignment, and action audit trail.
+2. **One-Click Regulatory & Police Compliance Export**:
+   - Instant PDF / Excel report generator for Bank of the Lao PDR (BOL) and Law Enforcement.
+   - Includes full transaction journey, account details, triggered rule IDs, and multi-hop audit trail.
+
+### Phase 2: Active Interdiction & Automated Alerting (Priority: High)
+3. **Dynamic AML Blacklist / Watchlist Management UI**:
+   - Web interface allowing compliance officers to instantly add, search, and manage flagged mule accounts, suspect national IDs, and card numbers.
+   - Synced into Redis in $< 1\text{ms}$ to power active evaluation of **`S013`** and **`R010`**.
+4. **Real-Time Notification Gateways (Telegram Bot & Webhooks)**:
+   - Automated instant notifications for `Critical` threats and `Closed Fraud Rings`.
+   - Rich interactive cards with direct buttons: `[Inspect Chain]`, `[Freeze Route]`, `[Acknowledge]`.
+
+### Phase 3: Advanced Intelligence & Enterprise Scaling (Priority: Medium)
+5. **Deep Multi-Hop Graph Database (Neo4j / NetworkX)**:
+   - Scale graph tracing from 3 hops to complex N-hop syndicates ($5+$ intermediary hops across all 15 member banks).
+   - Automated community detection to uncover shared mule recruiters and syndicated fraud hubs.
+6. **Enterprise High-Availability Ingestion (Kafka / RabbitMQ)**:
+   - Replace SSH streaming with lightweight log shippers (Filebeat / FluentBit) pushing to a Kafka/RabbitMQ queue on VM1 and VM2.
+   - Ensures zero transaction loss during network partitions or peak holiday settlement spikes.
 
 ---
 
