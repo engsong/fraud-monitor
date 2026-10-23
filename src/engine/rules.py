@@ -62,10 +62,22 @@ class RuleEngine:
     without modifying codebase.
     """
 
-    def __init__(self, config_path: str = CONFIG_PATH):
-        self.config_path = config_path
+    def __init__(self, config_path: str = CONFIG_PATH, *args, **kwargs):
+        self.config_path = config_path or CONFIG_PATH
         self.config: Dict[str, Any] = {}
         self.load_config()
+
+        # Support optional backwards-compatibility keyword arguments
+        if "max_single_amt" in kwargs and kwargs["max_single_amt"]:
+            val = float(kwargs["max_single_amt"])
+            for curr_cfg in self.config.get("currencies", {}).values():
+                if isinstance(curr_cfg, dict):
+                    curr_cfg["high_value_threshold"] = val
+        if "max_vel_1m" in kwargs and kwargs["max_vel_1m"]:
+            val = int(kwargs["max_vel_1m"])
+            s002 = self.config.get("sender_rules", {}).get("S002")
+            if isinstance(s002, dict):
+                s002["threshold"] = val
 
     def load_config(self):
         """Loads or reloads config/rules_config.yaml"""
