@@ -237,10 +237,10 @@ def trace_transaction_chain_logic(cur, tx_id=None, source_acc=None, dest_acc=Non
         cur.execute("""
             SELECT t.id, t.tx_id, t.node, t.source_bank, t.source_account, t.dest_bank, t.dest_account,
                    t.amount, t.currency, COALESCE(a.risk_score, t.risk_score) as risk_score,
-                   COALESCE(a.triggers, array_to_string(t.reasons, ', ')) as reasons,
+                   COALESCE(array_to_string(a.reasons, ', '), array_to_string(t.reasons, ', ')) as reasons,
                    t.timestamp, t.created_at
             FROM fraud_monitoring.transactions t
-            LEFT JOIN fraud_monitoring.alerts a ON a.tx_id = t.tx_id OR a.id = t.id
+            LEFT JOIN fraud_monitoring.fraud_alerts a ON a.tx_id = t.tx_id
             WHERE t.tx_id = %s OR t.id::text = %s
             LIMIT 1;
         """, (str(tx_id).strip(), str(tx_id).strip()))
@@ -250,10 +250,10 @@ def trace_transaction_chain_logic(cur, tx_id=None, source_acc=None, dest_acc=Non
         cur.execute("""
             SELECT t.id, t.tx_id, t.node, t.source_bank, t.source_account, t.dest_bank, t.dest_account,
                    t.amount, t.currency, COALESCE(a.risk_score, t.risk_score) as risk_score,
-                   COALESCE(a.triggers, array_to_string(t.reasons, ', ')) as reasons,
+                   COALESCE(array_to_string(a.reasons, ', '), array_to_string(t.reasons, ', ')) as reasons,
                    t.timestamp, t.created_at
             FROM fraud_monitoring.transactions t
-            LEFT JOIN fraud_monitoring.alerts a ON a.tx_id = t.tx_id OR a.id = t.id
+            LEFT JOIN fraud_monitoring.fraud_alerts a ON a.tx_id = t.tx_id
             WHERE (%s IS NOT NULL AND t.source_account = %s)
                OR (%s IS NOT NULL AND t.dest_account = %s)
             ORDER BY t.id DESC LIMIT 1;
@@ -265,10 +265,10 @@ def trace_transaction_chain_logic(cur, tx_id=None, source_acc=None, dest_acc=Non
         cur.execute("""
             SELECT t.id, t.tx_id, t.node, t.source_bank, t.source_account, t.dest_bank, t.dest_account,
                    t.amount, t.currency, COALESCE(a.risk_score, t.risk_score) as risk_score,
-                   COALESCE(a.triggers, array_to_string(t.reasons, ', ')) as reasons,
+                   COALESCE(array_to_string(a.reasons, ', '), array_to_string(t.reasons, ', ')) as reasons,
                    t.timestamp, t.created_at
             FROM fraud_monitoring.transactions t
-            LEFT JOIN fraud_monitoring.alerts a ON a.tx_id = t.tx_id OR a.id = t.id
+            LEFT JOIN fraud_monitoring.fraud_alerts a ON a.tx_id = t.tx_id
             ORDER BY t.id DESC LIMIT 1;
         """)
         target_tx = cur.fetchone()
