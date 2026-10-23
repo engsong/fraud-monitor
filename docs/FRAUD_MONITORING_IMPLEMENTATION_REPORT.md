@@ -15,6 +15,7 @@
 
 | Version | Date / Time (GMT+7) | Category | Description of Changes | Modified Files / Modules | Deployed Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
+| **v1.0.4** | 2026-10-23 14:15 | Configuration | Opened PostgreSQL port 5432/tcp in firewalld on `175.0.198.10` to enable direct external access for DbVisualizer / DBeaver clients. | OS Firewall (`firewalld`), PostgreSQL (`fraud-postgres`) | ✅ Verified Connected |
 | **v1.0.3** | 2026-10-23 13:20 | Bug Fix | Synchronized pipeline alert trigger tags (`[S009]`, `[S001]`, etc.) directly into 3-Tier Compliance matrix chips in Road Inspector modal. | `src/geomap/app.py`, `src/geomap/templates/index.html` | ✅ Live on 175.0.198.10 |
 | **v1.0.2** | 2026-10-23 13:08 | Enhancement | Switched OCC live header clock and modal transaction timestamps from UTC to Lao Local Time (`Asia/Vientiane`, GMT+7). | `src/geomap/templates/index.html`, `src/geomap/app.py` | ✅ Live on 175.0.198.10 |
 | **v1.0.1** | 2026-10-23 12:47 | Bug Fix | Fixed Redis multi-window pipeline result indexing using deterministic slot mapping (`len(pipe)`), preventing index shift errors when failed transactions are queued. | `src/engine/redis_velocity.py`, `src/engine/rules.py` | ✅ Live on 175.0.198.10 |
