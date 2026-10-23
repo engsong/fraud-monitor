@@ -10,6 +10,18 @@
 
 ---
 
+## Revision History & Live Changelog
+> **Policy**: Every update, bug fix, feature addition, or configuration modification to the Fraud Monitoring codebase must be formally recorded in this table with the timestamp (GMT+7), modified modules, and production deployment status.
+
+| Version | Date / Time (GMT+7) | Category | Description of Changes | Modified Files / Modules | Deployed Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **v1.0.3** | 2026-10-23 13:20 | Bug Fix | Synchronized pipeline alert trigger tags (`[S009]`, `[S001]`, etc.) directly into 3-Tier Compliance matrix chips in Road Inspector modal. | `src/geomap/app.py`, `src/geomap/templates/index.html` | ✅ Live on 175.0.198.10 |
+| **v1.0.2** | 2026-10-23 13:08 | Enhancement | Switched OCC live header clock and modal transaction timestamps from UTC to Lao Local Time (`Asia/Vientiane`, GMT+7). | `src/geomap/templates/index.html`, `src/geomap/app.py` | ✅ Live on 175.0.198.10 |
+| **v1.0.1** | 2026-10-23 12:47 | Bug Fix | Fixed Redis multi-window pipeline result indexing using deterministic slot mapping (`len(pipe)`), preventing index shift errors when failed transactions are queued. | `src/engine/redis_velocity.py`, `src/engine/rules.py` | ✅ Live on 175.0.198.10 |
+| **v1.0.0** | 2026-10-23 12:40 | Major Feature | Complete implementation of 3-Tier Declarative Fraud Rules Engine (all 42 rules: S001-S015, R001-R015, SR001-SR012), YAML configuration, and Road Inspector matrix UI. | `config/rules_config.yaml`, `src/engine/rules.py`, `src/common/models.py`, `src/main_pipeline.py`, `index.html` | ✅ Live on 175.0.198.10 |
+
+---
+
 ## 1. Executive Summary
 
 This document certifies the successful design, implementation, and deployment of the **LAPNet Real-Time Payment Switch Fraud Transaction Monitoring & Cyber Audit System**. The system processes live inter-bank transaction streams from both central switching nodes (**VM1** and **VM2**) in sub-second real time, evaluates transactions against a **3-Tier Declarative Rules Engine containing all 42 rules**, computes multi-window sliding velocity metrics via Redis, identifies multi-hop money laundering trails and closed circular fraud rings, and renders an interactive Operations Control Center (OCC) dashboard with live Lao local time (`GMT+7`) synchronization.
