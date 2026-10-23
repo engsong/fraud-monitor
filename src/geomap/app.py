@@ -539,7 +539,7 @@ def trace_transaction_chain_logic(cur, tx_id=None, source_acc=None, dest_acc=Non
     # S010: Night-time off hours
     hour_utc = tx_time.hour if hasattr(tx_time, "hour") else 0
     if ((18 <= hour_utc <= 22) or (1 <= hour_utc <= 4)) and target_amt >= (large_limit * 0.2):
-        r = {"id": "S010", "name": "Unusual hours with anomaly", "risk": "Medium", "desc": f"Night-time transfer combined with high value at {tx_time.strftime('%H:%M')} UTC"}
+        r = {"id": "S010", "name": "Unusual hours with anomaly", "risk": "Medium", "desc": f"Night-time transfer combined with high value at {tx_time.strftime('%H:%M')} (GMT+7)"}
         rule_hits.append(r)
         tier1_sender.append(r)
 

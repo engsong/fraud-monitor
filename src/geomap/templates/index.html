@@ -1481,7 +1481,7 @@
           <span class="val val-amber">0.41</span>
         </div>
         <div class="clock-badge" id="clock-display">
-          14:32 UTC
+          --:--:-- GMT+7 (LIVE)
         </div>
       </div>
     </header>
@@ -1937,9 +1937,16 @@
     // ==========================================
     function updateClock() {
       const now = new Date();
-      const h = String(now.getUTCHours()).padStart(2, '0');
-      const m = String(now.getUTCMinutes()).padStart(2, '0');
-      document.getElementById('clock-display').innerText = `${h}:${m} UTC (LIVE)`;
+      // Format to Lao Timezone (Asia/Vientiane, UTC+7)
+      const options = {
+        timeZone: 'Asia/Vientiane',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      };
+      const timeStr = new Intl.DateTimeFormat('en-GB', options).format(now);
+      document.getElementById('clock-display').innerText = `${timeStr} GMT+7 (LIVE)`;
     }
     setInterval(updateClock, 1000);
     updateClock();
@@ -2764,7 +2771,7 @@
       // Detail Cards
       document.getElementById('m-sender-acc').innerText = tx.from_account || tx.source_account || 'N/A';
       document.getElementById('m-sender-bank').innerText = `${srcCode} (${(STATIONS[srcCode] || {}).fullName || 'Lao Bank'})`;
-      document.getElementById('m-tx-time').innerText = `${tx.time || tx.alert_time || ''} UTC`;
+      document.getElementById('m-tx-time').innerText = `${tx.time || tx.alert_time || ''} (GMT+7)`;
 
       document.getElementById('m-lapnet-node').innerText = tx.full_node || (tx.node === 'VM1' ? 'VM1 (175.2.0.23)' : 'VM2 (175.2.0.24)');
       document.getElementById('m-risk-score').innerText = `${tx.risk_score || 0} / 100`;
@@ -2940,7 +2947,7 @@
                   <span style="font-size: 8.5px; color: ${h.risk_score >= 80 ? 'var(--neon-red)' : 'var(--neon-cyan)'}; font-weight: 700;">
                     Risk: ${h.risk_score}/100
                   </span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: #78909c;">${h.time} UTC</span>
+                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: #78909c;">${h.time} (GMT+7)</span>
                 </div>
               </div>
 
