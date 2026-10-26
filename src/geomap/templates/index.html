@@ -138,6 +138,169 @@
       border-radius: 6px;
     }
 
+    /* OCC / Grafana-style Timeline & Refresh Toolbar */
+    .timeline-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      background: #061826;
+      border: 1px solid var(--border-blue);
+      border-radius: 6px;
+      padding: 2px 4px;
+    }
+
+    .t-btn {
+      background: #092030;
+      border: 1px solid rgba(0, 242, 254, 0.2);
+      color: #cfd8dc;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .t-btn:hover {
+      background: rgba(0, 242, 254, 0.18);
+      border-color: var(--neon-cyan);
+      color: #ffffff;
+      box-shadow: 0 0 8px rgba(0, 242, 254, 0.25);
+    }
+
+    .t-btn-step {
+      padding: 3px 6px;
+      font-weight: 800;
+      color: var(--neon-cyan);
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    .t-picker-btn {
+      color: #ffffff;
+    }
+
+    .t-picker-btn .t-icon {
+      font-size: 10px;
+      filter: drop-shadow(0 0 4px var(--neon-cyan));
+    }
+
+    .t-arrow {
+      font-size: 7px;
+      color: var(--text-dim);
+      margin-left: 2px;
+    }
+
+    .t-dropdown-container {
+      position: relative;
+    }
+
+    .t-menu-dropdown {
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 0;
+      background: #071927;
+      border: 1px solid var(--neon-cyan);
+      border-radius: 6px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 242, 254, 0.25);
+      min-width: 145px;
+      z-index: 9999;
+      display: none;
+      overflow: hidden;
+      backdrop-filter: blur(8px);
+    }
+
+    .t-menu-dropdown.show {
+      display: block;
+      animation: tFadeIn 0.12s ease-out;
+    }
+
+    @keyframes tFadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .t-refresh-dropdown {
+      right: 0;
+      left: auto;
+      min-width: 90px;
+    }
+
+    .t-menu-header {
+      font-size: 8px;
+      font-weight: 800;
+      color: var(--text-dim);
+      letter-spacing: 0.6px;
+      padding: 6px 10px 3px;
+      border-bottom: 1px solid rgba(0, 200, 255, 0.12);
+      text-transform: uppercase;
+    }
+
+    .t-menu-item {
+      padding: 5px 10px;
+      font-size: 9.5px;
+      font-weight: 600;
+      color: #b0bec5;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.1s;
+    }
+
+    .t-menu-item:hover {
+      background: rgba(0, 242, 254, 0.15);
+      color: #ffffff;
+    }
+
+    .t-menu-item.active {
+      color: var(--neon-cyan);
+      font-weight: 800;
+      background: rgba(0, 242, 254, 0.1);
+    }
+
+    .t-menu-item.active::after {
+      content: '✓';
+      color: var(--neon-cyan);
+      font-weight: 900;
+      font-size: 10px;
+    }
+
+    .alert-range-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5px;
+      font-weight: 800;
+      color: var(--neon-cyan);
+      background: rgba(0, 242, 254, 0.12);
+      border: 1px solid rgba(0, 242, 254, 0.35);
+      padding: 2px 7px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .alert-range-pill:hover {
+      background: rgba(0, 242, 254, 0.25);
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 6px rgba(0, 242, 254, 0.3);
+    }
+
+    .empty-alerts-msg {
+      padding: 16px 10px;
+      text-align: center;
+      color: var(--neon-teal);
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(0, 242, 254, 0.04);
+      border: 1px dashed rgba(0, 242, 254, 0.2);
+      border-radius: 6px;
+      margin: 8px 4px;
+    }
+
     /* Main Grid Layout (Left - Center - Right) */
     .occ-grid {
       flex: 1;
@@ -1480,6 +1643,47 @@
           <span class="label">Risk Index</span>
           <span class="val val-amber">0.41</span>
         </div>
+
+        <!-- Timeline Selector Toolbar -->
+        <div class="timeline-bar-wrap">
+          <button class="t-btn t-btn-step" onclick="stepTimeline(-1)" title="Previous time range">‹</button>
+          <div class="t-dropdown-container">
+            <button class="t-btn t-picker-btn" id="timeline-picker-btn" onclick="toggleTimelineMenu(event)" title="Click to select timeline range">
+              <span class="t-icon">🕒</span>
+              <span id="timeline-current-label">Last 1 hour</span>
+              <span class="t-arrow">▼</span>
+            </button>
+            <div class="t-menu-dropdown" id="timeline-menu">
+              <div class="t-menu-header">SELECT TIMELINE RANGE</div>
+              <div class="t-menu-item" data-range="15m" onclick="applyTimelineRange('15m', 'Last 15 minutes')">Last 15 minutes</div>
+              <div class="t-menu-item" data-range="30m" onclick="applyTimelineRange('30m', 'Last 30 minutes')">Last 30 minutes</div>
+              <div class="t-menu-item active" data-range="1h" onclick="applyTimelineRange('1h', 'Last 1 hour')">Last 1 hour</div>
+              <div class="t-menu-item" data-range="3h" onclick="applyTimelineRange('3h', 'Last 3 hours')">Last 3 hours</div>
+              <div class="t-menu-item" data-range="6h" onclick="applyTimelineRange('6h', 'Last 6 hours')">Last 6 hours</div>
+              <div class="t-menu-item" data-range="12h" onclick="applyTimelineRange('12h', 'Last 12 hours')">Last 12 hours</div>
+              <div class="t-menu-item" data-range="24h" onclick="applyTimelineRange('24h', 'Last 24 hours')">Last 24 hours</div>
+              <div class="t-menu-item" data-range="today" onclick="applyTimelineRange('today', 'Today so far')">Today</div>
+            </div>
+          </div>
+          <button class="t-btn t-btn-step" onclick="stepTimeline(1)" title="Next time range">›</button>
+          
+          <div class="t-dropdown-container">
+            <button class="t-btn" id="refresh-picker-btn" onclick="toggleRefreshMenu(event)" title="Auto-refresh interval">
+              <span style="font-size: 11px; color: var(--neon-cyan);">⟳</span>
+              <span id="refresh-current-label">5s</span>
+              <span class="t-arrow">▼</span>
+            </button>
+            <div class="t-menu-dropdown t-refresh-dropdown" id="refresh-menu">
+              <div class="t-menu-header">AUTO REFRESH</div>
+              <div class="t-menu-item" onclick="applyRefreshInterval(0, 'Off')">Off</div>
+              <div class="t-menu-item active" onclick="applyRefreshInterval(5000, '5s')">5s</div>
+              <div class="t-menu-item" onclick="applyRefreshInterval(10000, '10s')">10s</div>
+              <div class="t-menu-item" onclick="applyRefreshInterval(30000, '30s')">30s</div>
+              <div class="t-menu-item" onclick="applyRefreshInterval(60000, '1m')">1m</div>
+            </div>
+          </div>
+        </div>
+
         <div class="clock-badge" id="clock-display">
           --:--:-- GMT+7 (LIVE)
         </div>
@@ -1675,8 +1879,9 @@
             </span>
           </div>
 
-          <div style="padding: 6px 10px 2px; font-size: 9px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">
-            LIVE HIGH-RISK ALERTS
+          <div style="padding: 6px 10px 4px; font-size: 9px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center;">
+            <span>LIVE HIGH-RISK ALERTS</span>
+            <span id="alert-timeline-badge" class="alert-range-pill" title="Click to change timeline range" onclick="toggleTimelineMenu(event)">LAST 1 HOUR</span>
           </div>
 
           <div class="alert-list" id="alert-card-list">
@@ -1951,8 +2156,178 @@
     setInterval(updateClock, 1000);
     updateClock();
 
+    // ==========================================
+    // 1.1 TIMELINE & AUTO-REFRESH STATE
+    // ==========================================
+    const TIMELINE_RANGES = [
+      { id: '15m', label: 'Last 15 minutes' },
+      { id: '30m', label: 'Last 30 minutes' },
+      { id: '1h',  label: 'Last 1 hour' },
+      { id: '3h',  label: 'Last 3 hours' },
+      { id: '6h',  label: 'Last 6 hours' },
+      { id: '12h', label: 'Last 12 hours' },
+      { id: '24h', label: 'Last 24 hours' },
+      { id: 'today', label: 'Today so far' }
+    ];
+    let currentTimeRange = '1h';
+    let currentFromParam = '';
+    let refreshIntervalMs = 5000;
+    let refreshTimerAlerts = null;
+    let refreshTimerNodes = null;
+
+    function toggleTimelineMenu(event) {
+      if (event) event.stopPropagation();
+      const menu = document.getElementById('timeline-menu');
+      const refMenu = document.getElementById('refresh-menu');
+      if (refMenu) refMenu.classList.remove('show');
+      if (menu) menu.classList.toggle('show');
+    }
+
+    function toggleRefreshMenu(event) {
+      if (event) event.stopPropagation();
+      const menu = document.getElementById('refresh-menu');
+      const timeMenu = document.getElementById('timeline-menu');
+      if (timeMenu) timeMenu.classList.remove('show');
+      if (menu) menu.classList.toggle('show');
+    }
+
+    window.addEventListener('click', () => {
+      const tm = document.getElementById('timeline-menu');
+      const rm = document.getElementById('refresh-menu');
+      if (tm) tm.classList.remove('show');
+      if (rm) rm.classList.remove('show');
+    });
+
+    function applyTimelineRange(rangeId, label, updateUrl = true) {
+      currentTimeRange = rangeId;
+      currentFromParam = '';
+      const labelElem = document.getElementById('timeline-current-label');
+      if (labelElem) labelElem.innerText = label;
+
+      document.querySelectorAll('#timeline-menu .t-menu-item').forEach(item => {
+        if (item.getAttribute('data-range') === rangeId) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+
+      const tm = document.getElementById('timeline-menu');
+      if (tm) tm.classList.remove('show');
+
+      const badge = document.getElementById('alert-timeline-badge');
+      if (badge) badge.innerText = label.toUpperCase();
+
+      if (typeof fetchRecentAlerts === 'function') fetchRecentAlerts();
+      pollNodeStats();
+
+      if (updateUrl && window.history && window.history.replaceState) {
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.set('time_range', rangeId);
+          window.history.replaceState({}, '', url.toString());
+        } catch (e) {}
+      }
+    }
+
+    function stepTimeline(direction) {
+      const idx = TIMELINE_RANGES.findIndex(r => r.id === currentTimeRange);
+      if (idx === -1) {
+        applyTimelineRange('1h', 'Last 1 hour');
+        return;
+      }
+      let newIdx = idx + direction;
+      if (newIdx < 0) newIdx = 0;
+      if (newIdx >= TIMELINE_RANGES.length) newIdx = TIMELINE_RANGES.length - 1;
+      const target = TIMELINE_RANGES[newIdx];
+      applyTimelineRange(target.id, target.label);
+    }
+
+    function applyRefreshInterval(ms, label) {
+      refreshIntervalMs = ms;
+      const refLabel = document.getElementById('refresh-current-label');
+      if (refLabel) refLabel.innerText = label;
+
+      document.querySelectorAll('#refresh-menu .t-menu-item').forEach(item => {
+        if (item.innerText.trim() === label) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+
+      const rm = document.getElementById('refresh-menu');
+      if (rm) rm.classList.remove('show');
+
+      if (refreshTimerAlerts) clearInterval(refreshTimerAlerts);
+      if (refreshTimerNodes) clearInterval(refreshTimerNodes);
+
+      if (ms > 0) {
+        refreshTimerAlerts = setInterval(() => {
+          if (typeof fetchRecentAlerts === 'function') fetchRecentAlerts();
+        }, ms);
+        refreshTimerNodes = setInterval(pollNodeStats, Math.max(ms, 6000));
+        showToast(`✓ Auto-refresh interval: ${label}`);
+      } else {
+        showToast('⏸ Auto-refresh paused');
+      }
+    }
+
+    function detectUrlTimeRange() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const urlRange = params.get('time_range');
+        const fromParam = params.get('from');
+
+        if (urlRange) {
+          const match = TIMELINE_RANGES.find(r => r.id === urlRange.toLowerCase());
+          if (match) {
+            applyTimelineRange(match.id, match.label, false);
+            return;
+          }
+        }
+
+        if (fromParam) {
+          currentFromParam = fromParam;
+          if (fromParam.includes('15m')) applyTimelineRange('15m', 'Last 15 minutes', false);
+          else if (fromParam.includes('30m')) applyTimelineRange('30m', 'Last 30 minutes', false);
+          else if (fromParam.includes('1h')) applyTimelineRange('1h', 'Last 1 hour', false);
+          else if (fromParam.includes('3h')) applyTimelineRange('3h', 'Last 3 hours', false);
+          else if (fromParam.includes('6h')) applyTimelineRange('6h', 'Last 6 hours', false);
+          else if (fromParam.includes('12h')) applyTimelineRange('12h', 'Last 12 hours', false);
+          else if (fromParam.includes('24h') || fromParam.includes('1d')) applyTimelineRange('24h', 'Last 24 hours', false);
+          else if (fromParam.includes('d') || fromParam.includes('today')) applyTimelineRange('today', 'Today so far', false);
+          else {
+            currentTimeRange = 'custom';
+            const labelElem = document.getElementById('timeline-current-label');
+            if (labelElem) labelElem.innerText = fromParam;
+            const badge = document.getElementById('alert-timeline-badge');
+            if (badge) badge.innerText = fromParam.toUpperCase();
+            if (typeof fetchRecentAlerts === 'function') fetchRecentAlerts();
+            pollNodeStats();
+          }
+        }
+      } catch (e) {}
+    }
+
+    // Listen to iframe postMessage from Grafana
+    window.addEventListener('message', (event) => {
+      try {
+        const d = event.data;
+        if (d && (d.timeRange || d.from)) {
+          const r = d.timeRange || d.from;
+          const match = TIMELINE_RANGES.find(item => item.id === r || r.includes(item.id));
+          if (match) applyTimelineRange(match.id, match.label);
+        }
+      } catch (e) {}
+    });
+
     function pollNodeStats() {
-      fetch('/api/node-stats')
+      const q = new URLSearchParams();
+      if (currentTimeRange) q.set('time_range', currentTimeRange);
+      if (currentFromParam) q.set('from', currentFromParam);
+
+      fetch(`/api/node-stats?${q.toString()}`)
         .then(res => res.json())
         .then(d => {
           if (d.vm1 && d.vm2) {
@@ -1962,8 +2337,6 @@
         })
         .catch(() => {});
     }
-    pollNodeStats();
-    setInterval(pollNodeStats, 8000);
 
     // ==========================================
     // 2. SCHEMATIC TRANSIT/SWITCHING TOPOLOGY MAP
@@ -3275,12 +3648,56 @@
       }, 3200);
     }
 
-    // Initial Recent Alerts
-    fetch('/api/recent-alerts')
-      .then(res => res.json())
-      .then(alerts => {
-        alerts.forEach(a => injectAlertCard(a));
-      });
+    // ==========================================
+    // RECENT ALERTS FETCHING & STARTUP
+    // ==========================================
+    function fetchRecentAlerts() {
+      const q = new URLSearchParams();
+      if (currentTimeRange) q.set('time_range', currentTimeRange);
+      if (currentFromParam) q.set('from', currentFromParam);
+
+      fetch(`/api/recent-alerts?${q.toString()}`)
+        .then(res => res.json())
+        .then(data => {
+          let alerts = [];
+          let totalCount = 0;
+          let label = 'Last 1 hour';
+
+          if (Array.isArray(data)) {
+            alerts = data;
+            totalCount = data.length;
+          } else if (data && data.alerts) {
+            alerts = data.alerts;
+            totalCount = data.total_count !== undefined ? data.total_count : data.alerts.length;
+            if (data.label) label = data.label;
+          }
+
+          const badge = document.getElementById('alert-timeline-badge');
+          if (badge) {
+            badge.innerText = `${label.toUpperCase()} (${totalCount} ALERTS)`;
+          }
+
+          alertList.innerHTML = '';
+          if (alerts.length === 0) {
+            alertList.innerHTML = `
+              <div class="empty-alerts-msg">
+                ✓ No high-risk alerts in ${label.toLowerCase()}
+              </div>
+            `;
+            return;
+          }
+
+          // In reverse order so newest remains at the top after insertBefore
+          alerts.slice().reverse().forEach(a => injectAlertCard(a));
+        })
+        .catch(() => {});
+    }
+
+    // Startup Initialization
+    detectUrlTimeRange();
+    fetchRecentAlerts();
+    pollNodeStats();
+    applyRefreshInterval(5000, '5s');
 
     // SSE Stream
     const eventSource = new EventSource('/api/live-stream');
@@ -3369,6 +3786,9 @@
     }
 
     function injectAlertCard(a) {
+      const emptyMsg = alertList.querySelector('.empty-alerts-msg');
+      if (emptyMsg) emptyMsg.remove();
+
       const card = document.createElement('div');
       card.className = 'alert-card';
 

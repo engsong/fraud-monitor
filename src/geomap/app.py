@@ -56,13 +56,43 @@ def get_nodes():
         })
     return jsonify(nodes)
 
+def get_time_interval_sql(time_range_arg=None, from_arg=None):
+    """
+    Parses timeline range (e.g. 15m, 30m, 1h, 3h, 6h, 12h, 24h, today, or Grafana now-X)
+    and returns SQL WHERE clause for created_at.
+    """
+    target = (from_arg or time_range_arg or "1h").strip().lower()
+    
+    if target in ["15m", "now-15m"]:
+        return "created_at >= NOW() - INTERVAL '15 minutes'", "15m", "Last 15 minutes"
+    elif target in ["30m", "now-30m"]:
+        return "created_at >= NOW() - INTERVAL '30 minutes'", "30m", "Last 30 minutes"
+    elif target in ["1h", "now-1h"]:
+        return "created_at >= NOW() - INTERVAL '1 hour'", "1h", "Last 1 hour"
+    elif target in ["3h", "now-3h"]:
+        return "created_at >= NOW() - INTERVAL '3 hours'", "3h", "Last 3 hours"
+    elif target in ["6h", "now-6h"]:
+        return "created_at >= NOW() - INTERVAL '6 hours'", "6h", "Last 6 hours"
+    elif target in ["12h", "now-12h"]:
+        return "created_at >= NOW() - INTERVAL '12 hours'", "12h", "Last 12 hours"
+    elif target in ["24h", "now-24h", "now-1d", "1d"]:
+        return "created_at >= NOW() - INTERVAL '24 hours'", "24h", "Last 24 hours"
+    elif target in ["today", "now/d"]:
+        return "created_at >= date_trunc('day', NOW())", "today", "Today"
+    else:
+        return "created_at >= NOW() - INTERVAL '1 hour'", "1h", "Last 1 hour"
+
 @app.route("/api/node-stats")
 def get_node_stats():
-    """Returns real-time switching metrics comparing VM1 (175.2.0.23) and VM2 (175.2.0.24)"""
+    """Returns real-time switching metrics comparing VM1 (175.2.0.23) and VM2 (175.2.0.24) for selected timeline"""
     try:
+        where_time, range_id, label = get_time_interval_sql(
+            request.args.get("time_range"),
+            request.args.get("from")
+        )
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("""
+        cur.execute(f"""
             SELECT 
                 node, 
                 count(*) AS tx_count,
@@ -71,6 +101,7 @@ def get_node_stats():
                 COALESCE(sum(amount) FILTER (WHERE currency = 'THB'), 0) AS thb_volume,
                 COALESCE(sum(amount) FILTER (WHERE currency = 'USD'), 0) AS usd_volume
             FROM fraud_monitoring.transactions
+            WHERE {where_time}
             GROUP BY node;
         """)
         rows = cur.fetchall()
@@ -81,11 +112,13 @@ def get_node_stats():
         vm2 = next((r for r in rows if "175.2.0.24" in (r["node"] or "")), {"tx_count": 0, "alert_count": 0, "lak_volume": 0})
         
         total_tx = vm1["tx_count"] + vm2["tx_count"]
-        vm1_pct = round((vm1["tx_count"] / total_tx * 100), 1) if total_tx > 0 else 0
-        vm2_pct = round((vm2["tx_count"] / total_tx * 100), 1) if total_tx > 0 else 0
+        vm1_pct = round((vm1["tx_count"] / total_tx * 100), 1) if total_tx > 0 else 50.0
+        vm2_pct = round((vm2["tx_count"] / total_tx * 100), 1) if total_tx > 0 else 50.0
 
         return jsonify({
             "total_tx": total_tx,
+            "time_range": range_id,
+            "label": label,
             "vm1": {
                 "name": "VM1-175.2.0.23",
                 "count": vm1["tx_count"],
@@ -108,16 +141,20 @@ def get_node_stats():
 def get_hourly_stats():
     """Returns hourly volume by node (VM1 vs VM2) and alerts for the timeline area chart"""
     try:
+        where_time, range_id, label = get_time_interval_sql(
+            request.args.get("time_range"),
+            request.args.get("from")
+        )
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("""
+        cur.execute(f"""
             SELECT 
                 to_char(date_trunc('hour', timestamp), 'HH24:00') AS hour_label,
                 count(*) FILTER (WHERE node LIKE '%175.2.0.23%') AS vm1_tx,
                 count(*) FILTER (WHERE node LIKE '%175.2.0.24%') AS vm2_tx,
                 count(*) FILTER (WHERE risk_score >= 80) AS alert_tx
             FROM fraud_monitoring.transactions
-            WHERE timestamp >= NOW() - INTERVAL '24 hours'
+            WHERE {where_time}
             GROUP BY date_trunc('hour', timestamp)
             ORDER BY date_trunc('hour', timestamp) ASC;
         """)
@@ -130,11 +167,18 @@ def get_hourly_stats():
 
 @app.route("/api/recent-alerts")
 def get_recent_alerts():
-    """Returns the latest 15 alerts for the right live alerts board"""
+    """Returns alerts filtered by time range (default 1h)"""
     try:
+        where_time, range_id, label = get_time_interval_sql(
+            request.args.get("time_range"),
+            request.args.get("from")
+        )
+        limit = int(request.args.get("limit", 60))
+        format_type = request.args.get("format", "dict")
+        
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("""
+        cur.execute(f"""
             SELECT 
                 id,
                 COALESCE(tx_id, 'TX-' || id) AS tx_id,
@@ -155,16 +199,39 @@ def get_recent_alerts():
                     ELSE 'Low'
                 END AS threat_level
             FROM fraud_monitoring.transactions
-            WHERE risk_score >= 40 OR array_length(reasons, 1) > 0
+            WHERE (risk_score >= 40 OR array_length(reasons, 1) > 0)
+              AND {where_time}
             ORDER BY id DESC
-            LIMIT 18;
-        """)
+            LIMIT %s;
+        """, (limit,))
         rows = cur.fetchall()
+
+        # Total alert count in this window
+        cur.execute(f"""
+            SELECT count(*) AS total
+            FROM fraud_monitoring.transactions
+            WHERE (risk_score >= 40 OR array_length(reasons, 1) > 0)
+              AND {where_time};
+        """)
+        c_row = cur.fetchone()
+        total_count = c_row["total"] if c_row else len(rows)
+
         cur.close()
         conn.close()
-        return jsonify(rows or [])
+
+        if format_type == "array":
+            resp = jsonify(rows or [])
+            resp.headers["X-Total-Count"] = str(total_count)
+            return resp
+
+        return jsonify({
+            "alerts": rows or [],
+            "total_count": total_count,
+            "time_range": range_id,
+            "label": label
+        })
     except Exception as e:
-        return jsonify([])
+        return jsonify({"alerts": [], "total_count": 0, "error": str(e)})
 
 @app.route("/api/fan-in-out")
 def get_fan_in_out():
