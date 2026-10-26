@@ -1019,6 +1019,34 @@ def view_timeline_report():
     except Exception as e:
         return f"<div style='font-family: sans-serif; padding: 20px; color: #b91c1c;'><h2>Error Generating Timeline Dossier</h2><p>{str(e)}</p></div>", 500
 
+@app.route("/report/statistics")
+@app.route("/report/stats")
+def view_statistics_report():
+    """Generates official printable Executive Fraud Statistics & Risk Typology Report"""
+    time_range = request.args.get("time_range")
+    from_arg = request.args.get("from")
+    where_time, range_id, label = get_time_interval_sql(time_range, from_arg)
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        stats = compute_fraud_statistics(cur, where_time)
+        cur.close()
+        conn.close()
+
+        lao_tz = timezone(timedelta(hours=7))
+        now_lao = datetime.now(lao_tz).strftime("%Y-%m-%d %H:%M:%S")
+
+        return render_template(
+            "statistics_report.html",
+            label=label,
+            range_id=range_id,
+            now=now_lao,
+            stats=stats
+        )
+    except Exception as e:
+        return f"<div style='font-family: sans-serif; padding: 20px; color: #b91c1c;'><h2>Error Generating Statistics Report</h2><p>{str(e)}</p></div>", 500
+
 @app.route("/api/fraud-stats")
 def get_fraud_stats_api():
     """Returns detailed fraud statistics in JSON format for the selected timeline"""

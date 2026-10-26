@@ -233,7 +233,7 @@
     .t-export-dropdown {
       right: 0;
       left: auto;
-      min-width: 145px;
+      min-width: 175px;
     }
 
     .t-btn-dl {
@@ -1755,6 +1755,9 @@
               <div class="t-menu-item" onclick="downloadTimelineCSV()">
                 <span>📊 Export CSV (Excel)</span>
               </div>
+              <div class="t-menu-item" onclick="openStatisticsReport()">
+                <span>📈 Fraud Statistics Report</span>
+              </div>
               <div class="t-menu-item" onclick="openTimelineSummaryReport()">
                 <span>📄 Full Timeline Dossier</span>
               </div>
@@ -1961,6 +1964,7 @@
             <div style="display: flex; align-items: center; gap: 6px;">
               <span>LIVE HIGH-RISK ALERTS</span>
               <button class="pill-dl-btn" onclick="downloadTimelineCSV()" title="Download CSV report for current timeline">📥 CSV</button>
+              <button class="pill-dl-btn" onclick="openStatisticsReport()" title="Open Executive Fraud Statistics & Typology Report">📈 Stats</button>
             </div>
             <span id="alert-timeline-badge" class="alert-range-pill" title="Click to change timeline range" onclick="toggleTimelineMenu(event)">LAST 1 HOUR</span>
           </div>
@@ -2301,6 +2305,14 @@
       if (currentTimeRange) q.set('time_range', currentTimeRange);
       if (currentFromParam) q.set('from', currentFromParam);
       const url = `/report/timeline?${q.toString()}`;
+      window.open(url, '_blank');
+    }
+
+    function openStatisticsReport() {
+      const q = new URLSearchParams();
+      if (currentTimeRange) q.set('time_range', currentTimeRange);
+      if (currentFromParam) q.set('from', currentFromParam);
+      const url = `/report/statistics?${q.toString()}`;
       window.open(url, '_blank');
     }
 
