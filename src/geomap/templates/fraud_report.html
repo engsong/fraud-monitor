@@ -786,7 +786,35 @@
       {% endif %}
     </section>
 
-    <!-- 5. REGULATORY SIGN-OFF & LEGAL DISPATCH -->
+    <!-- 5. STATISTICAL RISK CONTEXT & FORENSIC TYPOLOGY EXPLANATION -->
+    <section style="background: #f0fdfa; border: 1.5px solid #99f6e4; border-radius: 6px; padding: 12px 14px; margin: 16px 0; page-break-inside: avoid;">
+      <h4 style="font-size: 11px; font-weight: 800; color: #0f766e; text-transform: uppercase; margin-bottom: 6px;">
+        📊 Statistical Risk Benchmarks & Forensic Typology Explanation
+      </h4>
+
+      <p style="font-size: 9.5px; color: #134e4a; line-height: 1.5; margin-bottom: 6px;">
+        <strong>1. Threshold & Velocity Metrics:</strong>
+        This transfer of <strong>{{ data.target_tx.amount_fmt }} {{ data.target_tx.currency }}</strong> was evaluated against the LAPNet 3-Tier engine sliding-window baseline. It triggered a composite risk score of <strong>{{ data.target_tx.risk_score }}/100</strong>, exceeding the reporting benchmark of 50,000,000 LAK for standard transfers (and 20,000,000 LAK for first-time counterparty pairs).
+      </p>
+
+      <p style="font-size: 9.5px; color: #134e4a; line-height: 1.5; margin-bottom: 6px;">
+        <strong>2. Typology Diagnostics:</strong>
+        {% if data.ring_detected %}
+          <strong>Circular Fraud Ring:</strong> A closed circuit of funds ({{ data.ring_path|join(' ➔ ') }} ➔ {{ data.ring_path[0] }}) was detected. Closed loops indicate deliberate circular layering designed to artificially inflate clearing turnover or simulate genuine merchant volume.
+        {% elif data.mule_stats and data.mule_stats.is_mule %}
+          <strong>Mule Convergence Hub:</strong> Beneficiary account {{ data.target_tx.dest_account }} has received deposits from {{ data.mule_stats.unique_senders }} distinct sender accounts within 24 hours, matching the classic Fan-In Mule syndicate profile.
+        {% else %}
+          <strong>High-Velocity Transfer Anomaly:</strong> The transaction represents an abrupt surge in outward capital from {{ data.target_tx.source_bank }} to {{ data.target_tx.dest_bank }}, characterized by unverified first-time counterparty interaction.
+        {% endif %}
+      </p>
+
+      <p style="font-size: 9.5px; color: #134e4a; line-height: 1.5;">
+        <strong>3. Recommended Countermeasure:</strong>
+        Under Bank of the Lao PDR (BOL) directives, the receiving institution (<strong>{{ data.target_tx.dest_bank }}</strong>) is advised to temporarily place a debit hold on account <strong>{{ data.target_tx.dest_account }}</strong>, conduct Customer Due Diligence (CDD), and submit a Suspicious Transaction Report (STR) to AMLIO if documentation is not provided within 24 hours.
+      </p>
+    </section>
+
+    <!-- 6. REGULATORY SIGN-OFF & LEGAL DISPATCH -->
     <section class="signoff-grid">
       <div class="signoff-box">
         <div class="signoff-title">LAPNet Fraud Operations Analyst</div>

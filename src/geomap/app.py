@@ -811,9 +811,161 @@ def view_fraud_report(tx_id=None):
     except Exception as e:
         return f"<div style='font-family: sans-serif; padding: 20px; color: #b91c1c;'><h2>Error Generating Forensic Dossier</h2><p>{str(e)}</p></div>", 500
 
+def compute_fraud_statistics(cur, where_time):
+    """Computes macro and micro statistics for fraud monitoring reports"""
+    # 1. Macro Totals: Switching vs Flagged Fraud
+    cur.execute(f"""
+        SELECT 
+            count(*) AS total_switching,
+            COALESCE(sum(amount) FILTER (WHERE currency = 'LAK'), 0) AS total_switching_lak,
+            count(*) FILTER (WHERE risk_score >= 40 OR array_length(reasons, 1) > 0) AS total_fraud_alerts,
+            count(*) FILTER (WHERE risk_score >= 85) AS crit_alerts,
+            count(*) FILTER (WHERE risk_score >= 70 AND risk_score < 85) AS high_alerts,
+            count(*) FILTER (WHERE risk_score >= 40 AND risk_score < 70) AS med_alerts,
+            COALESCE(sum(amount) FILTER ((risk_score >= 40 OR array_length(reasons, 1) > 0) AND currency = 'LAK'), 0) AS fraud_lak_volume,
+            COALESCE(sum(amount) FILTER ((risk_score >= 40 OR array_length(reasons, 1) > 0) AND currency = 'THB'), 0) AS fraud_thb_volume,
+            COALESCE(sum(amount) FILTER ((risk_score >= 40 OR array_length(reasons, 1) > 0) AND currency = 'USD'), 0) AS fraud_usd_volume
+        FROM fraud_monitoring.transactions
+        WHERE {where_time};
+    """)
+    totals = cur.fetchone() or {}
+
+    total_sw = totals.get("total_switching") or 0
+    total_fr = totals.get("total_fraud_alerts") or 0
+    fraud_rate = round((total_fr / total_sw * 100), 2) if total_sw > 0 else 0.0
+
+    # 2. Dual-Node Traffic & Alert Breakdown
+    cur.execute(f"""
+        SELECT 
+            node, 
+            count(*) AS tx_count,
+            count(*) FILTER (WHERE risk_score >= 40 OR array_length(reasons, 1) > 0) AS alert_count,
+            COALESCE(sum(amount) FILTER (currency = 'LAK'), 0) AS volume_lak
+        FROM fraud_monitoring.transactions
+        WHERE {where_time}
+        GROUP BY node;
+    """)
+    node_rows = cur.fetchall()
+    vm1_data = next((r for r in node_rows if "175.2.0.23" in (r["node"] or "")), {"tx_count": 0, "alert_count": 0, "volume_lak": 0})
+    vm2_data = next((r for r in node_rows if "175.2.0.24" in (r["node"] or "")), {"tx_count": 0, "alert_count": 0, "volume_lak": 0})
+    
+    vm1_tx_pct = round((vm1_data["tx_count"] / total_sw * 100), 1) if total_sw > 0 else 50.0
+    vm2_tx_pct = round((vm2_data["tx_count"] / total_sw * 100), 1) if total_sw > 0 else 50.0
+    vm1_al_pct = round((vm1_data["alert_count"] / total_fr * 100), 1) if total_fr > 0 else 50.0
+    vm2_al_pct = round((vm2_data["alert_count"] / total_fr * 100), 1) if total_fr > 0 else 50.0
+
+    # 3. Top Originating Banks by Fraud Volume & Incident Count
+    cur.execute(f"""
+        SELECT 
+            source_bank,
+            count(*) AS alert_count,
+            to_char(sum(amount), 'FM999,999,990.00') AS lak_volume,
+            ROUND(count(*)::numeric / NULLIF({max(1, total_fr)}, 0) * 100, 1) AS share_pct
+        FROM fraud_monitoring.transactions
+        WHERE (risk_score >= 40 OR array_length(reasons, 1) > 0)
+          AND {where_time}
+        GROUP BY source_bank
+        ORDER BY alert_count DESC
+        LIMIT 5;
+    """)
+    top_source_banks = cur.fetchall()
+
+    # 4. Top Beneficiary Banks (Mule Hubs)
+    cur.execute(f"""
+        SELECT 
+            dest_bank,
+            count(*) AS alert_count,
+            count(DISTINCT dest_account) AS unique_accounts,
+            to_char(sum(amount), 'FM999,999,990.00') AS lak_volume,
+            ROUND(count(*)::numeric / NULLIF({max(1, total_fr)}, 0) * 100, 1) AS share_pct
+        FROM fraud_monitoring.transactions
+        WHERE (risk_score >= 40 OR array_length(reasons, 1) > 0)
+          AND {where_time}
+        GROUP BY dest_bank
+        ORDER BY alert_count DESC
+        LIMIT 5;
+    """)
+    top_dest_banks = cur.fetchall()
+
+    # 5. Top Hotspot Interbank Corridors
+    cur.execute(f"""
+        SELECT 
+            source_bank,
+            dest_bank,
+            count(*) AS alert_count,
+            to_char(sum(amount), 'FM999,999,990.00') AS lak_volume
+        FROM fraud_monitoring.transactions
+        WHERE (risk_score >= 40 OR array_length(reasons, 1) > 0)
+          AND {where_time}
+        GROUP BY source_bank, dest_bank
+        ORDER BY alert_count DESC
+        LIMIT 5;
+    """)
+    top_corridors = cur.fetchall()
+
+    # 6. Top Triggered Rules
+    top_rules = []
+    try:
+        cur.execute(f"""
+            SELECT 
+                unnest(reasons) AS raw_rule,
+                count(*) AS hits
+            FROM fraud_monitoring.transactions
+            WHERE (risk_score >= 40 OR array_length(reasons, 1) > 0)
+              AND {where_time}
+            GROUP BY raw_rule
+            ORDER BY hits DESC
+            LIMIT 6;
+        """)
+        rule_rows = cur.fetchall()
+        for rr in rule_rows:
+            raw = rr["raw_rule"] or ""
+            match = re.match(r"^\[([A-Z0-9]+)\]\s*([^:]+)", raw)
+            rule_id = match.group(1) if match else "ANOMALY"
+            rule_title = match.group(2).strip() if match else raw
+            tier = "Tier 1: Sender" if rule_id.startswith("S") and not rule_id.startswith("SR") else ("Tier 2: Receiver" if rule_id.startswith("R") else "Tier 3: Topology")
+            top_rules.append({
+                "id": rule_id,
+                "title": rule_title,
+                "tier": tier,
+                "hits": rr["hits"],
+                "pct": round((rr["hits"] / total_fr * 100), 1) if total_fr > 0 else 0.0
+            })
+    except Exception:
+        pass
+
+    return {
+        "total_switching": total_sw,
+        "total_switching_lak": f"{float(totals.get('total_switching_lak') or 0):,.2f} LAK",
+        "total_fraud_alerts": total_fr,
+        "fraud_rate": fraud_rate,
+        "crit_alerts": totals.get("crit_alerts") or 0,
+        "high_alerts": totals.get("high_alerts") or 0,
+        "med_alerts": totals.get("med_alerts") or 0,
+        "fraud_lak_volume": f"{float(totals.get('fraud_lak_volume') or 0):,.2f} LAK",
+        "fraud_thb_volume": f"{float(totals.get('fraud_thb_volume') or 0):,.2f} THB",
+        "fraud_usd_volume": f"{float(totals.get('fraud_usd_volume') or 0):,.2f} USD",
+        "vm1": {
+            "tx_count": vm1_data["tx_count"],
+            "alert_count": vm1_data["alert_count"],
+            "tx_pct": vm1_tx_pct,
+            "al_pct": vm1_al_pct
+        },
+        "vm2": {
+            "tx_count": vm2_data["tx_count"],
+            "alert_count": vm2_data["alert_count"],
+            "tx_pct": vm2_tx_pct,
+            "al_pct": vm2_al_pct
+        },
+        "top_source_banks": top_source_banks,
+        "top_dest_banks": top_dest_banks,
+        "top_corridors": top_corridors,
+        "top_rules": top_rules
+    }
+
 @app.route("/report/timeline")
 def view_timeline_report():
-    """Generates official printable timeline incident summary report"""
+    """Generates official printable timeline incident summary report with deep fraud statistics"""
     time_range = request.args.get("time_range")
     from_arg = request.args.get("from")
     where_time, range_id, label = get_time_interval_sql(time_range, from_arg)
@@ -822,31 +974,7 @@ def view_timeline_report():
         conn = get_db_connection()
         cur = conn.cursor()
 
-        cur.execute(f"""
-            SELECT 
-                count(*) AS total,
-                count(*) FILTER (WHERE risk_score >= 70) AS crit_count,
-                COALESCE(sum(amount) FILTER (WHERE currency = 'LAK'), 0) AS lak_volume,
-                COALESCE(sum(amount) FILTER (WHERE currency = 'THB'), 0) AS thb_volume,
-                COALESCE(sum(amount) FILTER (WHERE currency = 'USD'), 0) AS usd_volume
-            FROM fraud_monitoring.transactions
-            WHERE (risk_score >= 40 OR array_length(reasons, 1) > 0)
-              AND {where_time};
-        """)
-        summary_row = cur.fetchone() or {"total": 0, "crit_count": 0, "lak_volume": 0}
-
-        cur.execute(f"""
-            SELECT node, count(*) AS count
-            FROM fraud_monitoring.transactions
-            WHERE {where_time}
-            GROUP BY node;
-        """)
-        n_rows = cur.fetchall()
-        vm1 = next((r["count"] for r in n_rows if "175.2.0.23" in (r["node"] or "")), 0)
-        vm2 = next((r["count"] for r in n_rows if "175.2.0.24" in (r["node"] or "")), 0)
-        tot_nodes = vm1 + vm2
-        vm1_pct = round(vm1 / tot_nodes * 100, 1) if tot_nodes > 0 else 50.0
-        vm2_pct = round(vm2 / tot_nodes * 100, 1) if tot_nodes > 0 else 50.0
+        stats = compute_fraud_statistics(cur, where_time)
 
         cur.execute(f"""
             SELECT 
@@ -885,15 +1013,32 @@ def view_timeline_report():
             label=label,
             range_id=range_id,
             now=now_lao,
-            total_count=summary_row["total"] if summary_row else 0,
-            crit_count=summary_row["crit_count"] if summary_row else 0,
-            total_lak_volume=f"{float(summary_row['lak_volume'] or 0):,.2f} LAK",
-            vm1_pct=vm1_pct,
-            vm2_pct=vm2_pct,
+            stats=stats,
             alerts=alert_rows or []
         )
     except Exception as e:
         return f"<div style='font-family: sans-serif; padding: 20px; color: #b91c1c;'><h2>Error Generating Timeline Dossier</h2><p>{str(e)}</p></div>", 500
+
+@app.route("/api/fraud-stats")
+def get_fraud_stats_api():
+    """Returns detailed fraud statistics in JSON format for the selected timeline"""
+    time_range = request.args.get("time_range")
+    from_arg = request.args.get("from")
+    where_time, range_id, label = get_time_interval_sql(time_range, from_arg)
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        stats = compute_fraud_statistics(cur, where_time)
+        cur.close()
+        conn.close()
+        return jsonify({
+            "status": "success",
+            "time_range": range_id,
+            "label": label,
+            "statistics": stats
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route("/api/export-alerts")
 @app.route("/api/download-report")
