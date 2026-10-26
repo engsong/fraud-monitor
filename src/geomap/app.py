@@ -822,9 +822,9 @@ def compute_fraud_statistics(cur, where_time):
             count(*) FILTER (WHERE risk_score >= 85) AS crit_alerts,
             count(*) FILTER (WHERE risk_score >= 70 AND risk_score < 85) AS high_alerts,
             count(*) FILTER (WHERE risk_score >= 40 AND risk_score < 70) AS med_alerts,
-            COALESCE(sum(amount) FILTER ((risk_score >= 40 OR array_length(reasons, 1) > 0) AND currency = 'LAK'), 0) AS fraud_lak_volume,
-            COALESCE(sum(amount) FILTER ((risk_score >= 40 OR array_length(reasons, 1) > 0) AND currency = 'THB'), 0) AS fraud_thb_volume,
-            COALESCE(sum(amount) FILTER ((risk_score >= 40 OR array_length(reasons, 1) > 0) AND currency = 'USD'), 0) AS fraud_usd_volume
+            COALESCE(sum(amount) FILTER (WHERE (risk_score >= 40 OR array_length(reasons, 1) > 0) AND currency = 'LAK'), 0) AS fraud_lak_volume,
+            COALESCE(sum(amount) FILTER (WHERE (risk_score >= 40 OR array_length(reasons, 1) > 0) AND currency = 'THB'), 0) AS fraud_thb_volume,
+            COALESCE(sum(amount) FILTER (WHERE (risk_score >= 40 OR array_length(reasons, 1) > 0) AND currency = 'USD'), 0) AS fraud_usd_volume
         FROM fraud_monitoring.transactions
         WHERE {where_time};
     """)
@@ -840,7 +840,7 @@ def compute_fraud_statistics(cur, where_time):
             node, 
             count(*) AS tx_count,
             count(*) FILTER (WHERE risk_score >= 40 OR array_length(reasons, 1) > 0) AS alert_count,
-            COALESCE(sum(amount) FILTER (currency = 'LAK'), 0) AS volume_lak
+            COALESCE(sum(amount) FILTER (WHERE currency = 'LAK'), 0) AS volume_lak
         FROM fraud_monitoring.transactions
         WHERE {where_time}
         GROUP BY node;
