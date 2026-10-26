@@ -15,6 +15,7 @@
 
 | Version | Date / Time (GMT+7) | Category | Description of Changes | Modified Files / Modules | Deployed Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
+| **v1.0.6** | 2026-10-26 08:58 | Major Feature | Added interactive OCC & Grafana-style timeline toolbar (`‹`, `🕒 Range ▼`, `›`, `⟳ Interval ▼`) with backend time-window filtering (`15m`, `30m`, `1h`, `3h`, `6h`, `12h`, `24h`, `today`), live alert count badge, and iframe/URL parameter auto-sync. | `src/geomap/app.py`, `src/geomap/templates/index.html` | ✅ Live on 175.0.198.10 |
 | **v1.0.5** | 2026-10-23 15:30 | Roadmap | Formulated strategic feature expansion roadmap (Case Management, Dynamic Blacklist API, Telegram Alerting, Deep Graph Network, and Ingestion HA). | `docs/FRAUD_MONITORING_IMPLEMENTATION_REPORT.md` | 📋 Roadmap Documented |
 | **v1.0.4** | 2026-10-23 14:15 | Configuration | Opened PostgreSQL port 5432/tcp in firewalld on `175.0.198.10` to enable direct external access for DbVisualizer / DBeaver clients. | OS Firewall (`firewalld`), PostgreSQL (`fraud-postgres`) | ✅ Verified Connected |
 | **v1.0.3** | 2026-10-23 13:20 | Bug Fix | Synchronized pipeline alert trigger tags (`[S009]`, `[S001]`, etc.) directly into 3-Tier Compliance matrix chips in Road Inspector modal. | `src/geomap/app.py`, `src/geomap/templates/index.html` | ✅ Live on 175.0.198.10 |
