@@ -2,7 +2,7 @@ import os
 import json
 import time
 import re
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from flask import Flask, render_template, Response, jsonify, send_from_directory, request
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -786,6 +786,28 @@ def get_transaction_chain(tx_id=None):
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e), "chain": [], "ring_detected": False})
+
+@app.route("/report")
+@app.route("/report/<path:tx_id>")
+def view_fraud_report(tx_id=None):
+    """Generates official printable forensic audit dossier for a transaction or fraud ring"""
+    tx_id_param = tx_id or request.args.get("tx_id") or request.args.get("id")
+    src_acc = request.args.get("source_account") or request.args.get("source_acc")
+    dst_acc = request.args.get("dest_account") or request.args.get("dest_acc")
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        data = trace_transaction_chain_logic(cur, tx_id=tx_id_param, source_acc=src_acc, dest_acc=dst_acc)
+        cur.close()
+        conn.close()
+
+        lao_tz = timezone(timedelta(hours=7))
+        now_lao = datetime.now(lao_tz).strftime("%Y-%m-%d %H:%M:%S")
+        bank_names = {code: info.get("name", code) for code, info in INSTITUTION_COORDINATES.items()}
+
+        return render_template("fraud_report.html", data=data, now=now_lao, bank_names=bank_names)
+    except Exception as e:
+        return f"<div style='font-family: sans-serif; padding: 20px; color: #b91c1c;'><h2>Error Generating Forensic Dossier</h2><p>{str(e)}</p></div>", 500
 
 @app.route("/api/live-stream")
 def live_stream():

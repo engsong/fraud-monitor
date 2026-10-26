@@ -1580,6 +1580,33 @@
       color: #ffffff;
     }
 
+    .btn-print {
+      background: rgba(0, 242, 254, 0.18);
+      border: 1px solid var(--neon-cyan);
+      color: #ffffff;
+    }
+    .btn-print:hover {
+      background: var(--neon-cyan);
+      color: #040e17;
+      box-shadow: 0 0 12px var(--neon-cyan);
+    }
+
+    .card-print-btn {
+      background: rgba(0, 242, 254, 0.1);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      color: var(--neon-cyan);
+      font-size: 8.5px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .card-print-btn:hover {
+      background: var(--neon-cyan);
+      color: #040e17;
+      box-shadow: 0 0 6px var(--neon-cyan);
+    }
+
     /* Toast Notification */
     #toast-notification {
       position: fixed;
@@ -2120,6 +2147,7 @@
           Transit Road: <strong style="color: #ffffff;" id="m-route-path">BCEL ➔ LAPNET CORE ➔ JDB</strong>
         </div>
         <div style="display: flex; gap: 8px;">
+          <button class="btn-action btn-print" onclick="printAuditReport()" title="Print / Export Official Forensic Audit Dossier">🖨️ Print Report</button>
           <button class="btn-action btn-trace" onclick="traceOnMapAndClose()">📍 Focus & Trace on Map</button>
           <button class="btn-action btn-copy" onclick="copyAuditJSON()">📄 Copy Audit JSON</button>
           <button class="btn-action btn-flag" onclick="flagWatchlistAccount()">⚠️ Flag to Mule Watchlist</button>
@@ -3584,6 +3612,12 @@
         .catch(() => {});
     }
 
+    function printAuditReport() {
+      if (!activeTxData) return;
+      const txId = activeTxData.tx_id || ('TX-' + activeTxData.id);
+      window.open(`/report/${encodeURIComponent(txId)}`, '_blank');
+    }
+
     function copyAuditJSON() {
       if (!activeTxData) return;
       const auditPayload = {
@@ -3826,8 +3860,11 @@
 
       card.innerHTML = `
         <div class="alert-hdr">
-          <span>${nodeBadge} ${a.source_bank} ➔ ${a.dest_bank || 'BCEL'}</span>
-          <span style="font-family: monospace; color: var(--neon-red); font-size: 9px;">${a.alert_time}</span>
+          <span style="display: flex; align-items: center; gap: 4px;">${nodeBadge} ${a.source_bank} ➔ ${a.dest_bank || 'BCEL'}</span>
+          <div style="display: flex; align-items: center; gap: 5px;">
+            <button class="card-print-btn" onclick="event.stopPropagation(); window.open('/report/' + encodeURIComponent('${a.tx_id || a.id}'), '_blank');" title="Print Transaction Dossier">🖨️</button>
+            <span style="font-family: monospace; color: var(--neon-red); font-size: 9px;">${a.alert_time}</span>
+          </div>
         </div>
         <div class="alert-reason" title="${a.triggers}">
           ${a.triggers || 'High Velocity Inbound / Fan-In Risk'}
