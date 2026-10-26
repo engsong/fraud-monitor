@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAPNet Fraud Timeline Incident Dossier - {{ label }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0b2545;
+      --primary-light: #134074;
+      --accent-red: #d90429;
+      --accent-amber: #b45309;
+      --accent-teal: #0f766e;
+      --accent-green: #15803d;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --border-color: #cbd5e1;
+      --bg-page: #f8fafc;
+      --card-bg: #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.4;
+      font-size: 11px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Floating Action Bar (Hidden on Print) */
+    .action-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: #0b1a28;
+      color: #ffffff;
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      border-bottom: 2px solid #00f2fe;
+    }
+
+    .action-bar-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .action-bar-btns {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      border: none;
+      text-decoration: none;
+    }
+
+    .btn-print { background: #00f2fe; color: #040e17; }
+    .btn-print:hover { background: #4facfe; box-shadow: 0 0 10px rgba(0, 242, 254, 0.5); }
+    .btn-csv { background: #10b981; color: #ffffff; }
+    .btn-csv:hover { background: #059669; }
+    .btn-secondary { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; }
+    .btn-secondary:hover { background: #334155; color: #ffffff; }
+
+    /* Report Paper Container */
+    .report-paper {
+      max-width: 230mm;
+      margin: 20px auto 40px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      padding: 16mm 18mm;
+    }
+
+    /* Header */
+    .doc-header {
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .doc-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-emblem {
+      width: 48px;
+      height: 48px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: 1px;
+      border: 2px solid #00f2fe;
+    }
+
+    .brand-titles h1 {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .brand-titles h2 {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .brand-titles h3 {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--accent-red);
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .doc-meta-box {
+      text-align: right;
+      font-size: 9.5px;
+      color: var(--text-muted);
+    }
+
+    .doc-meta-box strong {
+      color: var(--text-main);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .confidential-pill {
+      display: inline-block;
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #f87171;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 8.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    /* Summary KPI Grid */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .summary-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px;
+    }
+
+    .summary-card-lbl {
+      font-size: 8.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+
+    .summary-card-val {
+      font-size: 16px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--primary);
+    }
+
+    .summary-card-sub {
+      font-size: 8.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Table */
+    .section-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      border-bottom: 1.5px solid var(--border-color);
+      padding-bottom: 4px;
+      margin: 16px 0 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .audit-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 14px;
+      font-size: 9.5px;
+    }
+
+    .audit-tbl th {
+      background: #f1f5f9;
+      color: var(--primary);
+      text-align: left;
+      padding: 6px 8px;
+      font-size: 8.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      border: 1px solid var(--border-color);
+    }
+
+    .audit-tbl td {
+      padding: 5px 8px;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      vertical-align: middle;
+    }
+
+    .audit-tbl tr:nth-child(even) td { background: #f8fafc; }
+
+    .badge {
+      display: inline-block;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 8px;
+      font-weight: 800;
+      text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .badge-crit { background: #fee2e2; color: #991b1b; border: 1px solid #f87171; }
+    .badge-high { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+    .badge-med  { background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; }
+
+    .btn-view {
+      font-size: 8.5px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #7dd3fc;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-view:hover {
+      background: #0284c7;
+      color: #ffffff;
+    }
+
+    /* Regulatory Sign-off */
+    .signoff-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 24px;
+      padding-top: 14px;
+      border-top: 1.5px solid var(--border-color);
+      page-break-inside: avoid;
+    }
+
+    .signoff-box {
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      padding: 8px 10px;
+      background: #f8fafc;
+      font-size: 9px;
+    }
+
+    .signoff-title {
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+      margin-bottom: 30px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 3px;
+    }
+
+    .signoff-line {
+      border-top: 1px dashed #94a3b8;
+      padding-top: 4px;
+      color: var(--text-muted);
+      font-size: 8.5px;
+    }
+
+    /* Print media rules */
+    @media print {
+      body { background: #ffffff; font-size: 9px; }
+      .action-bar { display: none !important; }
+      .report-paper { border: none; box-shadow: none; max-width: 100%; margin: 0; padding: 0; }
+      .audit-tbl, .signoff-grid { page-break-inside: avoid; }
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Action Bar -->
+  <div class="action-bar">
+    <div class="action-bar-title">
+      <span>🛡️ LAPNet Timeline Incident Dossier</span>
+      <span style="font-family: monospace; font-size: 11px; color: #00f2fe;">[{{ label }}]</span>
+    </div>
+    <div class="action-bar-btns">
+      <button class="btn btn-print" onclick="window.print()">
+        <span>🖨️</span> Print / Save as PDF
+      </button>
+      <a class="btn btn-csv" href="/api/export-alerts?time_range={{ range_id }}">
+        <span>📥</span> Download CSV (Excel)
+      </a>
+      <button class="btn btn-secondary" onclick="window.close()">
+        <span>✖</span> Close
+      </button>
+    </div>
+  </div>
+
+  <!-- Report Document -->
+  <main class="report-paper">
+
+    <!-- Official Header -->
+    <header class="doc-header">
+      <div class="doc-brand">
+        <div class="brand-emblem">LPN</div>
+        <div class="brand-titles">
+          <h1>Lao National Payment Network (LAPNet)</h1>
+          <h2>National Interbank Switching Control & Financial Crime Prevention</h2>
+          <h3>Timeline Fraud Alerts & Suspicious Incident Report</h3>
+        </div>
+      </div>
+      <div class="doc-meta-box">
+        <div class="confidential-pill">BOL // Law Enforcement Restricted</div>
+        <div>Report Timeline: <strong>{{ label }} ({{ range_id }})</strong></div>
+        <div>Generated: <strong>{{ now }} (GMT+7)</strong></div>
+        <div>Total Incidents: <strong>{{ total_count }} Flags</strong></div>
+      </div>
+    </header>
+
+    <!-- Summary KPI Cards -->
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-card-lbl">Total Incidents</div>
+        <div class="summary-card-val" style="color: var(--accent-red);">{{ total_count }}</div>
+        <div class="summary-card-sub">In selected window ({{ label }})</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-lbl">Critical / High Severity</div>
+        <div class="summary-card-val" style="color: var(--accent-amber);">{{ crit_count }}</div>
+        <div class="summary-card-sub">Risk Score &ge; 70 or 3-Tier trigger</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-lbl">Switch Node Balance</div>
+        <div class="summary-card-val" style="font-size: 13px; color: var(--accent-teal);">VM1 {{ vm1_pct }}% | VM2 {{ vm2_pct }}%</div>
+        <div class="summary-card-sub">Dual-node ingestion traffic</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-lbl">Suspicious Volume (LAK)</div>
+        <div class="summary-card-val" style="font-size: 13px;">{{ total_lak_volume }}</div>
+        <div class="summary-card-sub">Flagged transfers volume</div>
+      </div>
+    </div>
+
+    <!-- Incident List Table -->
+    <section>
+      <div class="section-title">
+        <span>Incident Detail Ledger</span>
+        <span style="font-size: 9px; font-weight: 600; color: var(--text-muted);">Showing {{ alerts|length }} Most Recent Alerts (Download CSV for complete raw records)</span>
+      </div>
+
+      <table class="audit-tbl">
+        <thead>
+          <tr>
+            <th style="width: 50px;">ID</th>
+            <th style="width: 75px;">Time (GMT+7)</th>
+            <th style="width: 60px;">Node</th>
+            <th>Originating (Sender)</th>
+            <th>Beneficiary (Receiver)</th>
+            <th style="width: 90px; text-align: right;">Amount</th>
+            <th style="width: 55px; text-align: center;">Risk</th>
+            <th>Triggered Reasons / Rules</th>
+            <th style="width: 65px; text-align: center;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if alerts and alerts|length > 0 %}
+            {% for a in alerts %}
+            <tr>
+              <td style="font-family: monospace; font-weight: 700;">{{ a.id }}</td>
+              <td style="font-family: monospace;">{{ a.alert_time }}</td>
+              <td><span style="font-size: 8px; font-family: monospace; background: #e2e8f0; padding: 1px 4px; border-radius: 2px;">{{ a.node }}</span></td>
+              <td>
+                <strong>{{ a.source_bank }}</strong>
+                <span style="font-family: monospace; font-size: 8.5px; color: var(--text-muted); display: block;">
+                  {{ a.source_account }}
+                </span>
+              </td>
+              <td>
+                <strong>{{ a.dest_bank }}</strong>
+                <span style="font-family: monospace; font-size: 8.5px; color: var(--text-muted); display: block;">
+                  {{ a.dest_account }}
+                </span>
+              </td>
+              <td style="text-align: right; font-family: monospace; font-weight: 700; color: var(--accent-red);">
+                {{ a.amount }} {{ a.currency }}
+              </td>
+              <td style="text-align: center;">
+                <span class="badge {{ 'badge-crit' if a.threat_level == 'Critical' else ('badge-high' if a.threat_level == 'High' else 'badge-med') }}">
+                  {{ a.risk_score }}
+                </span>
+              </td>
+              <td style="font-size: 8.5px; color: var(--text-muted); max-width: 220px;">
+                {{ a.triggers }}
+              </td>
+              <td style="text-align: center;">
+                <a class="btn-view" href="/report/{{ a.tx_id or a.id }}" target="_blank" title="Open Forensic Audit Dossier">
+                  🔍 View
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 14px;">
+                ✓ No fraud alerts detected in this timeline window.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Sign-off Section -->
+    <section class="signoff-grid">
+      <div class="signoff-box">
+        <div class="signoff-title">LAPNet Senior Operations Lead</div>
+        <div class="signoff-line">
+          Signature: __________________________<br>
+          Name: ______________________________<br>
+          Date: {{ now.split(' ')[0] if now else '2026-10-26' }}
+        </div>
+      </div>
+      <div class="signoff-box">
+        <div class="signoff-title">Bank of the Lao PDR (BOL) Officer</div>
+        <div class="signoff-line">
+          Signature: __________________________<br>
+          Department: Banking Supervision<br>
+          Date: {{ now.split(' ')[0] if now else '2026-10-26' }}
+        </div>
+      </div>
+      <div class="signoff-box">
+        <div class="signoff-title">Batch Report Verification</div>
+        <div class="signoff-line">
+          Integrity SHA256: ___________________<br>
+          Records Verified: {{ total_count }} Flags<br>
+          Status: [ ] Audited [ ] Escalated
+        </div>
+      </div>
+    </section>
+
+    <div style="margin-top: 14px; font-size: 8px; color: #94a3b8; text-align: center;">
+      This batch summary dossier is produced by the LAPNet Central Switching Fraud Prevention & Risk Surveillance Engine under BOL regulatory directive.
+    </div>
+
+  </main>
+
+</body>
+</html>

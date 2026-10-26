@@ -230,6 +230,39 @@
       min-width: 90px;
     }
 
+    .t-export-dropdown {
+      right: 0;
+      left: auto;
+      min-width: 145px;
+    }
+
+    .t-btn-dl {
+      color: var(--neon-teal);
+    }
+    .t-btn-dl:hover {
+      border-color: var(--neon-teal);
+      box-shadow: 0 0 8px rgba(0, 242, 254, 0.25);
+    }
+
+    .pill-dl-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      font-weight: 800;
+      color: var(--neon-teal);
+      background: rgba(0, 242, 254, 0.08);
+      border: 1px solid rgba(0, 242, 254, 0.25);
+      padding: 1.5px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+      line-height: 1.2;
+    }
+    .pill-dl-btn:hover {
+      background: var(--neon-teal);
+      color: #040e17;
+      box-shadow: 0 0 6px var(--neon-teal);
+    }
+
     .t-menu-header {
       font-size: 8px;
       font-weight: 800;
@@ -1709,6 +1742,24 @@
               <div class="t-menu-item" onclick="applyRefreshInterval(60000, '1m')">1m</div>
             </div>
           </div>
+
+          <!-- Download / Export Report for Selected Timeline -->
+          <div class="t-dropdown-container">
+            <button class="t-btn t-btn-dl" id="export-picker-btn" onclick="toggleExportMenu(event)" title="Download / Export Report for selected timeline">
+              <span style="font-size: 10px;">📥</span>
+              <span id="dl-current-label">Report</span>
+              <span class="t-arrow">▼</span>
+            </button>
+            <div class="t-menu-dropdown t-export-dropdown" id="export-menu">
+              <div class="t-menu-header">DOWNLOAD REPORT (<span id="export-timeline-lbl">1h</span>)</div>
+              <div class="t-menu-item" onclick="downloadTimelineCSV()">
+                <span>📊 Export CSV (Excel)</span>
+              </div>
+              <div class="t-menu-item" onclick="openTimelineSummaryReport()">
+                <span>📄 Full Timeline Dossier</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="clock-badge" id="clock-display">
@@ -1907,7 +1958,10 @@
           </div>
 
           <div style="padding: 6px 10px 4px; font-size: 9px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center;">
-            <span>LIVE HIGH-RISK ALERTS</span>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span>LIVE HIGH-RISK ALERTS</span>
+              <button class="pill-dl-btn" onclick="downloadTimelineCSV()" title="Download CSV report for current timeline">📥 CSV</button>
+            </div>
             <span id="alert-timeline-badge" class="alert-range-pill" title="Click to change timeline range" onclick="toggleTimelineMenu(event)">LAST 1 HOUR</span>
           </div>
 
@@ -2207,7 +2261,9 @@
       if (event) event.stopPropagation();
       const menu = document.getElementById('timeline-menu');
       const refMenu = document.getElementById('refresh-menu');
+      const expMenu = document.getElementById('export-menu');
       if (refMenu) refMenu.classList.remove('show');
+      if (expMenu) expMenu.classList.remove('show');
       if (menu) menu.classList.toggle('show');
     }
 
@@ -2215,15 +2271,46 @@
       if (event) event.stopPropagation();
       const menu = document.getElementById('refresh-menu');
       const timeMenu = document.getElementById('timeline-menu');
+      const expMenu = document.getElementById('export-menu');
       if (timeMenu) timeMenu.classList.remove('show');
+      if (expMenu) expMenu.classList.remove('show');
       if (menu) menu.classList.toggle('show');
+    }
+
+    function toggleExportMenu(event) {
+      if (event) event.stopPropagation();
+      const menu = document.getElementById('export-menu');
+      const timeMenu = document.getElementById('timeline-menu');
+      const refMenu = document.getElementById('refresh-menu');
+      if (timeMenu) timeMenu.classList.remove('show');
+      if (refMenu) refMenu.classList.remove('show');
+      if (menu) menu.classList.toggle('show');
+    }
+
+    function downloadTimelineCSV() {
+      const q = new URLSearchParams();
+      if (currentTimeRange) q.set('time_range', currentTimeRange);
+      if (currentFromParam) q.set('from', currentFromParam);
+      const url = `/api/export-alerts?${q.toString()}`;
+      showToast(`📥 Exporting CSV incident report for ${currentTimeRange}...`);
+      window.location.href = url;
+    }
+
+    function openTimelineSummaryReport() {
+      const q = new URLSearchParams();
+      if (currentTimeRange) q.set('time_range', currentTimeRange);
+      if (currentFromParam) q.set('from', currentFromParam);
+      const url = `/report/timeline?${q.toString()}`;
+      window.open(url, '_blank');
     }
 
     window.addEventListener('click', () => {
       const tm = document.getElementById('timeline-menu');
       const rm = document.getElementById('refresh-menu');
+      const em = document.getElementById('export-menu');
       if (tm) tm.classList.remove('show');
       if (rm) rm.classList.remove('show');
+      if (em) em.classList.remove('show');
     });
 
     function applyTimelineRange(rangeId, label, updateUrl = true) {
@@ -2231,6 +2318,9 @@
       currentFromParam = '';
       const labelElem = document.getElementById('timeline-current-label');
       if (labelElem) labelElem.innerText = label;
+
+      const exportLbl = document.getElementById('export-timeline-lbl');
+      if (exportLbl) exportLbl.innerText = rangeId;
 
       document.querySelectorAll('#timeline-menu .t-menu-item').forEach(item => {
         if (item.getAttribute('data-range') === rangeId) {
@@ -2242,6 +2332,8 @@
 
       const tm = document.getElementById('timeline-menu');
       if (tm) tm.classList.remove('show');
+      const em = document.getElementById('export-menu');
+      if (em) em.classList.remove('show');
 
       const badge = document.getElementById('alert-timeline-badge');
       if (badge) badge.innerText = label.toUpperCase();

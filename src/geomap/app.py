@@ -2,6 +2,8 @@ import os
 import json
 import time
 import re
+import csv
+import io
 from datetime import datetime, timezone, timedelta
 from flask import Flask, render_template, Response, jsonify, send_from_directory, request
 import psycopg2
@@ -808,6 +810,183 @@ def view_fraud_report(tx_id=None):
         return render_template("fraud_report.html", data=data, now=now_lao, bank_names=bank_names)
     except Exception as e:
         return f"<div style='font-family: sans-serif; padding: 20px; color: #b91c1c;'><h2>Error Generating Forensic Dossier</h2><p>{str(e)}</p></div>", 500
+
+@app.route("/report/timeline")
+def view_timeline_report():
+    """Generates official printable timeline incident summary report"""
+    time_range = request.args.get("time_range")
+    from_arg = request.args.get("from")
+    where_time, range_id, label = get_time_interval_sql(time_range, from_arg)
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute(f"""
+            SELECT 
+                count(*) AS total,
+                count(*) FILTER (WHERE risk_score >= 70) AS crit_count,
+                COALESCE(sum(amount) FILTER (WHERE currency = 'LAK'), 0) AS lak_volume,
+                COALESCE(sum(amount) FILTER (WHERE currency = 'THB'), 0) AS thb_volume,
+                COALESCE(sum(amount) FILTER (WHERE currency = 'USD'), 0) AS usd_volume
+            FROM fraud_monitoring.transactions
+            WHERE (risk_score >= 40 OR array_length(reasons, 1) > 0)
+              AND {where_time};
+        """)
+        summary_row = cur.fetchone() or {"total": 0, "crit_count": 0, "lak_volume": 0}
+
+        cur.execute(f"""
+            SELECT node, count(*) AS count
+            FROM fraud_monitoring.transactions
+            WHERE {where_time}
+            GROUP BY node;
+        """)
+        n_rows = cur.fetchall()
+        vm1 = next((r["count"] for r in n_rows if "175.2.0.23" in (r["node"] or "")), 0)
+        vm2 = next((r["count"] for r in n_rows if "175.2.0.24" in (r["node"] or "")), 0)
+        tot_nodes = vm1 + vm2
+        vm1_pct = round(vm1 / tot_nodes * 100, 1) if tot_nodes > 0 else 50.0
+        vm2_pct = round(vm2 / tot_nodes * 100, 1) if tot_nodes > 0 else 50.0
+
+        cur.execute(f"""
+            SELECT 
+                id,
+                COALESCE(tx_id, 'TX-' || id::text) AS tx_id,
+                CASE WHEN node LIKE '%%175.2.0.23%%' THEN 'VM1' ELSE 'VM2' END AS node,
+                to_char(COALESCE(timestamp, created_at) AT TIME ZONE 'Asia/Vientiane', 'HH24:MI:SS') AS alert_time,
+                source_bank,
+                source_account,
+                dest_bank,
+                dest_account,
+                currency,
+                to_char(amount, 'FM999,999,990.00') AS amount,
+                risk_score,
+                array_to_string(reasons, ', ') AS triggers,
+                CASE 
+                    WHEN risk_score >= 85 THEN 'Critical'
+                    WHEN risk_score >= 70 THEN 'High'
+                    ELSE 'Medium'
+                END AS threat_level
+            FROM fraud_monitoring.transactions
+            WHERE (risk_score >= 40 OR array_length(reasons, 1) > 0)
+              AND {where_time}
+            ORDER BY id DESC
+            LIMIT 100;
+        """)
+        alert_rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        lao_tz = timezone(timedelta(hours=7))
+        now_lao = datetime.now(lao_tz).strftime("%Y-%m-%d %H:%M:%S")
+
+        return render_template(
+            "timeline_report.html",
+            label=label,
+            range_id=range_id,
+            now=now_lao,
+            total_count=summary_row["total"] if summary_row else 0,
+            crit_count=summary_row["crit_count"] if summary_row else 0,
+            total_lak_volume=f"{float(summary_row['lak_volume'] or 0):,.2f} LAK",
+            vm1_pct=vm1_pct,
+            vm2_pct=vm2_pct,
+            alerts=alert_rows or []
+        )
+    except Exception as e:
+        return f"<div style='font-family: sans-serif; padding: 20px; color: #b91c1c;'><h2>Error Generating Timeline Dossier</h2><p>{str(e)}</p></div>", 500
+
+@app.route("/api/export-alerts")
+@app.route("/api/download-report")
+def export_alerts_csv():
+    """Streams CSV of fraud alerts matching the selected timeline range"""
+    time_range = request.args.get("time_range")
+    from_arg = request.args.get("from")
+    where_time, range_id, label = get_time_interval_sql(time_range, from_arg)
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute(f"""
+            SELECT 
+                id AS incident_id,
+                COALESCE(tx_id, 'TX-' || id::text) AS tx_id,
+                node,
+                to_char(COALESCE(timestamp, created_at) AT TIME ZONE 'Asia/Vientiane', 'YYYY-MM-DD HH24:MI:SS') AS lao_time,
+                CASE 
+                    WHEN risk_score >= 85 THEN 'Critical'
+                    WHEN risk_score >= 70 THEN 'High'
+                    WHEN risk_score >= 40 THEN 'Medium'
+                    ELSE 'Low'
+                END AS threat_level,
+                risk_score,
+                source_bank,
+                source_account,
+                dest_bank,
+                dest_account,
+                amount,
+                currency,
+                array_to_string(reasons, ' | ') AS triggered_rules
+            FROM fraud_monitoring.transactions
+            WHERE (risk_score >= 40 OR array_length(reasons, 1) > 0)
+              AND {where_time}
+            ORDER BY id DESC;
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        output = io.StringIO()
+        output.write('\ufeff')  # UTF-8 BOM
+        writer = csv.writer(output)
+
+        writer.writerow([
+            "Incident ID",
+            "Transaction ID",
+            "Switch Node",
+            "Lao Local Time (GMT+7)",
+            "Threat Level",
+            "Risk Score",
+            "Originating Bank",
+            "Sender Account",
+            "Beneficiary Bank",
+            "Beneficiary Account",
+            "Amount",
+            "Currency",
+            "Triggered Fraud Rules"
+        ])
+
+        for r in rows:
+            writer.writerow([
+                r["incident_id"],
+                r["tx_id"],
+                r["node"] or "",
+                r["lao_time"] or "",
+                r["threat_level"],
+                r["risk_score"] or 0,
+                r["source_bank"] or "",
+                r["source_account"] or "",
+                r["dest_bank"] or "",
+                r["dest_account"] or "",
+                f"{float(r['amount'] or 0):,.2f}",
+                r["currency"] or "LAK",
+                r["triggered_rules"] or ""
+            ])
+
+        csv_data = output.getvalue()
+        output.close()
+
+        filename = f"lapnet_fraud_alerts_{range_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        return Response(
+            csv_data,
+            mimetype="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Content-Type": "text/csv; charset=utf-8"
+            }
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/api/live-stream")
 def live_stream():
