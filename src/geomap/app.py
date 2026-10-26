@@ -191,7 +191,7 @@ def get_recent_alerts():
                 dest_bank,
                 dest_account,
                 currency,
-                to_char(amount, 'FM999,999,990.00') AS amount,
+                to_char(amount, 'FM999,999,999,999,990.00') AS amount,
                 risk_score,
                 array_to_string(reasons, ', ') AS triggers,
                 CASE 
@@ -252,7 +252,7 @@ def get_fan_in_out():
                 END AS dest_account,
                 count(DISTINCT source_account) AS unique_senders,
                 count(*) AS deposit_count,
-                to_char(sum(amount), 'FM999,999,990.00') AS volume,
+                to_char(sum(amount), 'FM999,999,999,999,990.00') AS volume,
                 MAX(currency) AS currency,
                 to_char(MAX(timestamp), 'HH24:MI:SS') AS last_seen
             FROM fraud_monitoring.transactions
@@ -274,7 +274,7 @@ def get_fan_in_out():
                 END AS source_account,
                 count(DISTINCT dest_account) AS unique_recipients,
                 count(*) AS transfer_count,
-                to_char(sum(amount), 'FM999,999,990.00') AS volume,
+                to_char(sum(amount), 'FM999,999,999,999,990.00') AS volume,
                 MAX(currency) AS currency,
                 to_char(MAX(timestamp), 'HH24:MI:SS') AS last_seen
             FROM fraud_monitoring.transactions
@@ -859,7 +859,7 @@ def compute_fraud_statistics(cur, where_time):
         SELECT 
             source_bank,
             count(*) AS alert_count,
-            to_char(sum(amount), 'FM999,999,990.00') AS lak_volume,
+            to_char(sum(amount), 'FM999,999,999,999,990.00') AS lak_volume,
             ROUND(count(*)::numeric / NULLIF({max(1, total_fr)}, 0) * 100, 1) AS share_pct
         FROM fraud_monitoring.transactions
         WHERE (risk_score >= 40 OR array_length(reasons, 1) > 0)
@@ -876,7 +876,7 @@ def compute_fraud_statistics(cur, where_time):
             dest_bank,
             count(*) AS alert_count,
             count(DISTINCT dest_account) AS unique_accounts,
-            to_char(sum(amount), 'FM999,999,990.00') AS lak_volume,
+            to_char(sum(amount), 'FM999,999,999,999,990.00') AS lak_volume,
             ROUND(count(*)::numeric / NULLIF({max(1, total_fr)}, 0) * 100, 1) AS share_pct
         FROM fraud_monitoring.transactions
         WHERE (risk_score >= 40 OR array_length(reasons, 1) > 0)
@@ -893,7 +893,7 @@ def compute_fraud_statistics(cur, where_time):
             source_bank,
             dest_bank,
             count(*) AS alert_count,
-            to_char(sum(amount), 'FM999,999,990.00') AS lak_volume
+            to_char(sum(amount), 'FM999,999,999,999,990.00') AS lak_volume
         FROM fraud_monitoring.transactions
         WHERE (risk_score >= 40 OR array_length(reasons, 1) > 0)
           AND {where_time}
@@ -987,7 +987,7 @@ def view_timeline_report():
                 dest_bank,
                 dest_account,
                 currency,
-                to_char(amount, 'FM999,999,990.00') AS amount,
+                to_char(amount, 'FM999,999,999,999,990.00') AS amount,
                 risk_score,
                 array_to_string(reasons, ', ') AS triggers,
                 CASE 
