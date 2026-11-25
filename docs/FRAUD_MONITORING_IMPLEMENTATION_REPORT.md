@@ -422,9 +422,27 @@ Implemented in `src/ingestion/fortiadc_streamer.py`, stored in `fraud_monitoring
    - **Dual-Port Integration**:
      - Available directly on Dedicated FortiADC Dashboard (Port `3006`) via `[📄 Bank Incident Report]` button and on Switching Geo Map (Port `3005`) via `[DOWNLOAD REPORT]` menu and FortiADC Inspector Modal.
 
+9. **Bank Attributions Correction, VM Overload Red Alert & Interactive Rejection Inspector (v1.0.14 - 2026-11-25 14:15 GMT+7)**:
+   - **Bank Mapping Corrections**:
+     - *CAMBODIA*: Client IP `10.79.79.177` re-attributed to `CAMBODIA` (previously classified as `CORE_PROBE`). Historical DB records updated (4,245 rows) and live ingestion map updated in `src/ingestion/fortiadc_streamer.py`.
+     - *ACLE (ACLEDA Bank Laos)*: Client IP prefix `175.28.8.` and `175.28.8.1` re-attributed to `ACLE` (previously mapped to `CAMBODIA`). Historical DB records updated (21,486 rows) and live ingestion map updated in `src/ingestion/fortiadc_streamer.py`.
+   - **Switching Node Load Balancing > 80% Overload Red Alert**:
+     - Updated real-time load distribution visualizer in both Port 3006 (`fortiadc_dashboard.html`) and Port 3005 modal (`index.html`):
+       - If VM1 (`lmps-app1`) load usage is $\ge 80\%$, the progress bar turns bright RED (`#ff2255`) with red glow `box-shadow: 0 0 12px rgba(255, 34, 85, 0.8)` and legend displays bold red warning `⚠️ VM1 OVERLOAD (≥80%)`.
+       - If VM2 (`lmps-app2`) load usage is $\ge 80\%$, the progress bar turns bright RED (`#ff2255`) with red glow and legend displays bold red warning `⚠️ VM2 OVERLOAD (≥80%)`.
+       - Dedicated top badge `#node-overload-alert` displays `⚠️ WARNING: NODE LOAD > 80%` when overload occurs.
+   - **Interactive Traffic Resolution Inspector Modal**:
+     - The `Traffic Resolution Distribution` stacked bar and legend labels (`App Rejects` and `LB Drops`) are now interactive clickable elements (`inspectRejectionDetails('app')` / `inspectRejectionDetails('lb')`).
+     - Clicking opens a dedicated forensic modal dialog `#modal-reject-details` displaying:
+       - Active filter boundary badge (`Core Switch App Rejections Only` vs `LB Dropped (Pre-Core Drop)`).
+       - Total rejection count for the selected category in the current time window.
+       - Complete itemized breakdown: Timestamp (GMT+7), Unique Tracking Reference (`LB-<msg_id>`), Bank Name, Client IP, HTTP Method & Path, HTTP Status Code, Node (`VM1`, `VM2`, `LB_DIRECT`), Latency, and Technical Reason.
+       - Direct action buttons: `[📄 Open Official Bank Notice]` and `[📥 Export Forensic CSV]`.
+
 ---
 
 *Sign-off: LAPNet Cybersecurity & Fraud Prevention Engineering Team*  
-*Host: WEBSERVER01 (175.0.198.10) • Production Ports: 3005 & 3006 • Production Branch: main • Version: v1.0.13*
+*Host: WEBSERVER01 (175.0.198.10) • Production Ports: 3005 & 3006 • Production Branch: main • Version: v1.0.14*
+
 
 
