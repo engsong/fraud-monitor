@@ -399,13 +399,32 @@ Implemented in `src/ingestion/fortiadc_streamer.py`, stored in `fraud_monitoring
    - In `Top Originating Banks via FortiADC`, clicking any member bank's `App Rej` or `LB Drops` badge instantly filters the `Live Rejections Audit Ledger` to display only events for that selected institution.
    - Highlights active filter banner with a `[✕ Clear Filter]` button and automatically scrolls to the audit ledger.
 
-7. **Full Participating Member Banks Listing**:
-   - Removed `LIMIT 6` restriction from `/api/fortiadc-stats` query.
-   - Table now displays all active member institutions with a scrollable container and live member count badge.
+8. **Formal Bank Rejection Incident Notification Dossier & Boundary Filtering (v1.0.13 - 2026-11-25 14:00 GMT+7)**:
+   - **Architectural Boundary Distinction (Pre-Core Drop vs Core App Rejection)**:
+     - Clarified and formalized the two failure boundaries in both the OCC dashboard and the printable dispatch notice:
+       - *Boundary 1: `LB Dropped (Pre-Core Drop)`*: Request terminated at FortiADC 300E VIP `175.2.0.29:8055` before reaching Core Switch nodes `175.2.0.23` (VM1) or `175.2.0.24` (VM2). The Core Switch has no log of this transaction (e.g. Missing `Host:` header in HTTP/1.1 probes RFC 7230, connection resets, or 502/504 gateway timeouts).
+       - *Boundary 2: `Core Switch Application Rejection`*: FortiADC successfully proxied the request to VM1/VM2 backend nodes, but LMPSCore application responded with an HTTP error (e.g. `404 Not Found` for unmapped routes, `401 Unauthorized` for key/auth issues, `400 Bad Request` for schema errors).
+   - **Official Printable Bank Incident Report (`/report/bank-incident`)**:
+     - Added dedicated formal report route rendering `templates/bank_incident_report.html` formatted for A4 white paper printing (`@media print`):
+       - Official LAPNet letterhead and bilingual headers (Lao & English).
+       - Unique tracking reference: `LAPNET-INC-YYYYMMDD-[BANK]-XXXX`.
+       - Recipient Member Bank Name and targeted VIP `175.2.0.29:8055`.
+       - Executive Summary metrics: Total Requests, Dropped at FortiADC LB, Rejected by Core Switch, Average Latency.
+       - Architectural Boundary diagram and explanation.
+       - Complete itemized incident audit ledger with Timestamp (GMT+7), Session Reference (`LB-<msg_id>`), Client IP/Port, HTTP Method/URL, HTTP Code, Failure Boundary, and Technical Root Cause.
+       - Technical Root Cause & Protocol Diagnosis.
+       - Mandatory Remediation Checklist for Member Bank IT & Network Teams.
+       - Sign-off block for LAPNet OCC Shift Engineer, Technical Lead, and Member Bank IT Acknowledgment.
+   - **Dynamic Filter Controls & Custom Date Range**:
+     - Added Member Bank dropdown filter, Failure Boundary selector (`All`, `LB Dropped Only`, `Core App Rejections Only`), and Custom Date Range picker (`start_date`, `end_date`) supporting historical date auditing in GMT+7.
+   - **Enriched CSV Incident Export (`/api/export-fortiadc-rejects`)**:
+     - Streams UTF-8 BOM encoded CSV with complete forensic columns including `Failure Boundary`, `FortiADC Message / Session Ref`, `Client IP`, `HTTP URL / Path`, and `Rejection Reason`.
+   - **Dual-Port Integration**:
+     - Available directly on Dedicated FortiADC Dashboard (Port `3006`) via `[📄 Bank Incident Report]` button and on Switching Geo Map (Port `3005`) via `[DOWNLOAD REPORT]` menu and FortiADC Inspector Modal.
 
 ---
 
 *Sign-off: LAPNet Cybersecurity & Fraud Prevention Engineering Team*  
-*Host: WEBSERVER01 (175.0.198.10) • Production Port: 3006 • Production Branch: main*
+*Host: WEBSERVER01 (175.0.198.10) • Production Ports: 3005 & 3006 • Production Branch: main • Version: v1.0.13*
 
 
