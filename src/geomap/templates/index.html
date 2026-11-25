@@ -1703,6 +1703,14 @@
           <span class="label">Risk Index</span>
           <span class="val val-amber">0.41</span>
         </div>
+        <div class="kpi-pill" id="fortiadc-kpi-pill" onclick="openFortiADCModal()" style="cursor: pointer; border-color: rgba(0, 242, 254, 0.4); background: rgba(0, 242, 254, 0.08); transition: all 0.2s;" title="Click to open FortiADC Load Balancer & Reject Inspector">
+          <span class="label" style="display: flex; align-items: center; gap: 4px;">
+            <span id="lb-pulse-dot" style="width: 6px; height: 6px; border-radius: 50%; background: #10b981; display: inline-block; box-shadow: 0 0 6px #10b981;"></span>
+            FortiADC (LB)
+          </span>
+          <span id="kpi-lb-rps" class="val" style="color: var(--neon-cyan);">-- RPS</span>
+          <span id="kpi-lb-status" style="font-size: 8.5px; font-weight: 700; color: #10b981;">ONLINE</span>
+        </div>
 
         <!-- Timeline Selector Toolbar -->
         <div class="timeline-bar-wrap">
@@ -2215,6 +2223,186 @@
     </div>
   </div>
 
+  <!-- ==========================================
+       FORTIADC LOAD BALANCER & GATEWAY INSPECTOR MODAL
+       ========================================== -->
+  <div id="modal-fortiadc-inspector" class="modal-overlay" style="display: none;" onclick="if(event.target === this) closeFortiADCModal();">
+    <div class="modal-window" style="width: 950px;">
+      <!-- Modal Header -->
+      <div class="modal-hdr">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span class="threat-badge-pill" style="background: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);">FORTIADC GATEWAY</span>
+          <strong style="color: #ffffff; font-size: 13px;" id="lb-modal-title">LMDCLB01001 • VIP 175.2.0.29:8055</strong>
+          <span style="font-size: 10px; color: var(--neon-cyan); font-family: monospace;" id="lb-modal-policy">(vs-lmps-app-8055)</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span id="lb-modal-status-badge" style="font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981;">LIVE ACTIVE</span>
+          <button class="modal-close-btn" onclick="closeFortiADCModal()">✕</button>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px; max-height: calc(92vh - 100px); overflow-y: auto;">
+        
+        <!-- Row 1: KPI Cards -->
+        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;">
+          <div style="background: #092032; border: 1px solid var(--border-blue); border-radius: 8px; padding: 10px;">
+            <div style="font-size: 8.5px; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Live Throughput</div>
+            <div style="font-size: 18px; font-weight: 800; color: var(--neon-cyan); font-family: 'JetBrains Mono', monospace;" id="lb-kpi-rps">-- RPS</div>
+            <div style="font-size: 8px; color: var(--text-dim); margin-top: 2px;">Real-time stream</div>
+          </div>
+          <div style="background: #092032; border: 1px solid var(--border-blue); border-radius: 8px; padding: 10px;">
+            <div style="font-size: 8.5px; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Total Traffic</div>
+            <div style="font-size: 18px; font-weight: 800; color: #ffffff; font-family: 'JetBrains Mono', monospace;" id="lb-kpi-total">--</div>
+            <div style="font-size: 8px; color: var(--text-dim); margin-top: 2px;" id="lb-kpi-window">Selected window</div>
+          </div>
+          <div style="background: #092032; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 10px;">
+            <div style="font-size: 8.5px; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Approved / 200 OK</div>
+            <div style="font-size: 18px; font-weight: 800; color: #10b981; font-family: 'JetBrains Mono', monospace;" id="lb-kpi-approved-pct">--%</div>
+            <div style="font-size: 8px; color: var(--text-dim); margin-top: 2px;" id="lb-kpi-approved-cnt">-- requests</div>
+          </div>
+          <div style="background: #092032; border: 1px solid rgba(255, 184, 0, 0.3); border-radius: 8px; padding: 10px;">
+            <div style="font-size: 8.5px; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">App Rejects (4xx/500)</div>
+            <div style="font-size: 18px; font-weight: 800; color: var(--neon-amber); font-family: 'JetBrains Mono', monospace;" id="lb-kpi-app-reject-pct">--%</div>
+            <div style="font-size: 8px; color: var(--text-dim); margin-top: 2px;" id="lb-kpi-app-reject-cnt">-- rejected</div>
+          </div>
+          <div style="background: #092032; border: 1px solid rgba(255, 34, 85, 0.3); border-radius: 8px; padding: 10px;">
+            <div style="font-size: 8.5px; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">LB/Network Drops</div>
+            <div style="font-size: 18px; font-weight: 800; color: var(--neon-red); font-family: 'JetBrains Mono', monospace;" id="lb-kpi-lb-reject-pct">--%</div>
+            <div style="font-size: 8px; color: var(--text-dim); margin-top: 2px;" id="lb-kpi-lb-reject-cnt">WAF / Timeouts</div>
+          </div>
+          <div style="background: #092032; border: 1px solid var(--border-blue); border-radius: 8px; padding: 10px;">
+            <div style="font-size: 8.5px; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Average Latency</div>
+            <div style="font-size: 18px; font-weight: 800; color: var(--neon-teal); font-family: 'JetBrains Mono', monospace;" id="lb-kpi-latency">-- ms</div>
+            <div style="font-size: 8px; color: var(--text-dim); margin-top: 2px;" id="lb-kpi-p95-latency">P95: -- ms</div>
+          </div>
+        </div>
+
+        <!-- Row 2: Status Tri-Bar & Real Server Load Split -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <!-- Status Distribution Meter -->
+          <div style="background: #081a28; border: 1px solid var(--border-blue); border-radius: 8px; padding: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-size: 9.5px; font-weight: 800; color: #ffffff; text-transform: uppercase;">Transaction Resolution Status</span>
+              <span style="font-size: 8px; color: var(--text-dim);">App vs Network Health</span>
+            </div>
+            <!-- Tri-color Stacked Bar -->
+            <div style="height: 14px; border-radius: 4px; overflow: hidden; display: flex; background: #030d14; border: 1px solid rgba(255,255,255,0.1);">
+              <div id="lb-bar-success" style="width: 95%; background: #10b981;" title="Approved / 200 OK"></div>
+              <div id="lb-bar-app-rej" style="width: 4%; background: #ffb800;" title="App Rejects (400/500)"></div>
+              <div id="lb-bar-lb-rej" style="width: 1%; background: #ff2255;" title="LB/Network Drops"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 9px; margin-top: 6px; font-family: monospace;">
+              <span style="color: #10b981;">● Approved (<span id="lb-legend-success">--%</span>)</span>
+              <span style="color: #ffb800;">● App Rejects (<span id="lb-legend-app">--%</span>)</span>
+              <span style="color: #ff2255;">● LB Drops (<span id="lb-legend-lb">--%</span>)</span>
+            </div>
+          </div>
+
+          <!-- Real Server Load Balance (VM1 vs VM2) -->
+          <div style="background: #081a28; border: 1px solid var(--border-blue); border-radius: 8px; padding: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-size: 9.5px; font-weight: 800; color: #ffffff; text-transform: uppercase;">Real Server Load Balancing</span>
+              <span style="font-size: 8px; color: var(--neon-teal); font-family: monospace;">Weighted Distribution</span>
+            </div>
+            <div style="height: 14px; border-radius: 4px; overflow: hidden; display: flex; background: #030d14; border: 1px solid rgba(255,255,255,0.1);">
+              <div id="lb-bar-vm1" style="width: 33%; background: #00f2fe;" title="lmps-app1 (VM1 175.2.0.23)"></div>
+              <div id="lb-bar-vm2" style="width: 67%; background: #0f766e;" title="lmps-app2 (VM2 175.2.0.24)"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 9px; margin-top: 6px; font-family: monospace;">
+              <span style="color: #00f2fe;">● lmps-app1 VM1 (<span id="lb-legend-vm1">--%</span>)</span>
+              <span style="color: #0f766e;">● lmps-app2 VM2 (<span id="lb-legend-vm2">--%</span>)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Top Transaction Types & Top Banks -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <!-- Top Transaction Types -->
+          <div style="background: #081a28; border: 1px solid var(--border-blue); border-radius: 8px; padding: 12px;">
+            <div style="font-size: 9.5px; font-weight: 800; color: #ffffff; text-transform: uppercase; margin-bottom: 8px;">
+              Transaction Types Passing Through FortiADC
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 9px; font-family: monospace;">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--border-blue); color: var(--text-dim); text-align: left;">
+                  <th style="padding: 4px 6px;">Type / URI</th>
+                  <th style="padding: 4px 6px; text-align: center;">Requests</th>
+                  <th style="padding: 4px 6px; text-align: right;">Rejects</th>
+                </tr>
+              </thead>
+              <tbody id="lb-types-tbody">
+                <tr><td colspan="3" style="text-align: center; padding: 10px; color: var(--text-dim);">Loading transaction types...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Top Banks Volume & Rejects -->
+          <div style="background: #081a28; border: 1px solid var(--border-blue); border-radius: 8px; padding: 12px;">
+            <div style="font-size: 9.5px; font-weight: 800; color: #ffffff; text-transform: uppercase; margin-bottom: 8px;">
+              Top Originating Banks via FortiADC
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 9px; font-family: monospace;">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--border-blue); color: var(--text-dim); text-align: left;">
+                  <th style="padding: 4px 6px;">Bank</th>
+                  <th style="padding: 4px 6px; text-align: center;">Volume</th>
+                  <th style="padding: 4px 6px; text-align: center;">App Rej</th>
+                  <th style="padding: 4px 6px; text-align: right;">Latency</th>
+                </tr>
+              </thead>
+              <tbody id="lb-banks-tbody">
+                <tr><td colspan="4" style="text-align: center; padding: 10px; color: var(--text-dim);">Loading member bank traffic...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Row 4: Live Rejections Ledger -->
+        <div style="background: #081a28; border: 1px solid var(--border-blue); border-radius: 8px; padding: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 9.5px; font-weight: 800; color: #ffffff; text-transform: uppercase;">
+              ⚠️ Live Transaction Rejection Audit Ledger (App & Network Rejections)
+            </span>
+            <span style="font-size: 8px; color: var(--text-dim);">Real-time stream from FortiADC syslog</span>
+          </div>
+          <div style="max-height: 180px; overflow-y: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 8.5px; font-family: monospace;">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--border-blue); color: var(--text-dim); text-align: left; position: sticky; top: 0; background: #081a28;">
+                  <th style="padding: 4px;">Time (GMT+7)</th>
+                  <th style="padding: 4px;">Bank</th>
+                  <th style="padding: 4px;">Client IP</th>
+                  <th style="padding: 4px;">Type / Path</th>
+                  <th style="padding: 4px; text-align: center;">HTTP Code</th>
+                  <th style="padding: 4px; text-align: center;">Reject Category</th>
+                  <th style="padding: 4px; text-align: center;">Node</th>
+                  <th style="padding: 4px; text-align: right;">Latency</th>
+                </tr>
+              </thead>
+              <tbody id="lb-rejects-tbody">
+                <tr><td colspan="8" style="text-align: center; padding: 12px; color: var(--text-dim);">No rejections logged in window.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer" style="padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-blue); background: #092032;">
+        <div style="font-size: 9.5px; color: var(--text-dim);">
+          FortiADC Model: <strong style="color: #ffffff;">FortiADC 300E / VM</strong> • Host: <span style="color: var(--neon-cyan);">175.2.2.40</span> • Syslog Stream Port: <span style="color: var(--neon-teal);">UDP 514</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-action btn-copy" onclick="fetchFortiADCData()">⟳ Refresh LB Data</button>
+          <button class="btn-action btn-close" onclick="closeFortiADCModal()">Close</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Toast Notification Popup -->
   <div id="toast-notification">
     <span id="toast-icon">✓</span>
@@ -2468,6 +2656,199 @@
           }
         })
         .catch(() => {});
+
+      // Poll FortiADC Load Balancer live stats
+      fetchFortiADCLiveStats();
+    }
+
+    // ==========================================
+    // FORTIADC LOAD BALANCER & GATEWAY MONITORING
+    // ==========================================
+    let fortiadcData = null;
+
+    function fetchFortiADCLiveStats() {
+      const q = new URLSearchParams();
+      if (currentTimeRange) q.set('time_range', currentTimeRange);
+      if (currentFromParam) q.set('from', currentFromParam);
+
+      fetch(`/api/fortiadc-stats?${q.toString()}`)
+        .then(res => res.json())
+        .then(d => {
+          fortiadcData = d;
+          const rpsElem = document.getElementById('kpi-lb-rps');
+          const statusElem = document.getElementById('kpi-lb-status');
+          const dotElem = document.getElementById('lb-pulse-dot');
+          
+          if (rpsElem) rpsElem.innerText = `${d.live_rps || 0} RPS`;
+          if (statusElem && dotElem) {
+            if (d.status === 'online') {
+              statusElem.innerText = 'ONLINE';
+              statusElem.style.color = '#10b981';
+              dotElem.style.background = '#10b981';
+              dotElem.style.boxShadow = '0 0 6px #10b981';
+            } else if (d.status === 'active') {
+              statusElem.innerText = 'ACTIVE';
+              statusElem.style.color = 'var(--neon-teal)';
+              dotElem.style.background = 'var(--neon-teal)';
+              dotElem.style.boxShadow = '0 0 6px var(--neon-teal)';
+            } else {
+              statusElem.innerText = 'STANDBY';
+              statusElem.style.color = 'var(--text-dim)';
+              dotElem.style.background = 'var(--text-dim)';
+              dotElem.style.boxShadow = 'none';
+            }
+          }
+
+          const modal = document.getElementById('modal-fortiadc-inspector');
+          if (modal && modal.style.display !== 'none') {
+            renderFortiADCModal(d);
+          }
+        })
+        .catch(() => {});
+    }
+
+    function openFortiADCModal() {
+      const modal = document.getElementById('modal-fortiadc-inspector');
+      if (modal) {
+        modal.style.display = 'flex';
+        fetchFortiADCData();
+      }
+    }
+
+    function closeFortiADCModal() {
+      const modal = document.getElementById('modal-fortiadc-inspector');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function fetchFortiADCData() {
+      const q = new URLSearchParams();
+      if (currentTimeRange) q.set('time_range', currentTimeRange);
+      if (currentFromParam) q.set('from', currentFromParam);
+
+      fetch(`/api/fortiadc-stats?${q.toString()}`)
+        .then(res => res.json())
+        .then(d => {
+          fortiadcData = d;
+          renderFortiADCModal(d);
+        })
+        .catch(err => {
+          console.error("FortiADC fetch error:", err);
+        });
+    }
+
+    function renderFortiADCModal(d) {
+      if (!d || !d.macro) return;
+      const m = d.macro;
+
+      const rpsEl = document.getElementById('lb-kpi-rps');
+      if (rpsEl) rpsEl.innerText = `${d.live_rps || 0} RPS`;
+      const totEl = document.getElementById('lb-kpi-total');
+      if (totEl) totEl.innerText = (m.total_requests || 0).toLocaleString();
+      const winEl = document.getElementById('lb-kpi-window');
+      if (winEl) winEl.innerText = d.label || 'Timeline Window';
+
+      const appPctEl = document.getElementById('lb-kpi-approved-pct');
+      if (appPctEl) appPctEl.innerText = `${m.success_pct}%`;
+      const appCntEl = document.getElementById('lb-kpi-approved-cnt');
+      if (appCntEl) appCntEl.innerText = `${(m.success_count || 0).toLocaleString()} approved`;
+
+      const appRejPctEl = document.getElementById('lb-kpi-app-reject-pct');
+      if (appRejPctEl) appRejPctEl.innerText = `${m.app_reject_pct}%`;
+      const appRejCntEl = document.getElementById('lb-kpi-app-reject-cnt');
+      if (appRejCntEl) appRejCntEl.innerText = `${(m.app_reject_count || 0).toLocaleString()} rejected`;
+
+      const lbRejPctEl = document.getElementById('lb-kpi-lb-reject-pct');
+      if (lbRejPctEl) lbRejPctEl.innerText = `${m.lb_reject_pct}%`;
+      const lbRejCntEl = document.getElementById('lb-kpi-lb-reject-cnt');
+      if (lbRejCntEl) lbRejCntEl.innerText = `${(m.lb_reject_count || 0).toLocaleString()} drops`;
+
+      const latEl = document.getElementById('lb-kpi-latency');
+      if (latEl) latEl.innerText = `${m.avg_duration_ms || 0} ms`;
+      const p95El = document.getElementById('lb-kpi-p95-latency');
+      if (p95El) p95El.innerText = `P95: ${m.p95_duration_ms || 0} ms`;
+
+      // Status Bar
+      const barSucc = document.getElementById('lb-bar-success');
+      if (barSucc) barSucc.style.width = `${Math.max(1, m.success_pct)}%`;
+      const barApp = document.getElementById('lb-bar-app-rej');
+      if (barApp) barApp.style.width = `${m.app_reject_pct}%`;
+      const barLb = document.getElementById('lb-bar-lb-rej');
+      if (barLb) barLb.style.width = `${m.lb_reject_pct}%`;
+
+      const legSucc = document.getElementById('lb-legend-success');
+      if (legSucc) legSucc.innerText = `${m.success_pct}%`;
+      const legApp = document.getElementById('lb-legend-app');
+      if (legApp) legApp.innerText = `${m.app_reject_pct}%`;
+      const legLb = document.getElementById('lb-legend-lb');
+      if (legLb) legLb.innerText = `${m.lb_reject_pct}%`;
+
+      // Node Bar
+      const barVm1 = document.getElementById('lb-bar-vm1');
+      if (barVm1) barVm1.style.width = `${m.vm1_pct}%`;
+      const barVm2 = document.getElementById('lb-bar-vm2');
+      if (barVm2) barVm2.style.width = `${m.vm2_pct}%`;
+      const legVm1 = document.getElementById('lb-legend-vm1');
+      if (legVm1) legVm1.innerText = `${m.vm1_pct}% (${(m.vm1_count || 0).toLocaleString()})`;
+      const legVm2 = document.getElementById('lb-legend-vm2');
+      if (legVm2) legVm2.innerText = `${m.vm2_pct}% (${(m.vm2_count || 0).toLocaleString()})`;
+
+      // Render Transaction Types
+      const typesTbody = document.getElementById('lb-types-tbody');
+      if (typesTbody) {
+        if (d.top_types && d.top_types.length > 0) {
+          typesTbody.innerHTML = d.top_types.map(t => `
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <td style="padding: 4px 6px; font-weight: 700; color: var(--neon-cyan);">/${t.tx_type}</td>
+              <td style="padding: 4px 6px; text-align: center; color: #fff;">${(t.count || 0).toLocaleString()}</td>
+              <td style="padding: 4px 6px; text-align: right; color: ${t.reject_count > 0 ? 'var(--neon-amber)' : 'var(--text-dim)'};">${t.reject_count || 0}</td>
+            </tr>
+          `).join('');
+        } else {
+          typesTbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 10px; color: var(--text-dim);">No transactions in window</td></tr>';
+        }
+      }
+
+      // Render Top Banks
+      const banksTbody = document.getElementById('lb-banks-tbody');
+      if (banksTbody) {
+        if (d.top_banks && d.top_banks.length > 0) {
+          banksTbody.innerHTML = d.top_banks.map(b => `
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <td style="padding: 4px 6px; font-weight: 700; color: #ffffff;">${b.bank_name}</td>
+              <td style="padding: 4px 6px; text-align: center; color: var(--neon-teal);">${(b.total_req || 0).toLocaleString()}</td>
+              <td style="padding: 4px 6px; text-align: center; color: ${(b.app_reject_cnt + b.lb_reject_cnt) > 0 ? 'var(--neon-red)' : 'var(--text-dim)'};">${(b.app_reject_cnt || 0) + (b.lb_reject_cnt || 0)}</td>
+              <td style="padding: 4px 6px; text-align: right; color: var(--text-dim);">${b.avg_latency_ms || 0}ms</td>
+            </tr>
+          `).join('');
+        } else {
+          banksTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 10px; color: var(--text-dim);">No banks logged in window</td></tr>';
+        }
+      }
+
+      // Render Rejections Ledger
+      const rejectsTbody = document.getElementById('lb-rejects-tbody');
+      if (rejectsTbody) {
+        if (d.recent_rejects && d.recent_rejects.length > 0) {
+          rejectsTbody.innerHTML = d.recent_rejects.map(r => `
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.04); background: ${r.category === 'LB_REJECT' ? 'rgba(255,34,85,0.08)' : 'rgba(255,184,0,0.04)'};">
+              <td style="padding: 4px; color: var(--text-dim);">${r.time}</td>
+              <td style="padding: 4px; font-weight: 700; color: #fff;">${r.bank}</td>
+              <td style="padding: 4px; color: var(--text-dim);">${r.client_ip}</td>
+              <td style="padding: 4px; color: var(--neon-cyan);">${r.url || r.type}</td>
+              <td style="padding: 4px; text-align: center; font-weight: 800; color: ${r.retcode >= 500 ? 'var(--neon-red)' : 'var(--neon-amber)'};">${r.retcode}</td>
+              <td style="padding: 4px; text-align: center;">
+                <span style="font-size: 8px; font-weight: 800; padding: 1px 5px; border-radius: 3px; background: ${r.category === 'LB_REJECT' ? 'rgba(255,34,85,0.2); color: #ff2255;' : 'rgba(255,184,0,0.2); color: #ffb800;'}">
+                  ${r.category === 'LB_REJECT' ? 'LB / NETWORK' : 'APP REJECT'}
+                </span>
+              </td>
+              <td style="padding: 4px; text-align: center; color: var(--neon-teal);">${r.node || 'N/A'}</td>
+              <td style="padding: 4px; text-align: right; color: var(--text-dim);">${r.latency_ms || 0}ms</td>
+            </tr>
+          `).join('');
+        } else {
+          rejectsTbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 12px; color: #10b981;">✓ 100% Normal Clearing (Zero Rejections in Window)</td></tr>';
+        }
+      }
     }
 
     // ==========================================

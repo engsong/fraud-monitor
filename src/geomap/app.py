@@ -29,6 +29,16 @@ def get_db_connection():
         cursor_factory=RealDictCursor
     )
 
+# Redis Config (Live Telemetry & FortiADC Gateway)
+REDIS_HOST = os.getenv("REDIS_HOST", "127.0.0.1")
+REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+try:
+    import redis
+    redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)
+    redis_client.ping()
+except Exception:
+    redis_client = None
+
 LARGE_THRESHOLDS = {
     "LAK": 50000000.0,
     "THB": 80000.0,
@@ -1067,6 +1077,159 @@ def get_fraud_stats_api():
         })
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route("/api/fortiadc-stats")
+def get_fortiadc_stats():
+    """Returns comprehensive FortiADC Load Balancer traffic, reject status, latency, and node metrics"""
+    time_range = request.args.get("time_range")
+    from_arg = request.args.get("from")
+    where_time, range_id, label = get_time_interval_sql(time_range, from_arg)
+
+    # 1. Check Redis for real-time live pulse
+    is_online = False
+    live_rps = 0.0
+    recent_rejects = []
+    if redis_client:
+        try:
+            last_seen = float(redis_client.get("fortiadc:live:last_seen") or 0)
+            if time.time() - last_seen < 15:
+                is_online = True
+            live_rps = float(redis_client.get("fortiadc:live:rps") or 0.0)
+            reject_raw = redis_client.lrange("fortiadc:recent_rejects", 0, 19)
+            recent_rejects = [json.loads(x) for x in reject_raw]
+        except Exception:
+            pass
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # 2. Macro counts in selected timeline
+        cur.execute(f"""
+            SELECT 
+                count(*) AS total_req,
+                count(*) FILTER (WHERE status_category = 'SUCCESS') AS success_cnt,
+                count(*) FILTER (WHERE status_category = 'APP_REJECT') AS app_reject_cnt,
+                count(*) FILTER (WHERE status_category = 'LB_REJECT') AS lb_reject_cnt,
+                count(*) FILTER (WHERE target_node = 'VM1') AS vm1_cnt,
+                count(*) FILTER (WHERE target_node = 'VM2') AS vm2_cnt,
+                COALESCE(ROUND(AVG(duration_ms)), 0) AS avg_duration_ms,
+                COALESCE(ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY duration_ms)::numeric), 0) AS p95_duration_ms
+            FROM fraud_monitoring.fortiadc_traffic_logs
+            WHERE {where_time};
+        """)
+        macro = cur.fetchone() or {}
+        tot = macro.get("total_req") or 0
+        succ = macro.get("success_cnt") or 0
+        app_rej = macro.get("app_reject_cnt") or 0
+        lb_rej = macro.get("lb_reject_cnt") or 0
+        vm1 = macro.get("vm1_cnt") or 0
+        vm2 = macro.get("vm2_cnt") or 0
+
+        # Percentages
+        succ_pct = round(succ / tot * 100, 1) if tot > 0 else 100.0
+        app_rej_pct = round(app_rej / tot * 100, 1) if tot > 0 else 0.0
+        lb_rej_pct = round(lb_rej / tot * 100, 1) if tot > 0 else 0.0
+        node_tot = vm1 + vm2
+        vm1_pct = round(vm1 / node_tot * 100, 1) if node_tot > 0 else 50.0
+        vm2_pct = round(vm2 / node_tot * 100, 1) if node_tot > 0 else 50.0
+
+        # 3. Top Transaction Types (/transfer, /inquiry, etc.)
+        cur.execute(f"""
+            SELECT 
+                CASE 
+                    WHEN http_url ILIKE '%%/transfer%%' THEN 'TRANSFER'
+                    WHEN http_url ILIKE '%%/inquiry%%' THEN 'INQUIRY'
+                    WHEN http_url ILIKE '%%/qr%%' THEN 'QR_PAYMENT'
+                    WHEN http_url = '/' THEN 'HEALTH_CHECK'
+                    ELSE COALESCE(NULLIF(http_url, ''), 'OTHER')
+                END AS tx_type,
+                count(*) AS count,
+                count(*) FILTER (WHERE status_category != 'SUCCESS') AS reject_count
+            FROM fraud_monitoring.fortiadc_traffic_logs
+            WHERE {where_time}
+            GROUP BY 1
+            ORDER BY count DESC
+            LIMIT 6;
+        """)
+        top_types = cur.fetchall()
+
+        # 4. Top Source Banks & Reject Ratios
+        cur.execute(f"""
+            SELECT 
+                bank_name,
+                count(*) AS total_req,
+                count(*) FILTER (WHERE status_category = 'SUCCESS') AS success_cnt,
+                count(*) FILTER (WHERE status_category = 'APP_REJECT') AS app_reject_cnt,
+                count(*) FILTER (WHERE status_category = 'LB_REJECT') AS lb_reject_cnt,
+                ROUND(AVG(duration_ms)) AS avg_latency_ms
+            FROM fraud_monitoring.fortiadc_traffic_logs
+            WHERE {where_time}
+            GROUP BY bank_name
+            ORDER BY total_req DESC
+            LIMIT 6;
+        """)
+        top_banks = cur.fetchall()
+
+        # 5. Fallback for recent rejects from DB if Redis had none
+        if not recent_rejects:
+            cur.execute(f"""
+                SELECT 
+                    to_char(timestamp AT TIME ZONE 'Asia/Vientiane', 'HH24:MI:SS') AS time,
+                    bank_name AS bank,
+                    client_ip,
+                    http_url AS url,
+                    http_retcode AS retcode,
+                    status_category AS category,
+                    target_node AS node,
+                    duration_ms AS latency_ms,
+                    action
+                FROM fraud_monitoring.fortiadc_traffic_logs
+                WHERE status_category IN ('APP_REJECT', 'LB_REJECT')
+                  AND {where_time}
+                ORDER BY id DESC
+                LIMIT 20;
+            """)
+            recent_rejects = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        return jsonify({
+            "status": "online" if is_online else ("active" if tot > 0 else "standby"),
+            "is_online": is_online,
+            "devname": "LMDCLB01001",
+            "vip": "175.2.0.29:8055",
+            "policy": "vs-lmps-app-8055",
+            "time_range": range_id,
+            "label": label,
+            "live_rps": live_rps,
+            "macro": {
+                "total_requests": tot,
+                "success_count": succ,
+                "success_pct": succ_pct,
+                "app_reject_count": app_rej,
+                "app_reject_pct": app_rej_pct,
+                "lb_reject_count": lb_rej,
+                "lb_reject_pct": lb_rej_pct,
+                "avg_duration_ms": int(macro.get("avg_duration_ms") or 0),
+                "p95_duration_ms": int(macro.get("p95_duration_ms") or 0),
+                "vm1_count": vm1,
+                "vm1_pct": vm1_pct,
+                "vm2_count": vm2,
+                "vm2_pct": vm2_pct
+            },
+            "top_types": top_types,
+            "top_banks": top_banks,
+            "recent_rejects": recent_rejects
+        })
+    except Exception as e:
+        return jsonify({
+            "error": str(e),
+            "status": "offline",
+            "live_rps": 0.0,
+            "macro": {"total_requests": 0, "success_pct": 100.0, "app_reject_pct": 0.0, "lb_reject_pct": 0.0}
+        }), 500
 
 @app.route("/api/export-alerts")
 @app.route("/api/download-report")

@@ -15,6 +15,7 @@
 
 | Version | Date / Time (GMT+7) | Category | Description of Changes | Modified Files / Modules | Deployed Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
+| **v1.0.11** | 2026-11-25 10:42 | Infrastructure & Edge Monitoring | Implemented real-time FortiADC Load Balancer (`LMDCLB01001` / `175.2.2.40`) UDP Syslog ingestion daemon (`src/ingestion/fortiadc_streamer.py`), PostgreSQL audit table `fraud_monitoring.fortiadc_traffic_logs`, Redis live telemetry keys, REST API `/api/fortiadc-stats`, live OCC KPI status pill, and Gateway & Transaction Rejection Inspector modal distinguishing Application Rejects (`400`, `500`) vs Network/LB Rejects (`502`, `503`, WAF drops). Configured systemd service `lapnet-fortiadc-streamer.service`. | `src/ingestion/fortiadc_streamer.py`, `src/geomap/app.py`, `src/geomap/templates/index.html`, `config/systemd/lapnet-fortiadc-streamer.service` | ✅ Live on 175.0.198.10 |
 | **v1.0.10** | 2026-10-26 15:28 | UI & Reporting | Added "📈 Fraud Statistics Report" option into the `Report ▼` dropdown menu and quick "📈 Stats" pill button in the Live Alerts header. Implemented dedicated executive statistics report route (`/report/statistics`) and A4 template (`statistics_report.html`) for clean 2-page executive printing. | `src/geomap/templates/statistics_report.html`, `src/geomap/templates/index.html`, `src/geomap/app.py` | ✅ Live on 175.0.198.10 |
 | **v1.0.9** | 2026-10-26 15:15 | Major Feature | Added comprehensive Real-Time Fraud Transaction Statistics Engine (`compute_fraud_statistics` & `/api/fraud-stats`), macro KPI metrics, financial exposure (LAK, THB, USD), dual-node balance (VM1 vs VM2), Top 5 Source Banks, Top 5 Mule Destination Banks, Top 5 Interbank Corridors, Top 6 Rules, and Executive Forensic Typology Analysis across `/report/timeline` and `/report/<tx_id>`. Expanded numeric formatting up to 14-digit multi-billion scale (`FM999,999,999,999,990.00`). | `src/geomap/app.py`, `src/geomap/templates/timeline_report.html`, `src/geomap/templates/fraud_report.html` | ✅ Live on 175.0.198.10 |
 | **v1.0.8** | 2026-10-26 10:52 | Major Feature | Added timeline-based report download functionality: Excel-compatible UTF-8 BOM CSV streaming endpoint (`/api/export-alerts?time_range=...`), official batch timeline incident dossier (`/report/timeline?time_range=...`), and quick `[📥 CSV]` download buttons in the timeline toolbar and alerts header. | `src/geomap/templates/timeline_report.html`, `src/geomap/app.py`, `src/geomap/templates/index.html` | ✅ Live on 175.0.198.10 |
@@ -305,6 +306,38 @@ Based on real switching telemetry ingested from VM1 and VM2:
 
 ---
 
+## 11. FortiADC Load Balancer Live Ingestion & Rejection Monitoring Engine (v1.0.11)
+
+Implemented in `src/ingestion/fortiadc_streamer.py`, stored in `fraud_monitoring.fortiadc_traffic_logs`, exposed via `/api/fortiadc-stats`, and visualized via the FortiADC Gateway Inspector modal and header KPI pill in `index.html`.
+
+### 11.1 Architectural Role & Telemetry Stream
+- **Appliance**: FortiADC (`LMDCLB01001` / `175.2.2.40`)
+- **Virtual Server (VIP)**: `175.2.0.29:8055` (`vs-lmps-app-8055`)
+- **Real Servers**: `lmps-app1` (`175.2.0.23` VM1) and `lmps-app2` (`175.2.0.24` VM2)
+- **Ingestion Protocol**: Real-time RFC 5424 / SLB HTTP Syslog stream over UDP port `514` to `175.0.198.10`.
+- **Systemd Service**: `lapnet-fortiadc-streamer.service` (managed with auto-restart).
+
+### 11.2 Transaction Status Categorization
+1. **APPROVED / SUCCESS (`200 OK`)**:
+   - HTTP return code `200`, `201`, or `204` with normal real server round-trip.
+2. **APP REJECT (`4xx / 500`)**:
+   - The application backend rejected the request (e.g. `400 Bad Request` validation failure, `401 Unauthorized`, `403 Forbidden`, `404 Endpoint Not Found`, `500 Internal App Error`).
+3. **LB / NETWORK REJECT (`502 / 503 / 504 / WAF Drop`)**:
+   - FortiADC rejected the request directly (e.g. WAF block, rate-limit drop, connection reset) OR backend real server failed to respond / connection refused (`502 Bad Gateway`, `503 Service Unavailable`, `504 Gateway Timeout`).
+
+### 11.3 Real-Time Dashboard Integration
+- **OCC Header KPI Pill**: Live display of FortiADC online status, real-time requests per second (RPS), and average latency (ms).
+- **Gateway & Transaction Rejection Inspector Modal**:
+  - Live throughput (RPS), total traffic, approval rate %, application reject rate %, and LB drop rate %.
+  - Stacked tri-color resolution status bar (`Approved` vs `App Rejects` vs `LB Drops`).
+  - Real server weighted load balancing split (`VM1` vs `VM2`).
+  - Transaction types breakdown (`/transfer`, `/inquiry`, `/qr-payment`, etc.).
+  - Top originating member banks with total traffic and reject ratios.
+  - Live rejections audit ledger listing timestamp, bank, client IP, URI, HTTP return code, rejection category, and node.
+
+---
+
 *Sign-off: LAPNet Cybersecurity & Fraud Prevention Engineering Team*  
 *Host: WEBSERVER01 (175.0.198.10) • Production Branch: main*
+
 
