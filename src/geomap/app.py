@@ -1084,6 +1084,7 @@ def get_fortiadc_stats():
     time_range = request.args.get("time_range")
     from_arg = request.args.get("from")
     where_time, range_id, label = get_time_interval_sql(time_range, from_arg)
+    where_time = where_time.replace("created_at", "timestamp")
 
     # 1. Check Redis for real-time live pulse
     is_online = False
