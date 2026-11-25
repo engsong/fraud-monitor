@@ -6,7 +6,9 @@
 **Status**: Production Active (Deployed & Operational)  
 **Host Server**: `175.0.198.10` (`WEBSERVER01`)  
 **Switching Log Ingestion Nodes**: VM1 (`175.2.0.23`), VM2 (`175.2.0.24`)  
-**Active Production Port**: `http://175.0.198.10:3006`
+**Active Production Ports**:
+- **Port 3005**: Regional Switching Control (LMPS Core) Real-Time Geo Money Flow & Fan-In/Out Map (`http://175.0.198.10:3005`)
+- **Port 3006**: Dedicated FortiADC Load Balancer Live Traffic & Rejection Audit Monitor (`http://175.0.198.10:3006`)
 
 ---
 

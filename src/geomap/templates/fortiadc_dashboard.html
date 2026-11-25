@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAPNet FortiADC Load Balancer & Traffic Rejection OCC Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #040d1a;
+      --card-bg: #081a28;
+      --card-hdr: #092032;
+      --border-blue: #1e3a5f;
+      --neon-cyan: #00f2fe;
+      --neon-teal: #10b981;
+      --neon-amber: #ffb800;
+      --neon-red: #ff2255;
+      --text-dim: #94a3b8;
+      --text-bright: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg-dark);
+      color: #e2e8f0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header Bar */
+    header {
+      background: #061524;
+      border-bottom: 1px solid var(--border-blue);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    }
+
+    .hdr-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .badge-pill {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .badge-green {
+      background: #10b981;
+      color: #000;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .badge-cyan {
+      background: rgba(0, 242, 254, 0.15);
+      color: var(--neon-cyan);
+      border: 1px solid rgba(0, 242, 254, 0.4);
+    }
+
+    .hdr-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+    }
+
+    .hdr-subtitle {
+      font-size: 10.5px;
+      color: var(--neon-cyan);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .hdr-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .time-selector {
+      display: flex;
+      align-items: center;
+      background: #092032;
+      border: 1px solid var(--border-blue);
+      border-radius: 5px;
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .time-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 9.5px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .time-btn:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .time-btn.active {
+      background: var(--neon-cyan);
+      color: #000;
+      font-weight: 800;
+    }
+
+    .btn-action {
+      background: #092032;
+      border: 1px solid var(--border-blue);
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+
+    .btn-action:hover {
+      border-color: var(--neon-cyan);
+      background: rgba(0, 242, 254, 0.1);
+      color: var(--neon-cyan);
+    }
+
+    .clock-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--neon-cyan);
+      background: rgba(0, 242, 254, 0.1);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      padding: 3px 10px;
+      border-radius: 4px;
+    }
+
+    /* Main Container */
+    main {
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+      flex: 1;
+    }
+
+    /* Grid Layouts */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+    }
+
+    .kpi-card {
+      background: var(--card-hdr);
+      border: 1px solid var(--border-blue);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .kpi-title {
+      font-size: 9px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .kpi-val {
+      font-size: 22px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      color: #ffffff;
+    }
+
+    .kpi-sub {
+      font-size: 8.5px;
+      color: var(--text-dim);
+    }
+
+    .split-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .panel-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-blue);
+      border-radius: 8px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .panel-hdr {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-title {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Progress Resolution Bars */
+    .res-bar-container {
+      height: 16px;
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+      background: #000;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .res-bar-approved { background: #10b981; }
+    .res-bar-app-rej { background: #ffb800; }
+    .res-bar-lb-drop { background: #ff2255; }
+
+    .node-bar-vm1 { background: #00f2fe; }
+    .node-bar-vm2 { background: #0f766e; }
+
+    /* Tables */
+    .table-container {
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    th {
+      padding: 6px 8px;
+      color: var(--text-dim);
+      text-align: left;
+      border-bottom: 1px solid var(--border-blue);
+      position: sticky;
+      top: 0;
+      background: var(--card-bg);
+      font-weight: 700;
+      z-index: 2;
+    }
+
+    td {
+      padding: 5px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Filter banner */
+    .filter-banner {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0, 242, 254, 0.08);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      border-radius: 5px;
+      padding: 6px 12px;
+      font-size: 9.5px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .filter-badge {
+      background: var(--neon-cyan);
+      color: #000;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 3px;
+      margin: 0 4px;
+    }
+
+    .clear-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      font-size: 8.5px;
+      font-weight: 700;
+      border-radius: 3px;
+      cursor: pointer;
+      padding: 2px 8px;
+    }
+
+    .clear-btn:hover {
+      background: rgba(255, 34, 85, 0.3);
+      border-color: #ff2255;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #040d1a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e3a5f;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #00f2fe;
+    }
+
+    /* Footer */
+    footer {
+      background: #061524;
+      border-top: 1px solid var(--border-blue);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 9.5px;
+      color: var(--text-dim);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header Bar -->
+  <header>
+    <div class="hdr-left">
+      <span class="badge-pill badge-green">FORTIADC LB GATEWAY</span>
+      <div>
+        <div class="hdr-title" id="lb-app-title">LMDCLB01001 • VIP 175.2.0.29:8055</div>
+        <div class="hdr-subtitle">vs-lmps-app-8055 (LMPS Payment Switch Core VIP)</div>
+      </div>
+      <span class="badge-pill" id="lb-status-pill" style="background: rgba(16,185,129,0.2); color: #10b981; border: 1px solid #10b981;">● LIVE ACTIVE</span>
+    </div>
+
+    <div class="hdr-right">
+      <!-- Link back to Port 3005 Map -->
+      <a href="http://175.0.198.10:3005" class="btn-action" title="Switch to Real-Time Switching Core Money Flow Map on Port 3005">
+        <span>🗺️ Switching Core Map (Port 3005)</span>
+      </a>
+
+      <!-- Timeline range selector -->
+      <div class="time-selector">
+        <button class="time-btn" onclick="setTimeRange('15m')">15m</button>
+        <button class="time-btn" onclick="setTimeRange('30m')">30m</button>
+        <button class="time-btn active" onclick="setTimeRange('1h')">1h</button>
+        <button class="time-btn" onclick="setTimeRange('3h')">3h</button>
+        <button class="time-btn" onclick="setTimeRange('6h')">6h</button>
+        <button class="time-btn" onclick="setTimeRange('12h')">12h</button>
+        <button class="time-btn" onclick="setTimeRange('24h')">24h</button>
+        <button class="time-btn" onclick="setTimeRange('today')">Today</button>
+      </div>
+
+      <!-- Export CSV Button -->
+      <button class="btn-action" onclick="exportRejectionCSV()">
+        <span>📥 Export Rejects CSV</span>
+      </button>
+
+      <!-- Live Clock -->
+      <div class="clock-badge" id="live-clock">--:--:-- GMT+7</div>
+    </div>
+  </header>
+
+  <!-- Main Body Content -->
+  <main>
+    
+    <!-- Row 1: KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">Live Throughput</div>
+        <div class="kpi-val" style="color: var(--neon-cyan);" id="kpi-rps">-- RPS</div>
+        <div class="kpi-sub">UDP 514 Real-Time Stream</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Total Traffic</div>
+        <div class="kpi-val" id="kpi-total">--</div>
+        <div class="kpi-sub" id="kpi-window-label">Selected Window</div>
+      </div>
+      <div class="kpi-card" style="border-color: rgba(16, 185, 129, 0.3);">
+        <div class="kpi-title">Approved / 200 OK</div>
+        <div class="kpi-val" style="color: #10b981;" id="kpi-approved-pct">--%</div>
+        <div class="kpi-sub" style="color: #10b981;" id="kpi-approved-cnt">-- approved</div>
+      </div>
+      <div class="kpi-card" style="border-color: rgba(255, 184, 0, 0.3);">
+        <div class="kpi-title">App Rejections</div>
+        <div class="kpi-val" style="color: var(--neon-amber);" id="kpi-app-pct">--%</div>
+        <div class="kpi-sub" style="color: var(--neon-amber);" id="kpi-app-cnt">-- rejected</div>
+      </div>
+      <div class="kpi-card" style="border-color: rgba(255, 34, 85, 0.3);">
+        <div class="kpi-title">LB / Network Drops</div>
+        <div class="kpi-val" style="color: #ff2255;" id="kpi-lb-pct">--%</div>
+        <div class="kpi-sub" style="color: #ff2255;" id="kpi-lb-cnt">-- drops</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Avg Latency</div>
+        <div class="kpi-val" id="kpi-latency">-- ms</div>
+        <div class="kpi-sub" id="kpi-p95">P95: -- ms</div>
+      </div>
+    </div>
+
+    <!-- Row 2: Status Breakdown & Node Balance -->
+    <div class="split-grid">
+      <!-- Traffic Resolution -->
+      <div class="panel-card">
+        <div class="panel-hdr">
+          <span class="panel-title">Traffic Resolution Distribution</span>
+          <span style="font-size: 8.5px; color: var(--text-dim);">App vs Network Health</span>
+        </div>
+        <div class="res-bar-container">
+          <div id="bar-approved" class="res-bar-approved" style="width: 85%;"></div>
+          <div id="bar-app-rej" class="res-bar-app-rej" style="width: 10%;"></div>
+          <div id="bar-lb-drop" class="res-bar-lb-drop" style="width: 5%;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 9px; font-family: 'JetBrains Mono', monospace;">
+          <span style="color: #10b981;">● Approved (<span id="leg-approved">--%</span>)</span>
+          <span style="color: #ffb800;">● App Rejects (<span id="leg-app">--%</span>)</span>
+          <span style="color: #ff2255;">● LB Drops (<span id="leg-lb">--%</span>)</span>
+        </div>
+      </div>
+
+      <!-- Switching Node Load Balance -->
+      <div class="panel-card">
+        <div class="panel-hdr">
+          <span class="panel-title">Switching Node Load Balancing</span>
+          <span style="font-size: 8.5px; color: var(--text-dim);">Real Server Weighted Distribution</span>
+        </div>
+        <div class="res-bar-container">
+          <div id="bar-vm1" class="node-bar-vm1" style="width: 33%;"></div>
+          <div id="bar-vm2" class="node-bar-vm2" style="width: 67%;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 9px; font-family: 'JetBrains Mono', monospace;">
+          <span style="color: #00f2fe;">● lmps-app1 VM1 (<span id="leg-vm1">--%</span>)</span>
+          <span style="color: #0f766e;">● lmps-app2 VM2 (<span id="leg-vm2">--%</span>)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3: Transaction Types & Originating Banks -->
+    <div class="split-grid">
+      <!-- Types -->
+      <div class="panel-card">
+        <div class="panel-hdr">
+          <span class="panel-title">Transaction Types Passing Through FortiADC</span>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Type / URI</th>
+                <th style="text-align: center;">Requests</th>
+                <th style="text-align: right;">Rejects</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-types">
+              <tr><td colspan="3" style="text-align: center; color: var(--text-dim); padding: 12px;">Loading transaction types...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Banks -->
+      <div class="panel-card">
+        <div class="panel-hdr">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="panel-title">Originating Banks via FortiADC</span>
+            <span id="badge-member-count" class="badge-pill badge-cyan">ALL MEMBERS</span>
+          </div>
+          <span style="font-size: 8px; color: var(--neon-amber);">💡 Click reject count to filter ledger</span>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Bank</th>
+                <th style="text-align: center;">Volume</th>
+                <th style="text-align: center;">App Rej</th>
+                <th style="text-align: center;">LB Drops</th>
+                <th style="text-align: right;">Latency</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-banks">
+              <tr><td colspan="5" style="text-align: center; color: var(--text-dim); padding: 12px;">Loading member bank traffic...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 4: Live Rejections Ledger -->
+    <div class="panel-card" id="ledger-card">
+      <div class="panel-hdr">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span class="panel-title" style="color: #ffb800;">⚠️ Live Transaction Rejection Audit Ledger (App & Network Rejections)</span>
+          <span id="badge-reject-count" class="badge-pill" style="background: rgba(255, 34, 85, 0.2); color: #ff2255; border: 1px solid rgba(255, 34, 85, 0.4);">0 Rejections</span>
+        </div>
+        <span style="font-size: 8px; color: var(--text-dim);">Real-time stream from FortiADC syslog</span>
+      </div>
+
+      <!-- Active Filter Banner -->
+      <div id="filter-banner" class="filter-banner">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="color: var(--text-dim);">Filtered by Member Bank:</span>
+          <span id="filter-bank-name" class="filter-badge"></span>
+          <span style="color: var(--text-dim); font-size: 8.5px;">(Showing only rejections for this member institution)</span>
+        </div>
+        <button class="clear-btn" onclick="clearBankFilter()">✕ Clear Filter (Show All)</button>
+      </div>
+
+      <div class="table-container" style="max-height: 280px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Time (GMT+7)</th>
+              <th>Reference / TxID</th>
+              <th>Bank</th>
+              <th>Client IP</th>
+              <th>Type / Path</th>
+              <th style="text-align: center;">HTTP Code</th>
+              <th>Reject Category & Reason</th>
+              <th style="text-align: center;">Node</th>
+              <th style="text-align: right;">Latency</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-rejects">
+            <tr><td colspan="9" style="text-align: center; color: var(--text-dim); padding: 16px;">No rejections logged in window.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div>
+      FortiADC Model: <strong style="color: #fff;">FortiADC 300E / VM</strong> • LB Gateway: <span style="color: var(--neon-cyan);">175.2.2.40</span> • Syslog Stream: <span style="color: var(--neon-teal);">UDP 514</span> • DB Schema: <span style="color: #cbd5e1;">fraud_monitoring.fortiadc_traffic_logs</span>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <span style="color: var(--text-dim);">OCC Auto-Refresh: <strong>Every 5s</strong></span>
+      <button class="btn-action" onclick="fetchStats()">⟳ Refresh Now</button>
+    </div>
+  </footer>
+
+  <script>
+    let activeTimeRange = '1h';
+    let activeBankFilter = null;
+
+    // Live Lao Time Clock
+    function updateClock() {
+      const now = new Date();
+      const options = { timeZone: 'Asia/Vientiane', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
+      const timeStr = now.toLocaleTimeString('en-GB', options);
+      const clockEl = document.getElementById('live-clock');
+      if (clockEl) clockEl.innerText = `${timeStr} GMT+7 (LIVE)`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function setTimeRange(range) {
+      activeTimeRange = range;
+      document.querySelectorAll('.time-btn').forEach(b => {
+        b.classList.remove('active');
+        if (b.innerText.toLowerCase() === range.toLowerCase()) b.classList.add('active');
+      });
+      fetchStats();
+    }
+
+    function filterByBank(bankName) {
+      if (!bankName) return;
+      activeBankFilter = bankName;
+      fetchStats();
+      const card = document.getElementById('ledger-card');
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function clearBankFilter() {
+      activeBankFilter = null;
+      fetchStats();
+    }
+
+    function exportRejectionCSV() {
+      const q = new URLSearchParams();
+      if (activeTimeRange) q.set('time_range', activeTimeRange);
+      if (activeBankFilter) q.set('bank', activeBankFilter);
+      window.location.href = `/api/export-fortiadc-rejects?${q.toString()}`;
+    }
+
+    function fetchStats() {
+      const q = new URLSearchParams();
+      if (activeTimeRange) q.set('time_range', activeTimeRange);
+      if (activeBankFilter) q.set('bank', activeBankFilter);
+
+      fetch(`/api/fortiadc-stats?${q.toString()}`)
+        .then(res => res.json())
+        .then(d => renderDashboard(d))
+        .catch(err => console.error("Error fetching FortiADC stats:", err));
+    }
+
+    function renderDashboard(d) {
+      if (!d || !d.macro) return;
+      const m = d.macro;
+
+      // KPIs
+      document.getElementById('kpi-rps').innerText = `${d.live_rps || 0} RPS`;
+      document.getElementById('kpi-total').innerText = (m.total_requests || 0).toLocaleString();
+      document.getElementById('kpi-window-label').innerText = d.label || 'Selected Window';
+
+      document.getElementById('kpi-approved-pct').innerText = `${m.success_pct}%`;
+      document.getElementById('kpi-approved-cnt').innerText = `${(m.success_count || 0).toLocaleString()} approved`;
+
+      document.getElementById('kpi-app-pct').innerText = `${m.app_reject_pct}%`;
+      document.getElementById('kpi-app-cnt').innerText = `${(m.app_reject_count || 0).toLocaleString()} rejected`;
+
+      document.getElementById('kpi-lb-pct').innerText = `${m.lb_reject_pct}%`;
+      document.getElementById('kpi-lb-cnt').innerText = `${(m.lb_reject_count || 0).toLocaleString()} drops`;
+
+      document.getElementById('kpi-latency').innerText = `${m.avg_duration_ms || 0} ms`;
+      document.getElementById('kpi-p95').innerText = `P95: ${m.p95_duration_ms || 0} ms`;
+
+      // Resolution Bars
+      document.getElementById('bar-approved').style.width = `${Math.max(1, m.success_pct)}%`;
+      document.getElementById('bar-app-rej').style.width = `${m.app_reject_pct}%`;
+      document.getElementById('bar-lb-drop').style.width = `${m.lb_reject_pct}%`;
+
+      document.getElementById('leg-approved').innerText = `${m.success_pct}%`;
+      document.getElementById('leg-app').innerText = `${m.app_reject_pct}%`;
+      document.getElementById('leg-lb').innerText = `${m.lb_reject_pct}%`;
+
+      // Node Bars
+      document.getElementById('bar-vm1').style.width = `${m.vm1_pct}%`;
+      document.getElementById('bar-vm2').style.width = `${m.vm2_pct}%`;
+      document.getElementById('leg-vm1').innerText = `${m.vm1_pct}% (${(m.vm1_count || 0).toLocaleString()})`;
+      document.getElementById('leg-vm2').innerText = `${m.vm2_pct}% (${(m.vm2_count || 0).toLocaleString()})`;
+
+      // Transaction Types Table
+      const typesTbody = document.getElementById('tbody-types');
+      if (typesTbody) {
+        if (d.top_types && d.top_types.length > 0) {
+          typesTbody.innerHTML = d.top_types.map(t => `
+            <tr>
+              <td style="font-weight: 700; color: var(--neon-cyan);">/${t.tx_type}</td>
+              <td style="text-align: center; color: #fff;">${(t.count || 0).toLocaleString()}</td>
+              <td style="text-align: right; color: ${t.reject_count > 0 ? 'var(--neon-amber)' : 'var(--text-dim)'};">${t.reject_count || 0}</td>
+            </tr>
+          `).join('');
+        } else {
+          typesTbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-dim); padding: 12px;">No transactions logged in window</td></tr>';
+        }
+      }
+
+      // Banks Table
+      const banksTbody = document.getElementById('tbody-banks');
+      const memberBadge = document.getElementById('badge-member-count');
+      if (memberBadge && d.top_banks) {
+        memberBadge.innerText = `${d.top_banks.length} MEMBERS`;
+      }
+      if (banksTbody) {
+        if (d.top_banks && d.top_banks.length > 0) {
+          banksTbody.innerHTML = d.top_banks.map(b => {
+            const hasAppRej = (b.app_reject_cnt || 0) > 0;
+            const hasLbRej = (b.lb_reject_cnt || 0) > 0;
+            const isFilter = activeBankFilter === b.bank_name;
+            return `
+              <tr style="background: ${isFilter ? 'rgba(0, 242, 254, 0.12)' : 'transparent'};">
+                <td style="font-weight: 700; color: #ffffff;">
+                  ${isFilter ? '▶ ' : ''}${b.bank_name}
+                </td>
+                <td style="text-align: center; color: var(--neon-teal);">${(b.total_req || 0).toLocaleString()}</td>
+                <td style="text-align: center;">
+                  ${hasAppRej ? `
+                    <span onclick="filterByBank('${b.bank_name}')" 
+                          style="cursor: pointer; padding: 2px 7px; border-radius: 3px; background: rgba(255, 184, 0, 0.2); color: #ffb800; border: 1px solid rgba(255, 184, 0, 0.5); font-weight: 800;"
+                          title="Click to filter ${b.bank_name} rejections in audit ledger below">
+                      ${b.app_reject_cnt} 🔍
+                    </span>
+                  ` : `<span style="color: var(--text-dim);">0</span>`}
+                </td>
+                <td style="text-align: center;">
+                  ${hasLbRej ? `
+                    <span onclick="filterByBank('${b.bank_name}')" 
+                          style="cursor: pointer; padding: 2px 7px; border-radius: 3px; background: rgba(255, 34, 85, 0.2); color: #ff2255; border: 1px solid rgba(255, 34, 85, 0.5); font-weight: 800;"
+                          title="Click to filter ${b.bank_name} drops in audit ledger below">
+                      ${b.lb_reject_cnt} 🔍
+                    </span>
+                  ` : `<span style="color: var(--text-dim);">0</span>`}
+                </td>
+                <td style="text-align: right; color: var(--text-dim);">${b.avg_latency_ms || 0}ms</td>
+              </tr>
+            `;
+          }).join('');
+        } else {
+          banksTbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-dim); padding: 12px;">No banks active in window</td></tr>';
+        }
+      }
+
+      // Filter Banner
+      const banner = document.getElementById('filter-banner');
+      const bannerName = document.getElementById('filter-bank-name');
+      if (banner && bannerName) {
+        if (activeBankFilter) {
+          banner.style.display = 'flex';
+          bannerName.innerText = activeBankFilter;
+        } else {
+          banner.style.display = 'none';
+        }
+      }
+
+      // Rejections Ledger Table
+      const rejTbody = document.getElementById('tbody-rejects');
+      const countBadge = document.getElementById('badge-reject-count');
+      if (countBadge) {
+        const cnt = d.recent_rejects ? d.recent_rejects.length : 0;
+        countBadge.innerText = `${cnt} Rejections${activeBankFilter ? ' (' + activeBankFilter + ')' : ''}`;
+      }
+      if (rejTbody) {
+        if (d.recent_rejects && d.recent_rejects.length > 0) {
+          rejTbody.innerHTML = d.recent_rejects.map(r => `
+            <tr style="background: ${r.category === 'LB_REJECT' ? 'rgba(255,34,85,0.08)' : 'rgba(255,184,0,0.04)'};">
+              <td style="color: var(--text-dim); white-space: nowrap;">${r.time}</td>
+              <td style="color: var(--neon-cyan); font-weight: 700; white-space: nowrap;">${r.tx_ref || 'N/A'}</td>
+              <td style="font-weight: 700; color: #fff;">${r.bank}</td>
+              <td style="color: var(--text-dim); white-space: nowrap;">${r.client_ip}</td>
+              <td style="color: #ffffff; max-width: 200px; word-break: break-all;">${r.url || r.type}</td>
+              <td style="text-align: center; font-weight: 800;">
+                <span style="padding: 1px 6px; border-radius: 3px; font-size: 8.5px; background: ${r.retcode >= 500 ? 'rgba(255,34,85,0.2)' : 'rgba(255,184,0,0.2)'}; color: ${r.retcode >= 500 ? 'var(--neon-red)' : 'var(--neon-amber)'};">
+                  ${r.retcode}
+                </span>
+              </td>
+              <td>
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                  <span style="font-size: 7.5px; font-weight: 800; padding: 1px 4px; border-radius: 2px; width: fit-content; background: ${r.category === 'LB_REJECT' ? 'rgba(255,34,85,0.2); color: #ff2255;' : 'rgba(255,184,0,0.2); color: #ffb800;'}">
+                    ${r.category === 'LB_REJECT' ? 'LB / NETWORK DROP' : 'APPLICATION REJECT'}
+                  </span>
+                  <span style="font-size: 8px; color: #cbd5e1;">${r.reason || (r.retcode === 400 ? 'Bad Request' : 'Rejection')}</span>
+                </div>
+              </td>
+              <td style="text-align: center; color: var(--neon-teal); font-weight: 700;">${r.node || 'N/A'}</td>
+              <td style="text-align: right; color: var(--text-dim);">${r.latency_ms || 0}ms</td>
+            </tr>
+          `).join('');
+        } else {
+          rejTbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 16px; color: #10b981;">✓ Zero Rejections logged for ${activeBankFilter ? activeBankFilter : 'selected window'}</td></tr>`;
+        }
+      }
+    }
+
+    // Polling interval every 5 seconds
+    setInterval(fetchStats, 5000);
+    fetchStats();
+  </script>
+</body>
+</html>

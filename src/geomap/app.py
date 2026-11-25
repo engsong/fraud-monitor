@@ -1460,7 +1460,7 @@ def live_stream():
 
 if __name__ == "__main__":
     import argparse
-    default_port = int(os.getenv("PORT", os.getenv("GEOMAP_PORT", 3006)))
+    default_port = int(os.getenv("PORT", os.getenv("GEOMAP_PORT", 3005)))
     parser = argparse.ArgumentParser(description="LAPNet OCC Real-Time Geo Map Service")
     parser.add_argument("--port", type=int, default=default_port, help=f"Port to listen on (default: {default_port})")
     args, _ = parser.parse_known_args()

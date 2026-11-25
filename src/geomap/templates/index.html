@@ -2236,6 +2236,9 @@
           <span style="font-size: 10px; color: var(--neon-cyan); font-family: monospace;" id="lb-modal-policy">(vs-lmps-app-8055)</span>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
+          <a href="http://175.0.198.10:3006" target="_blank" style="font-size: 8.5px; padding: 2px 8px; border-radius: 4px; background: rgba(0,242,254,0.15); color: var(--neon-cyan); border: 1px solid var(--neon-cyan); text-decoration: none; font-weight: 700; display: flex; align-items: center; gap: 4px;">
+            <span>↗ Standalone Page (:3006)</span>
+          </a>
           <span id="lb-modal-status-badge" style="font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981;">LIVE ACTIVE</span>
           <button class="modal-close-btn" onclick="closeFortiADCModal()">✕</button>
         </div>
@@ -2691,6 +2694,7 @@
       const q = new URLSearchParams();
       if (currentTimeRange) q.set('time_range', currentTimeRange);
       if (currentFromParam) q.set('from', currentFromParam);
+      if (selectedLbBankFilter) q.set('bank', selectedLbBankFilter);
 
       fetch(`/api/fortiadc-stats?${q.toString()}`)
         .then(res => res.json())
