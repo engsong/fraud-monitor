@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAPNet Official Transaction Rejection & Incident Audit Notice - {{ selected_bank }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0b2545;
+      --primary-light: #134074;
+      --accent-red: #d90429;
+      --accent-amber: #b45309;
+      --accent-teal: #0f766e;
+      --accent-green: #15803d;
+      --accent-purple: #7c3aed;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --border-color: #cbd5e1;
+      --bg-page: #f1f5f9;
+      --card-bg: #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.45;
+      font-size: 11px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Floating Action Bar (Hidden on Print) */
+    .action-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: #061524;
+      color: #ffffff;
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
+      border-bottom: 2px solid #00f2fe;
+    }
+
+    .action-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 12.5px;
+    }
+
+    .action-bar-filters {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .ctrl-select, .ctrl-input {
+      background: #092032;
+      border: 1px solid #1e3a5f;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 8px;
+      border-radius: 4px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .ctrl-select:focus, .ctrl-input:focus {
+      border-color: #00f2fe;
+    }
+
+    .btn {
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 13px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      border: none;
+      text-decoration: none;
+    }
+
+    .btn-apply { background: #00f2fe; color: #040e17; }
+    .btn-apply:hover { background: #38bdf8; }
+    .btn-print { background: #10b981; color: #ffffff; }
+    .btn-print:hover { background: #059669; }
+    .btn-csv { background: #6366f1; color: #ffffff; }
+    .btn-csv:hover { background: #4f46e5; }
+    .btn-back { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; }
+    .btn-back:hover { background: #334155; color: #ffffff; }
+
+    /* Report Paper Container */
+    .report-paper {
+      max-width: 240mm;
+      margin: 20px auto 40px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      padding: 16mm 18mm;
+    }
+
+    /* Official Letterhead */
+    .letterhead {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+
+    .letterhead-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo-badge {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #0b2545, #134074);
+      color: #00f2fe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 900;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(11, 37, 69, 0.2);
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-text h1 {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: 0.3px;
+      line-height: 1.2;
+    }
+
+    .brand-text h2 {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #334155;
+      margin-top: 2px;
+    }
+
+    .brand-text p {
+      font-size: 9.5px;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-top: 1px;
+    }
+
+    .doc-meta-badge {
+      text-align: right;
+    }
+
+    .doc-meta-badge .ref-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-red);
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .doc-meta-badge .issue-date {
+      font-size: 9.5px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Document Title Banner */
+    .doc-title-banner {
+      background: linear-gradient(90deg, #0b2545, #1e3a5f);
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .doc-title-banner h3 {
+      font-size: 13.5px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .doc-title-banner .doc-subtitle {
+      font-size: 10px;
+      color: #93c5fd;
+      margin-top: 2px;
+      font-weight: 500;
+    }
+
+    .urgency-badge {
+      background: #dc2626;
+      color: #ffffff;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      box-shadow: 0 2px 6px rgba(220, 38, 38, 0.4);
+    }
+
+    /* Metadata Grid */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .meta-lbl {
+      font-size: 8.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.4px;
+    }
+
+    .meta-val {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .meta-val-highlight {
+      color: #0369a1;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Executive KPI Cards */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .kpi-box {
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 10px 12px;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .kpi-box-title {
+      font-size: 8.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.3px;
+    }
+
+    .kpi-box-val {
+      font-size: 20px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1.1;
+    }
+
+    .kpi-box-desc {
+      font-size: 8px;
+      color: var(--text-muted);
+    }
+
+    /* Boundary Architecture Callout Box */
+    .arch-box {
+      background: #f8fafc;
+      border-left: 4px solid #0284c7;
+      border-top: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      border-radius: 0 6px 6px 0;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+    }
+
+    .arch-hdr {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #0369a1;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .arch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      font-size: 9.5px;
+      color: #334155;
+      line-height: 1.4;
+    }
+
+    .arch-col {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      padding: 8px 10px;
+    }
+
+    .arch-col-title {
+      font-weight: 800;
+      font-size: 10px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Section Headings */
+    .section-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 16px 0 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Tables */
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9px;
+      margin-bottom: 16px;
+    }
+
+    .report-table th {
+      background: #0b2545;
+      color: #ffffff;
+      font-weight: 700;
+      text-align: left;
+      padding: 6px 8px;
+      font-size: 8.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      border: 1px solid #0b2545;
+    }
+
+    .report-table td {
+      padding: 6px 8px;
+      border: 1px solid #e2e8f0;
+      vertical-align: middle;
+      color: #1e293b;
+    }
+
+    .report-table tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    .badge-lb-boundary {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #f87171;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 8px;
+      font-weight: 800;
+      white-space: nowrap;
+      display: inline-block;
+    }
+
+    .badge-app-boundary {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fcd34d;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 8px;
+      font-weight: 800;
+      white-space: nowrap;
+      display: inline-block;
+    }
+
+    .badge-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 9px;
+    }
+
+    .code-400 { background: #fed7aa; color: #9a3412; }
+    .code-401 { background: #e9d5ff; color: #6b21a8; }
+    .code-404 { background: #fef08a; color: #854d0e; }
+    .code-500 { background: #fecaca; color: #991b1b; }
+    .code-502 { background: #fda4af; color: #881337; }
+
+    /* Root Cause Breakdown Grid */
+    .cause-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .cause-card {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 10px;
+    }
+
+    .cause-card-hdr {
+      font-weight: 800;
+      font-size: 10px;
+      color: var(--primary);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .cause-card-body {
+      font-size: 8.5px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Action Checklist */
+    .action-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+      font-size: 9.5px;
+    }
+
+    .action-list li {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 3px solid #10b981;
+      border-radius: 0 4px 4px 0;
+      padding: 6px 10px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      line-height: 1.4;
+    }
+
+    .action-num {
+      background: #10b981;
+      color: #ffffff;
+      font-size: 8.5px;
+      font-weight: 800;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* Sign-off Block */
+    .sign-block {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--border-color);
+      page-break-inside: avoid;
+    }
+
+    .sign-box {
+      display: flex;
+      flex-direction: column;
+      gap: 35px;
+    }
+
+    .sign-title {
+      font-size: 8.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .sign-line {
+      border-top: 1px solid #94a3b8;
+      padding-top: 4px;
+      font-size: 8.5px;
+      color: #334155;
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: #ffffff;
+        color: #000000;
+        font-size: 9pt;
+      }
+
+      .action-bar {
+        display: none !important;
+      }
+
+      .report-paper {
+        margin: 0;
+        padding: 0;
+        border: none;
+        box-shadow: none;
+        max-width: 100%;
+      }
+
+      @page {
+        size: A4 portrait;
+        margin: 10mm 12mm 10mm 12mm;
+      }
+
+      tr {
+        page-break-inside: avoid;
+      }
+
+      .badge-lb-boundary, .badge-app-boundary, .badge-code, .doc-title-banner, .urgency-badge {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating OCC Action Bar (Hidden on Print) -->
+  <div class="action-bar">
+    <div class="action-bar-left">
+      <span style="color: #00f2fe; font-family: 'JetBrains Mono', monospace;">● OCC INCIDENT DISPATCH</span>
+      <span>|</span>
+      <span>Member Bank Rejection Audit Dossier</span>
+    </div>
+
+    <!-- Interactive Filters Form -->
+    <div class="action-bar-filters">
+      <!-- Member Bank Selector -->
+      <select id="sel-bank" class="ctrl-select" title="Filter by Member Bank">
+        <option value="ALL" {% if selected_bank == 'ALL' %}selected{% endif %}>-- All Member Banks --</option>
+        {% for b in all_banks %}
+          <option value="{{ b }}" {% if selected_bank == b %}selected{% endif %}>{{ b }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- Rejection Boundary Selector -->
+      <select id="sel-boundary" class="ctrl-select" title="Filter by Rejection Point">
+        <option value="all" {% if selected_boundary == 'all' %}selected{% endif %}>All Failure Points</option>
+        <option value="lb" {% if selected_boundary == 'lb' %}selected{% endif %}>LB Pre-Core Drop (Did Not Reach Switch)</option>
+        <option value="app" {% if selected_boundary == 'app' %}selected{% endif %}>Core Switch App Rejections (VM1/VM2)</option>
+      </select>
+
+      <!-- Time Window Preset -->
+      <select id="sel-range" class="ctrl-select" title="Timeline Preset" onchange="toggleCustomDates(this.value)">
+        <option value="15m" {% if range_id == '15m' %}selected{% endif %}>Last 15m</option>
+        <option value="1h" {% if range_id == '1h' %}selected{% endif %}>Last 1h</option>
+        <option value="3h" {% if range_id == '3h' %}selected{% endif %}>Last 3h</option>
+        <option value="6h" {% if range_id == '6h' %}selected{% endif %}>Last 6h</option>
+        <option value="12h" {% if range_id == '12h' %}selected{% endif %}>Last 12h</option>
+        <option value="24h" {% if range_id == '24h' %}selected{% endif %}>Last 24h</option>
+        <option value="today" {% if range_id == 'today' %}selected{% endif %}>Today (Since 00:00)</option>
+        <option value="custom" {% if is_custom_date %}selected{% endif %}>Custom Date Range</option>
+      </select>
+
+      <!-- Custom Date Inputs -->
+      <div id="custom-date-box" style="display: {% if is_custom_date %}flex{% else %}none{% endif %}; gap: 4px; align-items: center;">
+        <input type="date" id="input-start-date" class="ctrl-input" value="{{ start_date }}" title="Start Date">
+        <span style="color: #94a3b8; font-size: 10px;">to</span>
+        <input type="date" id="input-end-date" class="ctrl-input" value="{{ end_date }}" title="End Date">
+      </div>
+
+      <button class="btn btn-apply" onclick="applyFilters()">
+        <span>Filter Dossier</span>
+      </button>
+
+      <button class="btn btn-print" onclick="window.print()">
+        <span>🖨️ Print / Save PDF</span>
+      </button>
+
+      <button class="btn btn-csv" onclick="exportFilteredCSV()">
+        <span>📥 Export CSV</span>
+      </button>
+
+      <a href="http://175.0.198.10:3006" class="btn btn-back">
+        <span>← FortiADC Dashboard (:3006)</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Formal Report Paper Container -->
+  <div class="report-paper">
+
+    <!-- Official Letterhead -->
+    <div class="letterhead">
+      <div class="letterhead-brand">
+        <div class="brand-logo-badge">LAP</div>
+        <div class="brand-text">
+          <h1>LAO NATIONAL PAYMENT NETWORK (LAPNet) CO., LTD.</h1>
+          <h2>ບໍລິສັດ ເຄືອຂ່າຍການຊຳລະແຫ່ງຊາດລາວ ຈຳກັດ</h2>
+          <p>Operational Control Center (OCC) • Core Switching Infrastructure & Risk Monitoring Division</p>
+        </div>
+      </div>
+      <div class="doc-meta-badge">
+        <div class="ref-num">{{ incident_ref_no }}</div>
+        <div class="issue-date">Dispatched: {{ now_lao }} (GMT+7)</div>
+      </div>
+    </div>
+
+    <!-- Document Title Banner -->
+    <div class="doc-title-banner">
+      <div>
+        <h3>TRANSACTION REJECTION INCIDENT NOTIFICATION DOSSIER</h3>
+        <div class="doc-subtitle">ໃບແຈ້ງເຕືອນເຫດການທຸລະກຳຖືກປະຕິເສດ ແລະ ລາຍງານການກວດສອບທາງເທັກນິກ (Technical Audit Notice)</div>
+      </div>
+      <div class="urgency-badge">ACTION REQUIRED BY MEMBER BANK</div>
+    </div>
+
+    <!-- Incident Metadata Grid -->
+    <div class="meta-grid">
+      <div class="meta-item">
+        <span class="meta-lbl">Target Member Bank</span>
+        <span class="meta-val" style="color: #0b2545; font-size: 12px;">{{ selected_bank }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-lbl">Target VIP & Service Port</span>
+        <span class="meta-val meta-val-highlight">175.2.0.29:8055 (vs-lmps-app-8055)</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-lbl">Investigation Window</span>
+        <span class="meta-val">{{ label }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-lbl">Failure Boundary Filter</span>
+        <span class="meta-val" style="text-transform: uppercase;">{{ selected_boundary }}</span>
+      </div>
+    </div>
+
+    <!-- Executive KPI Row -->
+    <div class="kpi-row">
+      <div class="kpi-box" style="border-left: 3px solid #0284c7;">
+        <span class="kpi-box-title">Total Inbound Requests</span>
+        <span class="kpi-box-val" style="color: #0369a1;">{{ macro.total_requests | default(0) }}</span>
+        <span class="kpi-box-desc">All attempts in window</span>
+      </div>
+      <div class="kpi-box" style="border-left: 3px solid #dc2626;">
+        <span class="kpi-box-title">Dropped by FortiADC LB</span>
+        <span class="kpi-box-val" style="color: #dc2626;">{{ macro.lb_reject_count | default(0) }}</span>
+        <span class="kpi-box-desc">Pre-Core: Did NOT reach Core Switch</span>
+      </div>
+      <div class="kpi-box" style="border-left: 3px solid #d97706;">
+        <span class="kpi-box-title">Rejected by Core Switch</span>
+        <span class="kpi-box-val" style="color: #d97706;">{{ macro.app_reject_count | default(0) }}</span>
+        <span class="kpi-box-desc">Reached VM1/VM2 application layer</span>
+      </div>
+      <div class="kpi-box" style="border-left: 3px solid #0f766e;">
+        <span class="kpi-box-title">Average Network Latency</span>
+        <span class="kpi-box-val" style="color: #0f766e;">{{ macro.avg_duration_ms | default(0) }} ms</span>
+        <span class="kpi-box-desc">P95: {{ macro.p95_duration_ms | default(0) }} ms</span>
+      </div>
+    </div>
+
+    <!-- Architectural Failure Domain Boundary Callout -->
+    <div class="arch-box">
+      <div class="arch-hdr">
+        <span>ℹ️ Technical Failure Domain Architecture Notice</span>
+      </div>
+      <div class="arch-grid">
+        <div class="arch-col" style="border-left: 3px solid #dc2626;">
+          <div class="arch-col-title" style="color: #dc2626;">
+            <span>● Boundary 1: Dropped at FortiADC Load Balancer (Pre-Core)</span>
+          </div>
+          <div>
+            The connection was terminated at LAPNet's perimeter load balancer (FortiADC 300E at VIP <code>175.2.0.29:8055</code>) 
+            <strong>before reaching the Core Switch nodes (VM1/VM2)</strong>.
+            The Core Switch has <strong>NO RECORD</strong> of these transactions because the HTTP packet failed RFC protocol validation (e.g. Missing <code>Host:</code> header in HTTP/1.1 probes) or suffered TCP connection resets.
+          </div>
+        </div>
+        <div class="arch-col" style="border-left: 3px solid #d97706;">
+          <div class="arch-col-title" style="color: #d97706;">
+            <span>● Boundary 2: Rejected by Core Switch Application (VM1 / VM2)</span>
+          </div>
+          <div>
+            FortiADC successfully proxied the HTTP request to backend switching nodes (<code>175.2.0.23</code> or <code>175.2.0.24</code>), 
+            but the LMPSCore switching application responded with an error (e.g. <code>404 Not Found</code> for misspelled API routes, <code>401 Unauthorized</code> for missing tokens, or <code>400 Bad Request</code> for schema validation errors).
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Incident Breakdown by Technical Root Cause -->
+    <div class="section-title">
+      <span>Rejection Categorization & Protocol Root Cause Analysis</span>
+      <span style="font-size: 8.5px; color: var(--text-muted); font-weight: 500;">Aggregated by Failure Signature</span>
+    </div>
+
+    <div class="cause-grid">
+      <div class="cause-card">
+        <div class="cause-card-hdr">
+          <span style="color: #dc2626;">HTTP 400 Bad Request (LB Drop)</span>
+          <span style="font-family: monospace;">Pre-Core</span>
+        </div>
+        <div class="cause-card-body">
+          Client sent HTTP/1.1 request (e.g. OPTIONS probe or raw TCP keepalive) without the mandatory RFC 7230 <code>Host:</code> header (FortiADC logged <code>http_host="none"</code>). FortiADC dropped the request immediately without forwarding to Core Switch.
+        </div>
+      </div>
+
+      <div class="cause-card">
+        <div class="cause-card-hdr">
+          <span style="color: #d97706;">HTTP 404 Route Not Found (App Reject)</span>
+          <span style="font-family: monospace;">Core Switch</span>
+        </div>
+        <div class="cause-card-body">
+          Bank client invoked an unmapped URI endpoint (e.g. <code>/api/inquirys</code> instead of standard <code>/inquiry</code>). Core Switch returned 404.
+        </div>
+      </div>
+
+      <div class="cause-card">
+        <div class="cause-card-hdr">
+          <span style="color: #7c3aed;">HTTP 401 Unauthorized (App Reject)</span>
+          <span style="font-family: monospace;">Core Switch</span>
+        </div>
+        <div class="cause-card-body">
+          Bank request reached Core Switch but failed authentication verification (missing or expired API token / invalid HMAC signature).
+        </div>
+      </div>
+    </div>
+
+    <!-- Technical Incident Audit Ledger -->
+    <div class="section-title">
+      <span>Itemized Rejection Audit Ledger</span>
+      <span style="font-size: 8.5px; color: var(--text-muted); font-weight: 500;">
+        Showing {{ rejections | length }} rejected events (Max 100 for formal dispatch)
+      </span>
+    </div>
+
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th style="width: 25px; text-align: center;">#</th>
+          <th style="width: 70px;">Time (GMT+7)</th>
+          <th style="width: 105px;">Session / Msg Ref</th>
+          <th style="width: 60px;">Bank</th>
+          <th style="width: 85px;">Originating IP</th>
+          <th style="width: 110px;">Method & Path</th>
+          <th style="width: 50px; text-align: center;">Code</th>
+          <th style="width: 140px;">Failure Boundary</th>
+          <th>Technical Diagnosis & Reason</th>
+          <th style="width: 65px; text-align: center;">Node</th>
+          <th style="width: 45px; text-align: right;">Latency</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if rejections and rejections | length > 0 %}
+          {% for r in rejections %}
+          <tr>
+            <td style="text-align: center; color: var(--text-muted); font-weight: 700;">{{ loop.index }}</td>
+            <td style="font-family: 'JetBrains Mono', monospace; font-size: 8.5px; white-space: nowrap;">{{ r.time }}</td>
+            <td style="font-family: 'JetBrains Mono', monospace; font-size: 8.5px; font-weight: 700; color: #0369a1; white-space: nowrap;">
+              {{ r.tx_ref }}
+            </td>
+            <td style="font-weight: 700;">{{ r.bank }}</td>
+            <td style="font-family: 'JetBrains Mono', monospace; font-size: 8px;">{{ r.client_ip }}</td>
+            <td style="font-family: 'JetBrains Mono', monospace; font-size: 8.5px; word-break: break-all;">
+              <strong>{{ r.http_method }}</strong> {{ r.url }}
+            </td>
+            <td style="text-align: center;">
+              <span class="badge-code {% if r.retcode == 400 %}code-400{% elif r.retcode == 401 %}code-401{% elif r.retcode == 404 %}code-404{% elif r.retcode >= 500 %}code-500{% endif %}">
+                {{ r.retcode }}
+              </span>
+            </td>
+            <td>
+              {% if r.category == 'LB_REJECT' %}
+                <span class="badge-lb-boundary">LB DROPPED (PRE-CORE)</span>
+              {% else %}
+                <span class="badge-app-boundary">CORE SWITCH (VM1/VM2)</span>
+              {% endif %}
+            </td>
+            <td style="font-size: 8.5px; color: #334155;">{{ r.reason }}</td>
+            <td style="text-align: center; font-family: monospace; font-size: 8px; font-weight: 700;">{{ r.node }}</td>
+            <td style="text-align: right; font-family: monospace; font-size: 8.5px;">{{ r.latency_ms }}ms</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="11" style="text-align: center; padding: 20px; color: #15803d; font-weight: 700;">
+              ✓ Zero Rejections recorded for {{ selected_bank }} in the selected investigation window.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    <!-- Action Items for Member Bank -->
+    <div class="section-title">
+      <span>Mandatory Remediation Actions for Member Bank Engineering Teams</span>
+      <span style="font-size: 8.5px; color: var(--text-muted); font-weight: 500;">ISO/IEC 20000 Incident Resolution Standards</span>
+    </div>
+
+    <ul class="action-list">
+      <li>
+        <div class="action-num">1</div>
+        <div>
+          <strong>Egress Proxy & Health Probe Header Configuration (RFC 7230 Compliance):</strong>
+          If your integration gateway or automated health check sends <code>OPTIONS</code> or <code>GET /</code> requests, ensure that the client software explicitly attaches the HTTP <code>Host: 175.2.0.29:8055</code> header. FortiADC adheres strictly to HTTP/1.1 specifications and immediately drops requests without a valid Host header.
+        </div>
+      </li>
+      <li>
+        <div class="action-num">2</div>
+        <div>
+          <strong>API Endpoint Route Verification:</strong>
+          Cross-verify the target endpoints in your core banking or payment adapter software against LAPNet API Interface Specification v2.4. Pay attention to plural/singular URI paths (e.g. <code>/inquiry</code>, not <code>/api/inquirys</code>).
+        </div>
+      </li>
+      <li>
+        <div class="action-num">3</div>
+        <div>
+          <strong>Firewall NAT Session & Log Correlation:</strong>
+          Quote the listed <strong>FortiADC Message Reference IDs (e.g. <code>LB-XXXXXXXX</code>)</strong> and exact timestamps to cross-reference with your perimeter firewall and application gateway egress logs.
+        </div>
+      </li>
+      <li>
+        <div class="action-num">4</div>
+        <div>
+          <strong>Authentication Credential & Certificate Validation:</strong>
+          For any <code>HTTP 401</code> rejections, verify that your API Gateway's authorization tokens, HMAC signature generation algorithm, and public/private key pairs match LAPNet OCC's active production directory.
+        </div>
+      </li>
+    </ul>
+
+    <!-- Sign-off & Verification Block -->
+    <div class="sign-block">
+      <div class="sign-box">
+        <span class="sign-title">Report Prepared By (LAPNet OCC)</span>
+        <div class="sign-line">
+          <strong>Shift Operations Engineer</strong><br>
+          Operational Control Center (OCC)
+        </div>
+      </div>
+      <div class="sign-box">
+        <span class="sign-title">Technical Review & Authorization</span>
+        <div class="sign-line">
+          <strong>Head of Core Switching & Infrastructure</strong><br>
+          LAPNet Technical Division
+        </div>
+      </div>
+      <div class="sign-box">
+        <span class="sign-title">Member Bank IT Acknowledgment</span>
+        <div class="sign-line">
+          <strong>Received & Investigated By:</strong> ________________<br>
+          Date & Time: ________________
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function toggleCustomDates(val) {
+      const box = document.getElementById('custom-date-box');
+      if (box) {
+        box.style.display = (val === 'custom') ? 'flex' : 'none';
+      }
+    }
+
+    function applyFilters() {
+      const bank = document.getElementById('sel-bank').value;
+      const boundary = document.getElementById('sel-boundary').value;
+      const range = document.getElementById('sel-range').value;
+      const q = new URLSearchParams();
+
+      if (bank && bank !== 'ALL') q.set('bank', bank);
+      if (boundary && boundary !== 'all') q.set('boundary', boundary);
+
+      if (range === 'custom') {
+        const s = document.getElementById('input-start-date').value;
+        const e = document.getElementById('input-end-date').value;
+        if (s) q.set('start_date', s);
+        if (e) q.set('end_date', e);
+        q.set('time_range', 'custom');
+      } else {
+        q.set('time_range', range);
+      }
+
+      window.location.search = q.toString();
+    }
+
+    function exportFilteredCSV() {
+      const bank = document.getElementById('sel-bank').value;
+      const boundary = document.getElementById('sel-boundary').value;
+      const range = document.getElementById('sel-range').value;
+      const q = new URLSearchParams();
+
+      if (bank && bank !== 'ALL') q.set('bank', bank);
+      if (boundary && boundary !== 'all') q.set('boundary', boundary);
+
+      if (range === 'custom') {
+        const s = document.getElementById('input-start-date').value;
+        const e = document.getElementById('input-end-date').value;
+        if (s) q.set('start_date', s);
+        if (e) q.set('end_date', e);
+        q.set('time_range', 'custom');
+      } else {
+        q.set('time_range', range);
+      }
+
+      window.location.href = `/api/export-fortiadc-rejects?${q.toString()}`;
+    }
+  </script>
+</body>
+</html>

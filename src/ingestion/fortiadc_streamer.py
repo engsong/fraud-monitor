@@ -52,6 +52,7 @@ BANK_IP_MAP = {
     "10.3.0.1": "CORE_PROBE",
     "10.3.0.17": "CORE_PROBE",
     "175.11.0.122": "INTERNAL_MGMT",
+    "175.2.0.112": "INTERNAL_CLEARING",
     
     # 3-octet subnet mappings
     "175.28.1.": "BCEL",

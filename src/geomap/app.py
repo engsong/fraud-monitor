@@ -1078,14 +1078,74 @@ def get_fraud_stats_api():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+def get_fortiadc_time_interval_sql(time_range=None, from_arg=None, start_date=None, end_date=None):
+    """Resolves timeline window SQL condition for FortiADC logs with custom date support (GMT+7)"""
+    if start_date and end_date:
+        s = start_date.strip()
+        e = end_date.strip()
+        label = f"{s} to {e}" if s != e else f"Date: {s}"
+        range_id = f"{s}_{e}"
+        sql = f"(timestamp AT TIME ZONE 'Asia/Vientiane')::date >= '{s}'::date AND (timestamp AT TIME ZONE 'Asia/Vientiane')::date <= '{e}'::date"
+        return sql, range_id, label
+    elif start_date:
+        s = start_date.strip()
+        sql = f"(timestamp AT TIME ZONE 'Asia/Vientiane')::date = '{s}'::date"
+        return sql, s, f"Date: {s}"
+
+    if from_arg:
+        try:
+            val = int(from_arg)
+            if val <= 60:
+                return f"timestamp >= NOW() - INTERVAL '{val} minutes'", f"{val}m", f"Last {val}m"
+            else:
+                hrs = val // 60
+                return f"timestamp >= NOW() - INTERVAL '{hrs} hours'", f"{hrs}h", f"Last {hrs}h"
+        except ValueError:
+            pass
+
+    if not time_range:
+        return "timestamp >= NOW() - INTERVAL '1 hour'", "1h", "Last 1 hour"
+
+    tr = time_range.lower().strip()
+    if tr in ["15m", "15min"]:
+        return "timestamp >= NOW() - INTERVAL '15 minutes'", "15m", "Last 15 minutes"
+    elif tr in ["30m", "30min"]:
+        return "timestamp >= NOW() - INTERVAL '30 minutes'", "30m", "Last 30 minutes"
+    elif tr in ["1h", "1hour", "hour"]:
+        return "timestamp >= NOW() - INTERVAL '1 hour'", "1h", "Last 1 hour"
+    elif tr in ["3h", "3hour", "3hours"]:
+        return "timestamp >= NOW() - INTERVAL '3 hours'", "3h", "Last 3 hours"
+    elif tr in ["6h", "6hour", "6hours"]:
+        return "timestamp >= NOW() - INTERVAL '6 hours'", "6h", "Last 6 hours"
+    elif tr in ["12h", "12hour", "12hours"]:
+        return "timestamp >= NOW() - INTERVAL '12 hours'", "12h", "Last 12 hours"
+    elif tr in ["24h", "24hour", "24hours"]:
+        return "timestamp >= NOW() - INTERVAL '24 hours'", "24h", "Last 24 hours"
+    elif tr in ["today", "current_day"]:
+        return "timestamp >= DATE_TRUNC('day', NOW() AT TIME ZONE 'Asia/Vientiane') AT TIME ZONE 'Asia/Vientiane'", "today", "Today (Since 00:00)"
+    else:
+        return "timestamp >= NOW() - INTERVAL '1 hour'", "1h", "Last 1 hour"
+
+def get_fortiadc_boundary_clause(boundary=None):
+    b = (boundary or "all").lower().strip()
+    if b == "lb":
+        return " AND status_category = 'LB_REJECT' ", "lb", "LB Dropped Only (Pre-Core Drop)"
+    elif b == "app":
+        return " AND status_category = 'APP_REJECT' ", "app", "Core Switch App Rejections Only"
+    else:
+        return " AND status_category IN ('APP_REJECT', 'LB_REJECT') ", "all", "All Rejection Points"
+
 @app.route("/api/fortiadc-stats")
 def get_fortiadc_stats():
     """Returns comprehensive FortiADC Load Balancer traffic, reject status, latency, and node metrics"""
     time_range = request.args.get("time_range")
     from_arg = request.args.get("from")
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
     filter_bank = (request.args.get("bank") or "").strip()
-    where_time, range_id, label = get_time_interval_sql(time_range, from_arg)
-    where_time = where_time.replace("created_at", "timestamp")
+    boundary = request.args.get("boundary")
+    where_time, range_id, label = get_fortiadc_time_interval_sql(time_range, from_arg, start_date, end_date)
+    boundary_clause, boundary_id, boundary_label = get_fortiadc_boundary_clause(boundary)
 
     # 1. Check Redis for real-time live pulse
     is_online = False
@@ -1172,7 +1232,7 @@ def get_fortiadc_stats():
         """)
         top_banks = cur.fetchall()
 
-        # 5. Live Rejections Ledger (with optional Bank filter and enriched details)
+        # 5. Live Rejections Ledger (with optional Bank filter & Rejection Boundary)
         bank_filter_clause = ""
         query_params = []
         if filter_bank and filter_bank.upper() != "ALL":
@@ -1182,8 +1242,10 @@ def get_fortiadc_stats():
         cur.execute(f"""
             SELECT 
                 to_char(timestamp AT TIME ZONE 'Asia/Vientiane', 'HH24:MI:SS') AS time,
+                to_char(timestamp AT TIME ZONE 'Asia/Vientiane', 'YYYY-MM-DD HH24:MI:SS') AS full_time,
                 bank_name AS bank,
                 client_ip,
+                http_method,
                 CASE 
                     WHEN http_url IN ('unknown', 'none', '') AND http_method = 'OPTIONS' THEN 'OPTIONS / (Probe)'
                     WHEN http_url IN ('unknown', 'none', '') THEN http_method || ' / (Unknown)'
@@ -1201,28 +1263,31 @@ def get_fortiadc_stats():
                 COALESCE(
                     NULLIF(reject_reason, ''),
                     CASE 
-                        WHEN real_server = 'none' AND http_retcode = 400 THEN 'LB: 400 Bad Request (Missing Host / OPTIONS Probe)'
-                        WHEN http_retcode = 400 THEN 'APP: 400 Bad Request (Field Validation Error)'
-                        WHEN http_retcode = 401 THEN 'APP: 401 Unauthorized (Auth / Key Invalid)'
-                        WHEN http_retcode = 404 THEN 'APP: 404 Not Found (Invalid Endpoint Route)'
-                        WHEN http_retcode = 500 THEN 'APP: 500 Internal Error (Backend Exception)'
-                        WHEN status_category = 'LB_REJECT' THEN 'LB: Gateway / Network Drop'
+                        WHEN real_server = 'none' AND http_retcode = 400 THEN 'LB: 400 Bad Request (Missing Host / OPTIONS Probe - RFC 7230)'
+                        WHEN real_server = 'none' AND http_retcode = 502 THEN 'LB: 502 Bad Gateway (Upstream Core Switch Down/Unreachable)'
+                        WHEN real_server = 'none' AND http_retcode = 504 THEN 'LB: 504 Gateway Timeout (Core Switch Connection Timeout)'
+                        WHEN real_server = 'none' THEN 'LB: ' || http_retcode::text || ' Gateway Drop (Pre-Core Drop)'
+                        WHEN http_retcode = 400 THEN 'APP: 400 Bad Request (Field Validation Error on VM1/VM2)'
+                        WHEN http_retcode = 401 THEN 'APP: 401 Unauthorized (Auth Token / Key Invalid on Core Switch)'
+                        WHEN http_retcode = 404 THEN 'APP: 404 Not Found (Invalid Endpoint Route on Core Switch)'
+                        WHEN http_retcode = 500 THEN 'APP: 500 Internal Error (Backend Exception on Core Switch)'
                         ELSE 'APP: HTTP ' || http_retcode::text
                     END
                 ) AS reason,
                 COALESCE(NULLIF(tx_ref, ''), substring(raw_log from 'msg_id=([0-9]+)'), 'N/A') AS tx_ref,
                 CASE 
-                    WHEN target_node = 'STANDBY/OTHER' THEN 'LB_DIRECT'
+                    WHEN target_node = 'STANDBY/OTHER' OR real_server = 'none' THEN 'LB_DIRECT'
                     ELSE target_node
                 END AS node,
                 duration_ms AS latency_ms,
                 action
             FROM fraud_monitoring.fortiadc_traffic_logs
-            WHERE status_category IN ('APP_REJECT', 'LB_REJECT')
+            WHERE 1=1
+              {boundary_clause}
               AND {where_time}
               {bank_filter_clause}
             ORDER BY id DESC
-            LIMIT 50;
+            LIMIT 100;
         """, tuple(query_params))
         recent_rejects = cur.fetchall()
 
@@ -1238,6 +1303,8 @@ def get_fortiadc_stats():
             "time_range": range_id,
             "label": label,
             "filter_bank": filter_bank or "ALL",
+            "boundary": boundary_id,
+            "boundary_label": boundary_label,
             "live_rps": live_rps,
             "macro": {
                 "total_requests": tot,
@@ -1265,6 +1332,253 @@ def get_fortiadc_stats():
             "live_rps": 0.0,
             "macro": {"total_requests": 0, "success_pct": 100.0, "app_reject_pct": 0.0, "lb_reject_pct": 0.0}
         }), 500
+
+@app.route("/report/bank-incident")
+@app.route("/report/bank-incident-report")
+def view_bank_incident_report():
+    """Generates an official, printable A4 Bank Rejection Incident Notification Dossier"""
+    time_range = request.args.get("time_range")
+    from_arg = request.args.get("from")
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
+    filter_bank = (request.args.get("bank") or "ALL").strip()
+    boundary = request.args.get("boundary") or "all"
+
+    where_time, range_id, label = get_fortiadc_time_interval_sql(time_range, from_arg, start_date, end_date)
+    boundary_clause, boundary_id, boundary_label = get_fortiadc_boundary_clause(boundary)
+
+    bank_filter_clause = ""
+    params = []
+    if filter_bank and filter_bank.upper() != "ALL":
+        bank_filter_clause = " AND bank_name = %s "
+        params.append(filter_bank)
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # 1. Macro counts for selected bank & time
+        cur.execute(f"""
+            SELECT 
+                count(*) AS total_req,
+                count(*) FILTER (WHERE status_category = 'SUCCESS') AS success_cnt,
+                count(*) FILTER (WHERE status_category = 'APP_REJECT') AS app_reject_cnt,
+                count(*) FILTER (WHERE status_category = 'LB_REJECT') AS lb_reject_cnt,
+                COALESCE(ROUND(AVG(duration_ms)), 0) AS avg_duration_ms,
+                COALESCE(ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY duration_ms)::numeric), 0) AS p95_duration_ms
+            FROM fraud_monitoring.fortiadc_traffic_logs
+            WHERE {where_time}
+            {bank_filter_clause};
+        """, tuple(params))
+        macro = cur.fetchone() or {}
+
+        # 2. Detailed Itemized Rejections
+        cur.execute(f"""
+            SELECT 
+                to_char(timestamp AT TIME ZONE 'Asia/Vientiane', 'YYYY-MM-DD HH24:MI:SS') AS time,
+                COALESCE(NULLIF(tx_ref, ''), substring(raw_log from 'msg_id=([0-9]+)'), 'N/A') AS tx_ref,
+                bank_name AS bank,
+                client_ip,
+                http_method,
+                CASE 
+                    WHEN http_url IN ('unknown', 'none', '') AND http_method = 'OPTIONS' THEN 'OPTIONS / (Probe)'
+                    WHEN http_url IN ('unknown', 'none', '') THEN http_method || ' / (Unknown)'
+                    ELSE http_url 
+                END AS url,
+                http_retcode AS retcode,
+                status_category AS category,
+                COALESCE(
+                    NULLIF(reject_reason, ''),
+                    CASE 
+                        WHEN real_server = 'none' AND http_retcode = 400 THEN 'LB: 400 Bad Request (Missing Host / OPTIONS Probe - RFC 7230)'
+                        WHEN real_server = 'none' AND http_retcode = 502 THEN 'LB: 502 Bad Gateway (Upstream Core Switch Down/Unreachable)'
+                        WHEN real_server = 'none' AND http_retcode = 504 THEN 'LB: 504 Gateway Timeout (Core Switch Connection Timeout)'
+                        WHEN real_server = 'none' THEN 'LB: ' || http_retcode::text || ' Gateway Drop (Pre-Core Drop)'
+                        WHEN http_retcode = 400 THEN 'APP: 400 Bad Request (Field Validation Error on VM1/VM2)'
+                        WHEN http_retcode = 401 THEN 'APP: 401 Unauthorized (Auth Token / Key Invalid on Core Switch)'
+                        WHEN http_retcode = 404 THEN 'APP: 404 Not Found (Invalid Endpoint Route on Core Switch)'
+                        WHEN http_retcode = 500 THEN 'APP: 500 Internal Error (Backend Exception on Core Switch)'
+                        ELSE 'APP: HTTP ' || http_retcode::text
+                    END
+                ) AS reason,
+                CASE 
+                    WHEN target_node = 'STANDBY/OTHER' OR real_server = 'none' THEN 'LB_DIRECT'
+                    ELSE target_node
+                END AS node,
+                duration_ms AS latency_ms
+            FROM fraud_monitoring.fortiadc_traffic_logs
+            WHERE 1=1
+              {boundary_clause}
+              AND {where_time}
+              {bank_filter_clause}
+            ORDER BY id DESC
+            LIMIT 100;
+        """, tuple(params))
+        rejections = cur.fetchall()
+
+        # 3. Dynamic Member Banks List
+        cur.execute("""
+            SELECT DISTINCT bank_name 
+            FROM fraud_monitoring.fortiadc_traffic_logs 
+            WHERE bank_name NOT IN ('INTERNAL_CORE', 'INTERNAL_MGMT', 'LAPNET_ADMIN', 'CORE_PROBE', 'VM1_CORE', 'VM2_CORE')
+            ORDER BY bank_name;
+        """)
+        all_banks = [r["bank_name"] for r in cur.fetchall() if r["bank_name"]]
+        if not all_banks:
+            all_banks = ["BCEL", "LDB", "APB", "LVB", "MJB", "JDB", "ICBC", "CAMBODIA", "LCNB", "BOC", "BIC", "VTB", "SACOM", "IDB", "STB", "PBLL", "KBANK", "BFL", "VMB", "Umoney.MB", "PSV", "VCBLAO", "LFX", "LBB", "FINA.LBB", "UPI", "UMONEY_GW", "ACLEDA", "MOFPAY"]
+
+        cur.close()
+        conn.close()
+
+        lao_tz = timezone(timedelta(hours=7))
+        now_dt = datetime.now(lao_tz)
+        now_lao = now_dt.strftime("%Y-%m-%d %H:%M:%S")
+        date_stamp = now_dt.strftime("%Y%m%d")
+        bank_slug = filter_bank.upper().replace(" ", "_") if filter_bank != "ALL" else "ALL_MEMBERS"
+        incident_ref_no = f"LAPNET-INC-{date_stamp}-{bank_slug}-{now_dt.strftime('%H%M')}"
+
+        return render_template(
+            "bank_incident_report.html",
+            selected_bank=filter_bank,
+            selected_boundary=boundary,
+            label=label,
+            range_id=range_id,
+            is_custom_date=(time_range == "custom" or (start_date is not None)),
+            start_date=start_date or "",
+            end_date=end_date or "",
+            all_banks=all_banks,
+            incident_ref_no=incident_ref_no,
+            now_lao=now_lao,
+            macro={
+                "total_requests": macro.get("total_req") or 0,
+                "lb_reject_count": macro.get("lb_reject_count") or 0,
+                "app_reject_count": macro.get("app_reject_count") or 0,
+                "avg_duration_ms": int(macro.get("avg_duration_ms") or 0),
+                "p95_duration_ms": int(macro.get("p95_duration_ms") or 0)
+            },
+            rejections=rejections
+        )
+    except Exception as e:
+        return f"<div style='font-family: sans-serif; padding: 24px; color: #dc2626;'><h2>Error Generating Bank Incident Dossier</h2><p>{str(e)}</p></div>", 500
+
+@app.route("/api/export-fortiadc-rejects")
+def export_fortiadc_rejects():
+    """Streams CSV audit export of FortiADC rejection logs with full incident details"""
+    time_range = request.args.get("time_range")
+    from_arg = request.args.get("from")
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
+    filter_bank = (request.args.get("bank") or "").strip()
+    boundary = request.args.get("boundary")
+
+    where_time, range_id, label = get_fortiadc_time_interval_sql(time_range, from_arg, start_date, end_date)
+    boundary_clause, boundary_id, boundary_label = get_fortiadc_boundary_clause(boundary)
+
+    bank_clause = ""
+    params = []
+    if filter_bank and filter_bank.upper() != "ALL":
+        bank_clause = " AND bank_name = %s "
+        params.append(filter_bank)
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(f"""
+            SELECT 
+                to_char(timestamp AT TIME ZONE 'Asia/Vientiane', 'YYYY-MM-DD HH24:MI:SS') AS lao_time,
+                COALESCE(NULLIF(tx_ref, ''), substring(raw_log from 'msg_id=([0-9]+)'), 'N/A') AS tx_ref,
+                bank_name AS bank,
+                client_ip,
+                http_method,
+                http_url,
+                http_retcode AS retcode,
+                CASE 
+                    WHEN status_category = 'LB_REJECT' THEN 'LOAD_BALANCER_PRE_CORE_DROP'
+                    ELSE 'CORE_SWITCH_APP_REJECT'
+                END AS failure_boundary,
+                status_category AS category,
+                COALESCE(
+                    NULLIF(reject_reason, ''),
+                    CASE 
+                        WHEN real_server = 'none' AND http_retcode = 400 THEN 'LB: 400 Bad Request (Missing Host / OPTIONS Probe - RFC 7230)'
+                        WHEN real_server = 'none' AND http_retcode = 502 THEN 'LB: 502 Bad Gateway (Upstream Core Switch Down/Unreachable)'
+                        WHEN real_server = 'none' AND http_retcode = 504 THEN 'LB: 504 Gateway Timeout (Core Switch Connection Timeout)'
+                        WHEN real_server = 'none' THEN 'LB: ' || http_retcode::text || ' Gateway Drop (Pre-Core Drop)'
+                        WHEN http_retcode = 400 THEN 'APP: 400 Bad Request (Field Validation Error on VM1/VM2)'
+                        WHEN http_retcode = 401 THEN 'APP: 401 Unauthorized (Auth Token / Key Invalid on Core Switch)'
+                        WHEN http_retcode = 404 THEN 'APP: 404 Not Found (Invalid Endpoint Route on Core Switch)'
+                        WHEN http_retcode = 500 THEN 'APP: 500 Internal Error (Backend Exception on Core Switch)'
+                        ELSE 'HTTP ' || http_retcode::text
+                    END
+                ) AS reason,
+                CASE 
+                    WHEN target_node = 'STANDBY/OTHER' OR real_server = 'none' THEN 'LB_DIRECT'
+                    ELSE target_node
+                END AS node,
+                duration_ms AS latency_ms,
+                action
+            FROM fraud_monitoring.fortiadc_traffic_logs
+            WHERE 1=1
+              {boundary_clause}
+              AND {where_time}
+              {bank_clause}
+            ORDER BY id DESC
+            LIMIT 5000;
+        """, tuple(params))
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        output = io.StringIO()
+        output.write('\ufeff')  # UTF-8 BOM for Microsoft Excel
+        writer = csv.writer(output)
+        writer.writerow([
+            "Timestamp (GMT+7)",
+            "FortiADC Message / Session Ref",
+            "Bank",
+            "Client IP",
+            "HTTP Method",
+            "HTTP URL / Path",
+            "HTTP Code",
+            "Failure Boundary",
+            "Status Category",
+            "Rejection Reason / Technical Diagnosis",
+            "Target Node",
+            "Latency (ms)",
+            "FortiADC Action"
+        ])
+        for r in rows:
+            writer.writerow([
+                r["lao_time"],
+                r["tx_ref"],
+                r["bank"],
+                r["client_ip"],
+                r["http_method"],
+                r["http_url"],
+                r["retcode"],
+                r["failure_boundary"],
+                r["category"],
+                r["reason"],
+                r["node"],
+                r["latency_ms"],
+                r["action"]
+            ])
+
+        csv_data = output.getvalue()
+        output.close()
+        bank_suffix = f"_{filter_bank}" if filter_bank and filter_bank != "ALL" else ""
+        boundary_suffix = f"_{boundary_id}" if boundary_id != "all" else ""
+        filename = f"lapnet_bank_incident_audit_{range_id}{bank_suffix}{boundary_suffix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        return Response(
+            csv_data,
+            mimetype="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Content-Type": "text/csv; charset=utf-8"
+            }
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/api/export-alerts")
 @app.route("/api/download-report")

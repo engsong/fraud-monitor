@@ -1769,6 +1769,9 @@
               <div class="t-menu-item" onclick="openTimelineSummaryReport()">
                 <span>📄 Full Timeline Dossier</span>
               </div>
+              <div class="t-menu-item" onclick="openBankIncidentReport()">
+                <span>📑 Bank Rejection Incident Notice</span>
+              </div>
             </div>
           </div>
         </div>
@@ -2236,6 +2239,9 @@
           <span style="font-size: 10px; color: var(--neon-cyan); font-family: monospace;" id="lb-modal-policy">(vs-lmps-app-8055)</span>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
+          <a href="/report/bank-incident" target="_blank" style="font-size: 8.5px; padding: 2px 8px; border-radius: 4px; background: rgba(0,242,254,0.15); color: var(--neon-cyan); border: 1px solid var(--neon-cyan); text-decoration: none; font-weight: 700; display: flex; align-items: center; gap: 4px;" title="Open official Bank Incident Report & Notice">
+            <span>📄 Bank Incident Report</span>
+          </a>
           <a href="http://175.0.198.10:3006" target="_blank" style="font-size: 8.5px; padding: 2px 8px; border-radius: 4px; background: rgba(0,242,254,0.15); color: var(--neon-cyan); border: 1px solid var(--neon-cyan); text-decoration: none; font-weight: 700; display: flex; align-items: center; gap: 4px;">
             <span>↗ Standalone Page (:3006)</span>
           </a>
@@ -2525,6 +2531,17 @@
       if (currentTimeRange) q.set('time_range', currentTimeRange);
       if (currentFromParam) q.set('from', currentFromParam);
       const url = `/report/statistics?${q.toString()}`;
+      window.open(url, '_blank');
+    }
+
+    function openBankIncidentReport() {
+      const q = new URLSearchParams();
+      if (typeof selectedLbBankFilter !== 'undefined' && selectedLbBankFilter && selectedLbBankFilter !== 'ALL') {
+        q.set('bank', selectedLbBankFilter);
+      }
+      if (currentTimeRange) q.set('time_range', currentTimeRange);
+      if (currentFromParam) q.set('from', currentFromParam);
+      const url = `/report/bank-incident?${q.toString()}`;
       window.open(url, '_blank');
     }
 

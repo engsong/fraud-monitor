@@ -49,6 +49,8 @@
       top: 0;
       z-index: 100;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
     .hdr-left {
@@ -95,7 +97,40 @@
     .hdr-right {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .hdr-select {
+      background: #092032;
+      border: 1px solid var(--border-blue);
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .hdr-select:focus {
+      border-color: var(--neon-cyan);
+    }
+
+    .date-input {
+      background: #092032;
+      border: 1px solid var(--border-blue);
+      color: #ffffff;
+      font-size: 9.5px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .date-input:focus {
+      border-color: var(--neon-cyan);
     }
 
     .time-selector {
@@ -153,6 +188,18 @@
       color: var(--neon-cyan);
     }
 
+    .btn-report {
+      background: rgba(0, 242, 254, 0.15);
+      border: 1px solid var(--neon-cyan);
+      color: var(--neon-cyan);
+    }
+
+    .btn-report:hover {
+      background: var(--neon-cyan);
+      color: #040e17;
+      box-shadow: 0 0 12px rgba(0, 242, 254, 0.4);
+    }
+
     .clock-badge {
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
@@ -162,6 +209,7 @@
       border: 1px solid rgba(0, 242, 254, 0.3);
       padding: 3px 10px;
       border-radius: 4px;
+      white-space: nowrap;
     }
 
     /* Main Container */
@@ -235,6 +283,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
     .panel-title {
@@ -248,99 +298,150 @@
     /* Progress Resolution Bars */
     .res-bar-container {
       height: 16px;
+      background: #040e17;
       border-radius: 4px;
-      overflow: hidden;
       display: flex;
-      background: #000;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      border: 1px solid var(--border-blue);
     }
 
-    .res-bar-approved { background: #10b981; }
-    .res-bar-app-rej { background: #ffb800; }
-    .res-bar-lb-drop { background: #ff2255; }
+    .res-bar-approved {
+      background: #10b981;
+      height: 100%;
+      transition: width 0.3s;
+    }
 
-    .node-bar-vm1 { background: #00f2fe; }
-    .node-bar-vm2 { background: #0f766e; }
+    .res-bar-app-rej {
+      background: #ffb800;
+      height: 100%;
+      transition: width 0.3s;
+    }
+
+    .res-bar-lb-drop {
+      background: #ff2255;
+      height: 100%;
+      transition: width 0.3s;
+    }
+
+    .node-bar-vm1 {
+      background: #00f2fe;
+      height: 100%;
+      transition: width 0.3s;
+    }
+
+    .node-bar-vm2 {
+      background: #0f766e;
+      height: 100%;
+      transition: width 0.3s;
+    }
 
     /* Tables */
     .table-container {
-      max-height: 220px;
+      max-height: 250px;
       overflow-y: auto;
+      border: 1px solid var(--border-blue);
+      border-radius: 6px;
+      background: #040e17;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 9px;
+      font-size: 9.5px;
       font-family: 'JetBrains Mono', monospace;
     }
 
-    th {
-      padding: 6px 8px;
-      color: var(--text-dim);
-      text-align: left;
-      border-bottom: 1px solid var(--border-blue);
+    thead {
       position: sticky;
       top: 0;
-      background: var(--card-bg);
+      background: #092032;
+      z-index: 10;
+    }
+
+    th {
+      color: var(--text-dim);
       font-weight: 700;
-      z-index: 2;
+      text-transform: uppercase;
+      font-size: 8.5px;
+      letter-spacing: 0.5px;
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--border-blue);
+      text-align: left;
     }
 
     td {
-      padding: 5px 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      padding: 6px 10px;
+      border-bottom: 1px solid rgba(30, 58, 95, 0.4);
+      color: #cbd5e1;
     }
 
     tr:hover {
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(0, 242, 254, 0.05);
     }
 
-    /* Filter banner */
+    /* Active Filter Banner */
     .filter-banner {
       display: none;
       align-items: center;
       justify-content: space-between;
-      background: rgba(0, 242, 254, 0.08);
-      border: 1px solid rgba(0, 242, 254, 0.3);
-      border-radius: 5px;
+      background: rgba(0, 242, 254, 0.1);
+      border: 1px solid var(--neon-cyan);
+      border-radius: 6px;
       padding: 6px 12px;
       font-size: 9.5px;
-      font-family: 'JetBrains Mono', monospace;
+      color: #ffffff;
     }
 
     .filter-badge {
       background: var(--neon-cyan);
       color: #000;
       font-weight: 800;
-      padding: 2px 8px;
+      padding: 2px 6px;
       border-radius: 3px;
-      margin: 0 4px;
     }
 
     .clear-btn {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #fff;
-      font-size: 8.5px;
+      background: none;
+      border: none;
+      color: var(--neon-cyan);
       font-weight: 700;
-      border-radius: 3px;
+      font-size: 9px;
       cursor: pointer;
-      padding: 2px 8px;
+      text-decoration: underline;
     }
 
-    .clear-btn:hover {
-      background: rgba(255, 34, 85, 0.3);
-      border-color: #ff2255;
+    /* Badges */
+    .badge-lb-boundary {
+      background: rgba(255, 34, 85, 0.2);
+      color: #ff2255;
+      border: 1px solid rgba(255, 34, 85, 0.5);
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 7.5px;
+      font-weight: 800;
+      white-space: nowrap;
+      display: inline-block;
     }
 
-    /* Custom Scrollbar */
+    .badge-app-boundary {
+      background: rgba(255, 184, 0, 0.2);
+      color: #ffb800;
+      border: 1px solid rgba(255, 184, 0, 0.5);
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 7.5px;
+      font-weight: 800;
+      white-space: nowrap;
+      display: inline-block;
+    }
+
+    /* Scrollbars */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
     ::-webkit-scrollbar-track {
-      background: #040d1a;
+      background: #040e17;
     }
     ::-webkit-scrollbar-thumb {
       background: #1e3a5f;
@@ -379,8 +480,20 @@
     <div class="hdr-right">
       <!-- Link back to Port 3005 Map -->
       <a href="http://175.0.198.10:3005" class="btn-action" title="Switch to Real-Time Switching Core Money Flow Map on Port 3005">
-        <span>🗺️ Switching Core Map (Port 3005)</span>
+        <span>🗺️ Core Map (:3005)</span>
       </a>
+
+      <!-- Bank Filter Selector -->
+      <select id="hdr-bank-select" class="hdr-select" onchange="onBankFilterSelect(this.value)" title="Filter by Member Bank">
+        <option value="ALL">-- All Member Banks --</option>
+      </select>
+
+      <!-- Failure Boundary Selector -->
+      <select id="hdr-boundary-select" class="hdr-select" onchange="onBoundarySelect(this.value)" title="Filter by Failure Boundary">
+        <option value="all">All Rejections (LB & App)</option>
+        <option value="lb">LB Dropped Only (Pre-Core Drop)</option>
+        <option value="app">Core Switch App Rejected (VM1/VM2)</option>
+      </select>
 
       <!-- Timeline range selector -->
       <div class="time-selector">
@@ -392,11 +505,25 @@
         <button class="time-btn" onclick="setTimeRange('12h')">12h</button>
         <button class="time-btn" onclick="setTimeRange('24h')">24h</button>
         <button class="time-btn" onclick="setTimeRange('today')">Today</button>
+        <button class="time-btn" onclick="toggleCustomDateRow()">Custom</button>
       </div>
 
+      <!-- Custom Date Row (Hidden by default) -->
+      <div id="hdr-custom-date-container" style="display: none; align-items: center; gap: 4px;">
+        <input type="date" id="hdr-start-date" class="date-input" title="Start Date">
+        <span style="font-size: 9px; color: var(--text-dim);">to</span>
+        <input type="date" id="hdr-end-date" class="date-input" title="End Date">
+        <button class="time-btn active" style="padding: 3px 6px;" onclick="applyCustomDateRange()">Go</button>
+      </div>
+
+      <!-- Official Bank Incident Report Button -->
+      <button class="btn-action btn-report" onclick="openBankIncidentReport()" title="Generate Official Bank Rejection Notice Dossier">
+        <span>📄 Bank Incident Report</span>
+      </button>
+
       <!-- Export CSV Button -->
-      <button class="btn-action" onclick="exportRejectionCSV()">
-        <span>📥 Export Rejects CSV</span>
+      <button class="btn-action" onclick="exportRejectionCSV()" title="Export CSV Audit Ledger">
+        <span>📥 Export CSV</span>
       </button>
 
       <!-- Live Clock -->
@@ -430,7 +557,7 @@
         <div class="kpi-sub" style="color: var(--neon-amber);" id="kpi-app-cnt">-- rejected</div>
       </div>
       <div class="kpi-card" style="border-color: rgba(255, 34, 85, 0.3);">
-        <div class="kpi-title">LB / Network Drops</div>
+        <div class="kpi-title">LB / Pre-Core Drops</div>
         <div class="kpi-val" style="color: #ff2255;" id="kpi-lb-pct">--%</div>
         <div class="kpi-sub" style="color: #ff2255;" id="kpi-lb-cnt">-- drops</div>
       </div>
@@ -447,7 +574,7 @@
       <div class="panel-card">
         <div class="panel-hdr">
           <span class="panel-title">Traffic Resolution Distribution</span>
-          <span style="font-size: 8.5px; color: var(--text-dim);">App vs Network Health</span>
+          <span style="font-size: 8.5px; color: var(--text-dim);">App vs Perimeter Gateway Health</span>
         </div>
         <div class="res-bar-container">
           <div id="bar-approved" class="res-bar-approved" style="width: 85%;"></div>
@@ -536,36 +663,41 @@
           <span class="panel-title" style="color: #ffb800;">⚠️ Live Transaction Rejection Audit Ledger (App & Network Rejections)</span>
           <span id="badge-reject-count" class="badge-pill" style="background: rgba(255, 34, 85, 0.2); color: #ff2255; border: 1px solid rgba(255, 34, 85, 0.4);">0 Rejections</span>
         </div>
-        <span style="font-size: 8px; color: var(--text-dim);">Real-time stream from FortiADC syslog</span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 8px; color: var(--text-dim);">Real-time stream from FortiADC syslog</span>
+          <button class="btn-action" style="font-size: 8.5px; padding: 2px 8px;" onclick="openBankIncidentReport()">📄 Dispatch Report</button>
+        </div>
       </div>
 
       <!-- Active Filter Banner -->
       <div id="filter-banner" class="filter-banner">
         <div style="display: flex; align-items: center; gap: 6px;">
-          <span style="color: var(--text-dim);">Filtered by Member Bank:</span>
+          <span style="color: var(--text-dim);">Active Filter:</span>
           <span id="filter-bank-name" class="filter-badge"></span>
-          <span style="color: var(--text-dim); font-size: 8.5px;">(Showing only rejections for this member institution)</span>
+          <span id="filter-boundary-name" class="filter-badge" style="background: #3b82f6;"></span>
+          <span style="color: var(--text-dim); font-size: 8.5px;">(Showing only transactions matching criteria)</span>
         </div>
-        <button class="clear-btn" onclick="clearBankFilter()">✕ Clear Filter (Show All)</button>
+        <button class="clear-btn" onclick="clearAllFilters()">✕ Clear Filter (Show All)</button>
       </div>
 
-      <div class="table-container" style="max-height: 280px;">
+      <div class="table-container" style="max-height: 320px;">
         <table>
           <thead>
             <tr>
-              <th>Time (GMT+7)</th>
-              <th>Reference / TxID</th>
-              <th>Bank</th>
-              <th>Client IP</th>
+              <th style="width: 75px;">Time (GMT+7)</th>
+              <th style="width: 120px;">Reference / Session ID</th>
+              <th style="width: 80px;">Bank</th>
+              <th style="width: 100px;">Client IP</th>
               <th>Type / Path</th>
-              <th style="text-align: center;">HTTP Code</th>
-              <th>Reject Category & Reason</th>
-              <th style="text-align: center;">Node</th>
-              <th style="text-align: right;">Latency</th>
+              <th style="width: 60px; text-align: center;">HTTP Code</th>
+              <th style="width: 140px;">Failure Boundary</th>
+              <th>Technical Reason & Protocol Diagnosis</th>
+              <th style="width: 70px; text-align: center;">Node</th>
+              <th style="width: 60px; text-align: right;">Latency</th>
             </tr>
           </thead>
           <tbody id="tbody-rejects">
-            <tr><td colspan="9" style="text-align: center; color: var(--text-dim); padding: 16px;">No rejections logged in window.</td></tr>
+            <tr><td colspan="10" style="text-align: center; color: var(--text-dim); padding: 16px;">No rejections logged in window.</td></tr>
           </tbody>
         </table>
       </div>
@@ -586,7 +718,10 @@
 
   <script>
     let activeTimeRange = '1h';
-    let activeBankFilter = null;
+    let activeBankFilter = 'ALL';
+    let activeBoundaryFilter = 'all';
+    let customStartDate = '';
+    let customEndDate = '';
 
     // Live Lao Time Clock
     function updateClock() {
@@ -601,6 +736,11 @@
 
     function setTimeRange(range) {
       activeTimeRange = range;
+      customStartDate = '';
+      customEndDate = '';
+      const dateBox = document.getElementById('hdr-custom-date-container');
+      if (dateBox) dateBox.style.display = 'none';
+
       document.querySelectorAll('.time-btn').forEach(b => {
         b.classList.remove('active');
         if (b.innerText.toLowerCase() === range.toLowerCase()) b.classList.add('active');
@@ -608,35 +748,129 @@
       fetchStats();
     }
 
-    function filterByBank(bankName) {
-      if (!bankName) return;
-      activeBankFilter = bankName;
+    function toggleCustomDateRow() {
+      const dateBox = document.getElementById('hdr-custom-date-container');
+      if (dateBox) {
+        const isHidden = dateBox.style.display === 'none';
+        dateBox.style.display = isHidden ? 'flex' : 'none';
+        if (isHidden) {
+          document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+          // Set today as default
+          const today = new Date().toISOString().split('T')[0];
+          const s = document.getElementById('hdr-start-date');
+          const e = document.getElementById('hdr-end-date');
+          if (s && !s.value) s.value = today;
+          if (e && !e.value) e.value = today;
+        }
+      }
+    }
+
+    function applyCustomDateRange() {
+      const s = document.getElementById('hdr-start-date').value;
+      const e = document.getElementById('hdr-end-date').value;
+      if (!s) return;
+      customStartDate = s;
+      customEndDate = e || s;
+      activeTimeRange = 'custom';
+      fetchStats();
+    }
+
+    function onBankFilterSelect(bank) {
+      activeBankFilter = bank || 'ALL';
       fetchStats();
       const card = document.getElementById('ledger-card');
       if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    function clearBankFilter() {
-      activeBankFilter = null;
+    function onBoundarySelect(b) {
+      activeBoundaryFilter = b || 'all';
       fetchStats();
+    }
+
+    function filterByBank(bankName, boundary = 'all') {
+      if (!bankName) return;
+      activeBankFilter = bankName;
+      activeBoundaryFilter = boundary;
+      
+      const selBank = document.getElementById('hdr-bank-select');
+      if (selBank) selBank.value = bankName;
+
+      const selBoundary = document.getElementById('hdr-boundary-select');
+      if (selBoundary) selBoundary.value = boundary;
+
+      fetchStats();
+      const card = document.getElementById('ledger-card');
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function clearAllFilters() {
+      activeBankFilter = 'ALL';
+      activeBoundaryFilter = 'all';
+      const selBank = document.getElementById('hdr-bank-select');
+      if (selBank) selBank.value = 'ALL';
+      const selBoundary = document.getElementById('hdr-boundary-select');
+      if (selBoundary) selBoundary.value = 'all';
+      fetchStats();
+    }
+
+    function openBankIncidentReport() {
+      const q = new URLSearchParams();
+      if (activeBankFilter && activeBankFilter !== 'ALL') q.set('bank', activeBankFilter);
+      if (activeBoundaryFilter && activeBoundaryFilter !== 'all') q.set('boundary', activeBoundaryFilter);
+
+      if (activeTimeRange === 'custom' && customStartDate) {
+        q.set('start_date', customStartDate);
+        if (customEndDate) q.set('end_date', customEndDate);
+        q.set('time_range', 'custom');
+      } else {
+        q.set('time_range', activeTimeRange);
+      }
+      window.open(`/report/bank-incident?${q.toString()}`, '_blank');
     }
 
     function exportRejectionCSV() {
       const q = new URLSearchParams();
-      if (activeTimeRange) q.set('time_range', activeTimeRange);
-      if (activeBankFilter) q.set('bank', activeBankFilter);
+      if (activeBankFilter && activeBankFilter !== 'ALL') q.set('bank', activeBankFilter);
+      if (activeBoundaryFilter && activeBoundaryFilter !== 'all') q.set('boundary', activeBoundaryFilter);
+
+      if (activeTimeRange === 'custom' && customStartDate) {
+        q.set('start_date', customStartDate);
+        if (customEndDate) q.set('end_date', customEndDate);
+        q.set('time_range', 'custom');
+      } else {
+        q.set('time_range', activeTimeRange);
+      }
       window.location.href = `/api/export-fortiadc-rejects?${q.toString()}`;
     }
 
     function fetchStats() {
       const q = new URLSearchParams();
-      if (activeTimeRange) q.set('time_range', activeTimeRange);
-      if (activeBankFilter) q.set('bank', activeBankFilter);
+      if (activeBankFilter && activeBankFilter !== 'ALL') q.set('bank', activeBankFilter);
+      if (activeBoundaryFilter && activeBoundaryFilter !== 'all') q.set('boundary', activeBoundaryFilter);
+
+      if (activeTimeRange === 'custom' && customStartDate) {
+        q.set('start_date', customStartDate);
+        if (customEndDate) q.set('end_date', customEndDate);
+      } else {
+        q.set('time_range', activeTimeRange);
+      }
 
       fetch(`/api/fortiadc-stats?${q.toString()}`)
         .then(res => res.json())
         .then(d => renderDashboard(d))
         .catch(err => console.error("Error fetching FortiADC stats:", err));
+    }
+
+    // Populate bank dropdown dynamically from API if empty
+    function populateBankDropdown(banks) {
+      const sel = document.getElementById('hdr-bank-select');
+      if (!sel || sel.options.length > 1) return;
+      banks.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.bank_name || b;
+        opt.innerText = b.bank_name || b;
+        sel.appendChild(opt);
+      });
     }
 
     function renderDashboard(d) {
@@ -691,12 +925,14 @@
         }
       }
 
-      // Banks Table
+      // Banks Table & Populate Dropdown
       const banksTbody = document.getElementById('tbody-banks');
       const memberBadge = document.getElementById('badge-member-count');
-      if (memberBadge && d.top_banks) {
-        memberBadge.innerText = `${d.top_banks.length} MEMBERS`;
+      if (d.top_banks) {
+        populateBankDropdown(d.top_banks);
+        if (memberBadge) memberBadge.innerText = `${d.top_banks.length} MEMBERS`;
       }
+
       if (banksTbody) {
         if (d.top_banks && d.top_banks.length > 0) {
           banksTbody.innerHTML = d.top_banks.map(b => {
@@ -705,24 +941,24 @@
             const isFilter = activeBankFilter === b.bank_name;
             return `
               <tr style="background: ${isFilter ? 'rgba(0, 242, 254, 0.12)' : 'transparent'};">
-                <td style="font-weight: 700; color: #ffffff;">
+                <td style="font-weight: 700; color: #ffffff; cursor: pointer;" onclick="filterByBank('${b.bank_name}', 'all')">
                   ${isFilter ? '▶ ' : ''}${b.bank_name}
                 </td>
                 <td style="text-align: center; color: var(--neon-teal);">${(b.total_req || 0).toLocaleString()}</td>
                 <td style="text-align: center;">
                   ${hasAppRej ? `
-                    <span onclick="filterByBank('${b.bank_name}')" 
+                    <span onclick="filterByBank('${b.bank_name}', 'app')" 
                           style="cursor: pointer; padding: 2px 7px; border-radius: 3px; background: rgba(255, 184, 0, 0.2); color: #ffb800; border: 1px solid rgba(255, 184, 0, 0.5); font-weight: 800;"
-                          title="Click to filter ${b.bank_name} rejections in audit ledger below">
+                          title="Click to filter ${b.bank_name} App Rejections in audit ledger below">
                       ${b.app_reject_cnt} 🔍
                     </span>
                   ` : `<span style="color: var(--text-dim);">0</span>`}
                 </td>
                 <td style="text-align: center;">
                   ${hasLbRej ? `
-                    <span onclick="filterByBank('${b.bank_name}')" 
+                    <span onclick="filterByBank('${b.bank_name}', 'lb')" 
                           style="cursor: pointer; padding: 2px 7px; border-radius: 3px; background: rgba(255, 34, 85, 0.2); color: #ff2255; border: 1px solid rgba(255, 34, 85, 0.5); font-weight: 800;"
-                          title="Click to filter ${b.bank_name} drops in audit ledger below">
+                          title="Click to filter ${b.bank_name} LB Pre-Core Drops in audit ledger below">
                       ${b.lb_reject_cnt} 🔍
                     </span>
                   ` : `<span style="color: var(--text-dim);">0</span>`}
@@ -739,10 +975,14 @@
       // Filter Banner
       const banner = document.getElementById('filter-banner');
       const bannerName = document.getElementById('filter-bank-name');
+      const bannerBoundary = document.getElementById('filter-boundary-name');
       if (banner && bannerName) {
-        if (activeBankFilter) {
+        const hasBankFilter = activeBankFilter && activeBankFilter !== 'ALL';
+        const hasBoundaryFilter = activeBoundaryFilter && activeBoundaryFilter !== 'all';
+        if (hasBankFilter || hasBoundaryFilter) {
           banner.style.display = 'flex';
-          bannerName.innerText = activeBankFilter;
+          bannerName.innerText = hasBankFilter ? activeBankFilter : 'ALL BANKS';
+          bannerBoundary.innerText = hasBoundaryFilter ? (activeBoundaryFilter === 'lb' ? 'LB DROPPED ONLY' : 'APP REJECTS ONLY') : 'ALL FAILURE POINTS';
         } else {
           banner.style.display = 'none';
         }
@@ -753,7 +993,8 @@
       const countBadge = document.getElementById('badge-reject-count');
       if (countBadge) {
         const cnt = d.recent_rejects ? d.recent_rejects.length : 0;
-        countBadge.innerText = `${cnt} Rejections${activeBankFilter ? ' (' + activeBankFilter + ')' : ''}`;
+        const bLabel = activeBankFilter !== 'ALL' ? ` (${activeBankFilter})` : '';
+        countBadge.innerText = `${cnt} Rejections${bLabel}`;
       }
       if (rejTbody) {
         if (d.recent_rejects && d.recent_rejects.length > 0) {
@@ -763,26 +1004,26 @@
               <td style="color: var(--neon-cyan); font-weight: 700; white-space: nowrap;">${r.tx_ref || 'N/A'}</td>
               <td style="font-weight: 700; color: #fff;">${r.bank}</td>
               <td style="color: var(--text-dim); white-space: nowrap;">${r.client_ip}</td>
-              <td style="color: #ffffff; max-width: 200px; word-break: break-all;">${r.url || r.type}</td>
+              <td style="color: #ffffff; max-width: 220px; word-break: break-all;">
+                <strong>${r.http_method || ''}</strong> ${r.url || r.type}
+              </td>
               <td style="text-align: center; font-weight: 800;">
                 <span style="padding: 1px 6px; border-radius: 3px; font-size: 8.5px; background: ${r.retcode >= 500 ? 'rgba(255,34,85,0.2)' : 'rgba(255,184,0,0.2)'}; color: ${r.retcode >= 500 ? 'var(--neon-red)' : 'var(--neon-amber)'};">
                   ${r.retcode}
                 </span>
               </td>
               <td>
-                <div style="display: flex; flex-direction: column; gap: 2px;">
-                  <span style="font-size: 7.5px; font-weight: 800; padding: 1px 4px; border-radius: 2px; width: fit-content; background: ${r.category === 'LB_REJECT' ? 'rgba(255,34,85,0.2); color: #ff2255;' : 'rgba(255,184,0,0.2); color: #ffb800;'}">
-                    ${r.category === 'LB_REJECT' ? 'LB / NETWORK DROP' : 'APPLICATION REJECT'}
-                  </span>
-                  <span style="font-size: 8px; color: #cbd5e1;">${r.reason || (r.retcode === 400 ? 'Bad Request' : 'Rejection')}</span>
-                </div>
+                ${r.category === 'LB_REJECT' 
+                  ? `<span class="badge-lb-boundary">LB DROPPED (PRE-CORE)</span>` 
+                  : `<span class="badge-app-boundary">CORE SWITCH (VM1/VM2)</span>`}
               </td>
+              <td style="font-size: 8.5px; color: #cbd5e1;">${r.reason}</td>
               <td style="text-align: center; color: var(--neon-teal); font-weight: 700;">${r.node || 'N/A'}</td>
               <td style="text-align: right; color: var(--text-dim);">${r.latency_ms || 0}ms</td>
             </tr>
           `).join('');
         } else {
-          rejTbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 16px; color: #10b981;">✓ Zero Rejections logged for ${activeBankFilter ? activeBankFilter : 'selected window'}</td></tr>`;
+          rejTbody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 16px; color: #10b981;">✓ Zero Rejections logged for ${activeBankFilter !== 'ALL' ? activeBankFilter : 'selected window'}</td></tr>`;
         }
       }
     }
