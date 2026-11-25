@@ -2,7 +2,7 @@ import psycopg2
 import json
 
 def main():
-    conn = psycopg2.connect(dbname="lapnet_fraud_db", user="postgres")
+    conn = psycopg2.connect(host="127.0.0.1", port=5432, dbname="lapnet_fraud_db", user="lev", password="LEV@2026")
     cur = conn.cursor()
     
     print("=== DISTINCT DEVNAME ===")
