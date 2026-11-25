@@ -38,36 +38,73 @@ DB_NAME = os.getenv("POSTGRES_DB", "lapnet_fraud_db")
 REDIS_HOST = os.getenv("REDIS_HOST", "127.0.0.1")
 REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
 
-# Known Bank IP / Agent heuristics
+# Authoritative Member Bank Subnet Mapping (verified against LMPSCore MariaDB)
 BANK_IP_MAP = {
+    # 4-octet specific overrides
+    "175.28.19.1": "VMB",
+    "175.28.19.4": "Umoney.MB",
+    "175.28.23.1": "LBB",
+    "175.28.23.2": "FINA.LBB",
+    "175.2.0.23": "VM1_CORE",
+    "175.2.0.24": "VM2_CORE",
+    "175.2.2.40": "FORTIADC_LB",
+    "10.79.79.177": "CORE_PROBE",
+    "10.3.0.1": "CORE_PROBE",
+    "10.3.0.17": "CORE_PROBE",
+    "175.11.0.122": "INTERNAL_MGMT",
+    
+    # 3-octet subnet mappings
     "175.28.1.": "BCEL",
-    "175.28.2.": "LVB",
+    "175.28.2.": "APB",
     "175.28.3.": "LDB",
-    "175.28.4.": "JDB",
+    "175.28.4.": "LVB",
+    "175.28.5.": "MJB",
+    "175.28.6.": "JDB",
+    "175.28.7.": "ICBC",
+    "175.28.8.": "CAMBODIA",
+    "175.28.9.": "LCNB",
+    "175.28.10.": "BOC",
+    "175.28.11.": "BIC",
+    "175.28.12.": "VTB",
+    "175.28.13.": "SACOM",
+    "175.28.14.": "IDB",
+    "175.28.15.": "STB",
+    "175.28.16.": "PBLL",
+    "175.28.17.": "KBANK",
+    "175.28.18.": "BFL",
     "175.28.19.": "APB",
-    "175.28.20.": "MOFPAY",
-    "175.28.21.": "LFX",
-    "175.28.22.": "MJBL",
-    "175.28.23.": "ACLEDA",
+    "175.28.20.": "PSV",
+    "175.28.21.": "VCBLAO",
+    "175.28.22.": "LFX",
+    "175.28.23.": "ACLE",
     "175.28.24.": "BIC",
-    "175.28.25.": "VIB"
+    "175.28.25.": "VIB",
+    "203.184.80.": "UPI",
+    "175.29.": "UMONEY_GW",
+    "175.17.4.": "LAPNET_ADMIN",
+    "10.": "INTERNAL_CORE",
+    "192.168.": "INTERNAL_CORE"
 }
 
-def resolve_bank_name(src_ip: str, agent: str) -> str:
-    """Infers member bank from http_agent or subnet mapping"""
-    agent_upper = (agent or "").upper()
-    for bank in ["BCEL", "LDB", "JDB", "APB", "MOFPAY", "LFX", "LVB", "MJBL", "ACLEDA", "BIC", "VIB", "PSVB", "STB", "BFL", "IB", "BOC", "ICBC"]:
-        if bank in agent_upper:
-            return bank
-
-    for prefix, bank in BANK_IP_MAP.items():
+def resolve_bank_name(src_ip: str, agent: str = "", url: str = "") -> str:
+    """Infers member bank from IP address, agent, or URL heuristics"""
+    # 1. Exact or prefix match from BANK_IP_MAP (sorted longest prefix first)
+    for prefix in sorted(BANK_IP_MAP.keys(), key=len, reverse=True):
         if src_ip.startswith(prefix):
+            return BANK_IP_MAP[prefix]
+
+    # 2. Check User-Agent & URL hints
+    combined = f"{agent} {url}".upper()
+    for bank in ["BCEL", "LDB", "JDB", "APB", "MOFPAY", "LFX", "LVB", "MJB", "MJBL", "ACLE", "ACLEDA", 
+                 "BIC", "VIB", "PSV", "PSVB", "STB", "BFL", "IDB", "BOC", "ICBC", "KBANK", "VTB", "VMB", "UPI"]:
+        if bank in combined:
             return bank
 
-    if src_ip.startswith("10.") or src_ip.startswith("192.168."):
+    if src_ip.startswith("10.") or src_ip.startswith("192.168.") or src_ip.startswith("127."):
         return "INTERNAL_CORE"
 
-    return f"BANK_{src_ip.split('.')[2]}" if len(src_ip.split('.')) >= 3 else "UNKNOWN"
+    parts = src_ip.split('.')
+    return f"IP_{parts[2]}.{parts[3]}" if len(parts) == 4 else src_ip
 
 class FortiADCStreamer:
     """
@@ -130,9 +167,11 @@ class FortiADCStreamer:
             real_server = data.get("real_server", "none")
             action = data.get("action", "none").lower()
             http_method = data.get("http_method", "POST").upper()
-            http_url = data.get("http_url", "unknown")
+            raw_url = data.get("http_url", "unknown")
             http_agent = data.get("http_agent", "none")
             retcode_str = data.get("http_retcode", "200")
+            http_qry = data.get("http_qry", "none")
+            msg_id = data.get("msg_id", "")
 
             try:
                 retcode = int(retcode_str)
@@ -155,39 +194,97 @@ class FortiADCStreamer:
                 target_node = "VM1"
             elif "175.2.0.24" in trans_dst or "app2" in real_server.lower():
                 target_node = "VM2"
+            elif real_server != "none":
+                target_node = real_server
             else:
-                target_node = "STANDBY/OTHER"
+                target_node = "LB_DIRECT"
 
             # Resolve Member Bank Name
-            bank_name = resolve_bank_name(src_ip, http_agent)
+            bank_name = resolve_bank_name(src_ip, http_agent, raw_url)
 
-            # Categorize Transaction Status
-            # 1. LB / Network Reject (FortiADC WAF/RateLimit dropped or backend connection failure 502/503/504)
-            if action in ["drop", "block", "close", "reject"] or retcode in [502, 503, 504] or (real_server == "none" and retcode >= 400 and http_method != "OPTIONS"):
+            # Extract Transaction Reference / ID
+            tx_ref = None
+            if http_qry and http_qry != "none":
+                ref_match = re.search(r'(?:Search|ref|reference|tx_id|txn|token)=([A-Za-z0-9_\-]+)', http_qry, re.IGNORECASE)
+                if ref_match:
+                    tx_ref = ref_match.group(1)
+                elif len(http_qry) >= 8 and "=" not in http_qry:
+                    tx_ref = http_qry[:24]
+
+            if not tx_ref and msg_id:
+                tx_ref = f"LB-{msg_id}"
+            elif not tx_ref:
+                tx_ref = "N/A"
+
+            # Clean URL and standard transaction type
+            if raw_url in ["unknown", "none", ""]:
+                if http_method == "OPTIONS":
+                    http_url = "OPTIONS / (Probe)"
+                    tx_type = "OPTIONS_PROBE"
+                else:
+                    http_url = f"{http_method} / (Unknown)"
+                    tx_type = "UNKNOWN_ROUTE"
+            else:
+                http_url = raw_url
+                clean_url = http_url.lower()
+                if "/crossborder" in clean_url:
+                    tx_type = "CROSSBORDER"
+                elif "/transfer" in clean_url:
+                    tx_type = "TRANSFER"
+                elif "/inquiry" in clean_url:
+                    tx_type = "INQUIRY"
+                elif "/qr" in clean_url or "/pay" in clean_url:
+                    tx_type = "QR_PAYMENT"
+                elif "/balance" in clean_url:
+                    tx_type = "BALANCE"
+                elif "/stmt" in clean_url or "/statement" in clean_url or "/report" in clean_url:
+                    tx_type = "REPORT"
+                elif "/upi/" in clean_url:
+                    tx_type = "UPI"
+                elif clean_url == "/":
+                    tx_type = "HEALTH_CHECK"
+                else:
+                    first_seg = clean_url.strip("/").split("/")[0].upper()
+                    tx_type = first_seg if first_seg else "API_CALL"
+
+            # Categorize Transaction Status & Granular Rejection Reason
+            # 1. LB / Network Reject (Dropped at Load Balancer or backend unreachable)
+            if action in ["drop", "block", "close", "reject"] or retcode in [502, 503, 504]:
                 status_category = "LB_REJECT"
-            # 2. Application Reject (Backend app returned 4xx or 500 error)
+                if retcode == 502:
+                    reject_reason = "LB: Bad Gateway (502 Upstream Down)"
+                elif retcode == 504:
+                    reject_reason = "LB: Gateway Timeout (504 Backend Slow)"
+                elif action in ["drop", "block"]:
+                    reject_reason = f"LB: WAF / Policy {action.upper()}"
+                else:
+                    reject_reason = f"LB: Connection {action.upper()}"
+            elif real_server == "none" and retcode == 400:
+                # FortiADC rejects malformed HTTP/1.1 requests without host header
+                status_category = "LB_REJECT"
+                if http_method == "OPTIONS" or raw_url == "unknown":
+                    reject_reason = "LB: 400 Bad Request (Missing Host / OPTIONS Probe)"
+                else:
+                    reject_reason = "LB: 400 Bad Request (Malformed HTTP Header)"
             elif retcode >= 400:
                 status_category = "APP_REJECT"
-            # 3. Approved / Success (200 OK)
+                if retcode == 400:
+                    reject_reason = "APP: 400 Bad Request (Field Validation Error)"
+                elif retcode == 401:
+                    reject_reason = "APP: 401 Unauthorized (Auth / Key Invalid)"
+                elif retcode == 403:
+                    reject_reason = "APP: 403 Forbidden (Access Denied)"
+                elif retcode == 404:
+                    reject_reason = "APP: 404 Not Found (Invalid Endpoint Route)"
+                elif retcode == 405:
+                    reject_reason = "APP: 405 Method Not Allowed"
+                elif retcode == 500:
+                    reject_reason = "APP: 500 Internal Error (Backend Exception)"
+                else:
+                    reject_reason = f"APP: HTTP {retcode}"
             else:
                 status_category = "SUCCESS"
-
-            # Standardize Transaction Type name
-            clean_url = http_url.lower()
-            if "/transfer" in clean_url:
-                tx_type = "TRANSFER"
-            elif "/inquiry" in clean_url:
-                tx_type = "INQUIRY"
-            elif "/qr" in clean_url or "/pay" in clean_url:
-                tx_type = "QR_PAYMENT"
-            elif "/balance" in clean_url:
-                tx_type = "BALANCE"
-            elif "/stmt" in clean_url or "/statement" in clean_url:
-                tx_type = "STATEMENT"
-            elif clean_url == "/":
-                tx_type = "HEALTH_CHECK"
-            else:
-                tx_type = clean_url.strip("/") or "API_CALL"
+                reject_reason = "OK"
 
             lao_now = datetime.now(timezone(timedelta(hours=7)))
 
@@ -203,9 +300,11 @@ class FortiADCStreamer:
                 "http_method": http_method,
                 "http_url": http_url,
                 "tx_type": tx_type,
+                "tx_ref": tx_ref,
                 "http_agent": http_agent if http_agent != "none" else "",
                 "http_retcode": retcode,
                 "status_category": status_category,
+                "reject_reason": reject_reason,
                 "action": action,
                 "duration_ms": duration,
                 "bytes_in": ibytes,
@@ -259,6 +358,8 @@ class FortiADCStreamer:
                     "url": parsed["http_url"],
                     "retcode": parsed["http_retcode"],
                     "category": parsed["status_category"],
+                    "reason": parsed["reject_reason"],
+                    "tx_ref": parsed["tx_ref"],
                     "node": parsed["target_node"],
                     "latency_ms": parsed["duration_ms"],
                     "action": parsed["action"]
@@ -291,7 +392,8 @@ class FortiADCStreamer:
                     INSERT INTO fraud_monitoring.fortiadc_traffic_logs (
                         timestamp, devname, policy, vip, client_ip, bank_name,
                         real_server, target_node, http_method, http_url, http_agent,
-                        http_retcode, status_category, action, duration_ms, bytes_in, bytes_out, raw_log
+                        http_retcode, status_category, action, duration_ms, bytes_in, bytes_out, raw_log,
+                        tx_ref, reject_reason
                     ) VALUES %s
                 """
                 tuples = [
@@ -300,7 +402,7 @@ class FortiADCStreamer:
                         item["client_ip"], item["bank_name"], item["real_server"], item["target_node"],
                         item["http_method"], item["http_url"], item["http_agent"], item["http_retcode"],
                         item["status_category"], item["action"], item["duration_ms"], item["bytes_in"],
-                        item["bytes_out"], item["raw_log"]
+                        item["bytes_out"], item["raw_log"], item.get("tx_ref"), item.get("reject_reason")
                     )
                     for item in batch
                 ]

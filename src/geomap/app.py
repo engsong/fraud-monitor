@@ -1083,21 +1083,19 @@ def get_fortiadc_stats():
     """Returns comprehensive FortiADC Load Balancer traffic, reject status, latency, and node metrics"""
     time_range = request.args.get("time_range")
     from_arg = request.args.get("from")
+    filter_bank = (request.args.get("bank") or "").strip()
     where_time, range_id, label = get_time_interval_sql(time_range, from_arg)
     where_time = where_time.replace("created_at", "timestamp")
 
     # 1. Check Redis for real-time live pulse
     is_online = False
     live_rps = 0.0
-    recent_rejects = []
     if redis_client:
         try:
             last_seen = float(redis_client.get("fortiadc:live:last_seen") or 0)
             if time.time() - last_seen < 15:
                 is_online = True
             live_rps = float(redis_client.get("fortiadc:live:rps") or 0.0)
-            reject_raw = redis_client.lrange("fortiadc:recent_rejects", 0, 19)
-            recent_rejects = [json.loads(x) for x in reject_raw]
         except Exception:
             pass
 
@@ -1142,7 +1140,10 @@ def get_fortiadc_stats():
                     WHEN http_url ILIKE '%%/transfer%%' THEN 'TRANSFER'
                     WHEN http_url ILIKE '%%/inquiry%%' THEN 'INQUIRY'
                     WHEN http_url ILIKE '%%/qr%%' THEN 'QR_PAYMENT'
+                    WHEN http_url ILIKE '%%/crossborder%%' THEN 'CROSSBORDER'
+                    WHEN http_url ILIKE '%%/upi%%' THEN 'UPI'
                     WHEN http_url = '/' THEN 'HEALTH_CHECK'
+                    WHEN http_url IN ('unknown', 'none', '') AND http_method = 'OPTIONS' THEN 'OPTIONS_PROBE'
                     ELSE COALESCE(NULLIF(http_url, ''), 'OTHER')
                 END AS tx_type,
                 count(*) AS count,
@@ -1151,11 +1152,11 @@ def get_fortiadc_stats():
             WHERE {where_time}
             GROUP BY 1
             ORDER BY count DESC
-            LIMIT 6;
+            LIMIT 10;
         """)
         top_types = cur.fetchall()
 
-        # 4. Top Source Banks & Reject Ratios
+        # 4. Top Source Banks & Reject Ratios (ALL participating members, no LIMIT 6)
         cur.execute(f"""
             SELECT 
                 bank_name,
@@ -1167,31 +1168,63 @@ def get_fortiadc_stats():
             FROM fraud_monitoring.fortiadc_traffic_logs
             WHERE {where_time}
             GROUP BY bank_name
-            ORDER BY total_req DESC
-            LIMIT 6;
+            ORDER BY total_req DESC;
         """)
         top_banks = cur.fetchall()
 
-        # 5. Fallback for recent rejects from DB if Redis had none
-        if not recent_rejects:
-            cur.execute(f"""
-                SELECT 
-                    to_char(timestamp AT TIME ZONE 'Asia/Vientiane', 'HH24:MI:SS') AS time,
-                    bank_name AS bank,
-                    client_ip,
-                    http_url AS url,
-                    http_retcode AS retcode,
-                    status_category AS category,
-                    target_node AS node,
-                    duration_ms AS latency_ms,
-                    action
-                FROM fraud_monitoring.fortiadc_traffic_logs
-                WHERE status_category IN ('APP_REJECT', 'LB_REJECT')
-                  AND {where_time}
-                ORDER BY id DESC
-                LIMIT 20;
-            """)
-            recent_rejects = cur.fetchall()
+        # 5. Live Rejections Ledger (with optional Bank filter and enriched details)
+        bank_filter_clause = ""
+        query_params = []
+        if filter_bank and filter_bank.upper() != "ALL":
+            bank_filter_clause = " AND bank_name = %s "
+            query_params.append(filter_bank)
+
+        cur.execute(f"""
+            SELECT 
+                to_char(timestamp AT TIME ZONE 'Asia/Vientiane', 'HH24:MI:SS') AS time,
+                bank_name AS bank,
+                client_ip,
+                CASE 
+                    WHEN http_url IN ('unknown', 'none', '') AND http_method = 'OPTIONS' THEN 'OPTIONS / (Probe)'
+                    WHEN http_url IN ('unknown', 'none', '') THEN http_method || ' / (Unknown)'
+                    ELSE http_url 
+                END AS url,
+                CASE 
+                    WHEN http_url ILIKE '%%/transfer%%' THEN 'TRANSFER'
+                    WHEN http_url ILIKE '%%/inquiry%%' THEN 'INQUIRY'
+                    WHEN http_url ILIKE '%%/qr%%' THEN 'QR_PAYMENT'
+                    WHEN http_method = 'OPTIONS' THEN 'PROBE'
+                    ELSE http_method
+                END AS type,
+                http_retcode AS retcode,
+                status_category AS category,
+                COALESCE(
+                    NULLIF(reject_reason, ''),
+                    CASE 
+                        WHEN real_server = 'none' AND http_retcode = 400 THEN 'LB: 400 Bad Request (Missing Host / OPTIONS Probe)'
+                        WHEN http_retcode = 400 THEN 'APP: 400 Bad Request (Field Validation Error)'
+                        WHEN http_retcode = 401 THEN 'APP: 401 Unauthorized (Auth / Key Invalid)'
+                        WHEN http_retcode = 404 THEN 'APP: 404 Not Found (Invalid Endpoint Route)'
+                        WHEN http_retcode = 500 THEN 'APP: 500 Internal Error (Backend Exception)'
+                        WHEN status_category = 'LB_REJECT' THEN 'LB: Gateway / Network Drop'
+                        ELSE 'APP: HTTP ' || http_retcode::text
+                    END
+                ) AS reason,
+                COALESCE(NULLIF(tx_ref, ''), substring(raw_log from 'msg_id=([0-9]+)'), 'N/A') AS tx_ref,
+                CASE 
+                    WHEN target_node = 'STANDBY/OTHER' THEN 'LB_DIRECT'
+                    ELSE target_node
+                END AS node,
+                duration_ms AS latency_ms,
+                action
+            FROM fraud_monitoring.fortiadc_traffic_logs
+            WHERE status_category IN ('APP_REJECT', 'LB_REJECT')
+              AND {where_time}
+              {bank_filter_clause}
+            ORDER BY id DESC
+            LIMIT 50;
+        """, tuple(query_params))
+        recent_rejects = cur.fetchall()
 
         cur.close()
         conn.close()
@@ -1204,6 +1237,7 @@ def get_fortiadc_stats():
             "policy": "vs-lmps-app-8055",
             "time_range": range_id,
             "label": label,
+            "filter_bank": filter_bank or "ALL",
             "live_rps": live_rps,
             "macro": {
                 "total_requests": tot,
@@ -1425,4 +1459,10 @@ def live_stream():
     return Response(generate(), mimetype="text/event-stream")
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=3005, debug=False, threaded=True)
+    import argparse
+    default_port = int(os.getenv("PORT", os.getenv("GEOMAP_PORT", 3006)))
+    parser = argparse.ArgumentParser(description="LAPNet OCC Real-Time Geo Map Service")
+    parser.add_argument("--port", type=int, default=default_port, help=f"Port to listen on (default: {default_port})")
+    args, _ = parser.parse_known_args()
+    print(f"[*] Starting LAPNet OCC Geomap Server on port {args.port}...")
+    app.run(host="0.0.0.0", port=args.port, debug=False, threaded=True)

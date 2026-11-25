@@ -2227,7 +2227,7 @@
        FORTIADC LOAD BALANCER & GATEWAY INSPECTOR MODAL
        ========================================== -->
   <div id="modal-fortiadc-inspector" class="modal-overlay" style="display: none;" onclick="if(event.target === this) closeFortiADCModal();">
-    <div class="modal-window" style="width: 950px;">
+    <div class="modal-window" style="width: 1040px; max-width: 96vw;">
       <!-- Modal Header -->
       <div class="modal-hdr">
         <div style="display: flex; align-items: center; gap: 10px;">
@@ -2339,49 +2339,70 @@
 
           <!-- Top Banks Volume & Rejects -->
           <div style="background: #081a28; border: 1px solid var(--border-blue); border-radius: 8px; padding: 12px;">
-            <div style="font-size: 9.5px; font-weight: 800; color: #ffffff; text-transform: uppercase; margin-bottom: 8px;">
-              Top Originating Banks via FortiADC
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <div style="font-size: 9.5px; font-weight: 800; color: #ffffff; text-transform: uppercase;">
+                Originating Banks via FortiADC <span id="lb-banks-count-badge" style="font-size: 8px; color: var(--neon-cyan); background: rgba(0, 242, 254, 0.15); padding: 1px 6px; border-radius: 4px; margin-left: 4px;">ALL MEMBERS</span>
+              </div>
+              <span style="font-size: 8px; color: var(--neon-amber);">💡 Click reject count to filter ledger</span>
             </div>
-            <table style="width: 100%; border-collapse: collapse; font-size: 9px; font-family: monospace;">
-              <thead>
-                <tr style="border-bottom: 1px solid var(--border-blue); color: var(--text-dim); text-align: left;">
-                  <th style="padding: 4px 6px;">Bank</th>
-                  <th style="padding: 4px 6px; text-align: center;">Volume</th>
-                  <th style="padding: 4px 6px; text-align: center;">App Rej</th>
-                  <th style="padding: 4px 6px; text-align: right;">Latency</th>
-                </tr>
-              </thead>
-              <tbody id="lb-banks-tbody">
-                <tr><td colspan="4" style="text-align: center; padding: 10px; color: var(--text-dim);">Loading member bank traffic...</td></tr>
-              </tbody>
-            </table>
+            <div style="max-height: 200px; overflow-y: auto;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 9px; font-family: monospace;">
+                <thead>
+                  <tr style="border-bottom: 1px solid var(--border-blue); color: var(--text-dim); text-align: left; position: sticky; top: 0; background: #081a28;">
+                    <th style="padding: 4px 6px;">Bank</th>
+                    <th style="padding: 4px 6px; text-align: center;">Volume</th>
+                    <th style="padding: 4px 6px; text-align: center;">App Rej</th>
+                    <th style="padding: 4px 6px; text-align: center;">LB Drops</th>
+                    <th style="padding: 4px 6px; text-align: right;">Latency</th>
+                  </tr>
+                </thead>
+                <tbody id="lb-banks-tbody">
+                  <tr><td colspan="5" style="text-align: center; padding: 10px; color: var(--text-dim);">Loading member bank traffic...</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
         <!-- Row 4: Live Rejections Ledger -->
-        <div style="background: #081a28; border: 1px solid var(--border-blue); border-radius: 8px; padding: 12px;">
+        <div id="lb-rejects-card" style="background: #081a28; border: 1px solid var(--border-blue); border-radius: 8px; padding: 12px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <span style="font-size: 9.5px; font-weight: 800; color: #ffffff; text-transform: uppercase;">
-              ⚠️ Live Transaction Rejection Audit Ledger (App & Network Rejections)
-            </span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 9.5px; font-weight: 800; color: #ffffff; text-transform: uppercase;">
+                ⚠️ Live Transaction Rejection Audit Ledger (App & Network Rejections)
+              </span>
+              <span id="lb-ledger-count-pill" style="font-size: 8px; background: rgba(255, 34, 85, 0.2); color: #ff2255; padding: 1px 6px; border-radius: 3px; font-weight: 700;">0 Rejects</span>
+            </div>
             <span style="font-size: 8px; color: var(--text-dim);">Real-time stream from FortiADC syslog</span>
           </div>
-          <div style="max-height: 180px; overflow-y: auto;">
+
+          <!-- Active Filter Pill Banner -->
+          <div id="lb-ledger-filter-bar" style="display: none; align-items: center; justify-content: space-between; background: rgba(0, 242, 254, 0.08); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 4px; padding: 4px 10px; margin-bottom: 8px; font-size: 9px; font-family: monospace;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="color: var(--text-dim);">Filtering by Bank:</span>
+              <span id="lb-filtered-bank-badge" style="color: #000; font-weight: 800; background: var(--neon-cyan); padding: 1px 6px; border-radius: 3px;"></span>
+              <span style="color: var(--text-dim); font-size: 8px;">(Showing only rejections for this member bank)</span>
+            </div>
+            <button onclick="clearRejectsBankFilter()" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #ffffff; font-size: 8px; border-radius: 3px; cursor: pointer; padding: 2px 8px;">✕ Clear Filter</button>
+          </div>
+
+          <div style="max-height: 220px; overflow-y: auto;">
             <table style="width: 100%; border-collapse: collapse; font-size: 8.5px; font-family: monospace;">
               <thead>
                 <tr style="border-bottom: 1px solid var(--border-blue); color: var(--text-dim); text-align: left; position: sticky; top: 0; background: #081a28;">
                   <th style="padding: 4px;">Time (GMT+7)</th>
+                  <th style="padding: 4px;">Reference / TxID</th>
                   <th style="padding: 4px;">Bank</th>
                   <th style="padding: 4px;">Client IP</th>
                   <th style="padding: 4px;">Type / Path</th>
                   <th style="padding: 4px; text-align: center;">HTTP Code</th>
-                  <th style="padding: 4px; text-align: center;">Reject Category</th>
+                  <th style="padding: 4px;">Reject Category & Reason</th>
                   <th style="padding: 4px; text-align: center;">Node</th>
                   <th style="padding: 4px; text-align: right;">Latency</th>
                 </tr>
               </thead>
               <tbody id="lb-rejects-tbody">
-                <tr><td colspan="8" style="text-align: center; padding: 12px; color: var(--text-dim);">No rejections logged in window.</td></tr>
+                <tr><td colspan="9" style="text-align: center; padding: 12px; color: var(--text-dim);">No rejections logged in window.</td></tr>
               </tbody>
             </table>
           </div>
@@ -2720,10 +2741,13 @@
       if (modal) modal.style.display = 'none';
     }
 
+    let selectedLbBankFilter = null;
+
     function fetchFortiADCData() {
       const q = new URLSearchParams();
       if (currentTimeRange) q.set('time_range', currentTimeRange);
       if (currentFromParam) q.set('from', currentFromParam);
+      if (selectedLbBankFilter) q.set('bank', selectedLbBankFilter);
 
       fetch(`/api/fortiadc-stats?${q.toString()}`)
         .then(res => res.json())
@@ -2734,6 +2758,21 @@
         .catch(err => {
           console.error("FortiADC fetch error:", err);
         });
+    }
+
+    function filterRejectsByBank(bankName) {
+      if (!bankName) return;
+      selectedLbBankFilter = bankName;
+      fetchFortiADCData();
+      const ledgerCard = document.getElementById('lb-rejects-card');
+      if (ledgerCard) {
+        ledgerCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    function clearRejectsBankFilter() {
+      selectedLbBankFilter = null;
+      fetchFortiADCData();
     }
 
     function renderFortiADCModal(d) {
@@ -2808,45 +2847,98 @@
         }
       }
 
-      // Render Top Banks
+      // Render Top Banks (All participating members)
       const banksTbody = document.getElementById('lb-banks-tbody');
+      const banksBadge = document.getElementById('lb-banks-count-badge');
+      if (banksBadge && d.top_banks) {
+        banksBadge.innerText = `${d.top_banks.length} MEMBERS`;
+      }
       if (banksTbody) {
         if (d.top_banks && d.top_banks.length > 0) {
-          banksTbody.innerHTML = d.top_banks.map(b => `
-            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-              <td style="padding: 4px 6px; font-weight: 700; color: #ffffff;">${b.bank_name}</td>
-              <td style="padding: 4px 6px; text-align: center; color: var(--neon-teal);">${(b.total_req || 0).toLocaleString()}</td>
-              <td style="padding: 4px 6px; text-align: center; color: ${(b.app_reject_cnt + b.lb_reject_cnt) > 0 ? 'var(--neon-red)' : 'var(--text-dim)'};">${(b.app_reject_cnt || 0) + (b.lb_reject_cnt || 0)}</td>
-              <td style="padding: 4px 6px; text-align: right; color: var(--text-dim);">${b.avg_latency_ms || 0}ms</td>
-            </tr>
-          `).join('');
+          banksTbody.innerHTML = d.top_banks.map(b => {
+            const hasAppRej = (b.app_reject_cnt || 0) > 0;
+            const hasLbRej = (b.lb_reject_cnt || 0) > 0;
+            const isCurrentFilter = selectedLbBankFilter === b.bank_name;
+            return `
+              <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); background: ${isCurrentFilter ? 'rgba(0,242,254,0.1)' : 'transparent'};">
+                <td style="padding: 4px 6px; font-weight: 700; color: #ffffff;">
+                  ${isCurrentFilter ? '▶ ' : ''}${b.bank_name}
+                </td>
+                <td style="padding: 4px 6px; text-align: center; color: var(--neon-teal);">${(b.total_req || 0).toLocaleString()}</td>
+                <td style="padding: 4px 6px; text-align: center;">
+                  ${hasAppRej ? `
+                    <span onclick="filterRejectsByBank('${b.bank_name}')" 
+                          style="cursor: pointer; padding: 1px 6px; border-radius: 3px; background: rgba(255, 184, 0, 0.2); color: #ffb800; border: 1px solid rgba(255, 184, 0, 0.5); font-weight: 800;"
+                          title="Click to filter ${b.bank_name} rejections in audit ledger below">
+                      ${b.app_reject_cnt} 🔍
+                    </span>
+                  ` : `<span style="color: var(--text-dim);">0</span>`}
+                </td>
+                <td style="padding: 4px 6px; text-align: center;">
+                  ${hasLbRej ? `
+                    <span onclick="filterRejectsByBank('${b.bank_name}')" 
+                          style="cursor: pointer; padding: 1px 6px; border-radius: 3px; background: rgba(255, 34, 85, 0.2); color: #ff2255; border: 1px solid rgba(255, 34, 85, 0.5); font-weight: 800;"
+                          title="Click to filter ${b.bank_name} drops in audit ledger below">
+                      ${b.lb_reject_cnt} 🔍
+                    </span>
+                  ` : `<span style="color: var(--text-dim);">0</span>`}
+                </td>
+                <td style="padding: 4px 6px; text-align: right; color: var(--text-dim);">${b.avg_latency_ms || 0}ms</td>
+              </tr>
+            `;
+          }).join('');
         } else {
-          banksTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 10px; color: var(--text-dim);">No banks logged in window</td></tr>';
+          banksTbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 10px; color: var(--text-dim);">No banks logged in window</td></tr>';
+        }
+      }
+
+      // Filter Bar Update
+      const filterBar = document.getElementById('lb-ledger-filter-bar');
+      const filterBadge = document.getElementById('lb-filtered-bank-badge');
+      if (filterBar && filterBadge) {
+        if (selectedLbBankFilter) {
+          filterBar.style.display = 'flex';
+          filterBadge.innerText = selectedLbBankFilter;
+        } else {
+          filterBar.style.display = 'none';
         }
       }
 
       // Render Rejections Ledger
       const rejectsTbody = document.getElementById('lb-rejects-tbody');
+      const countPill = document.getElementById('lb-ledger-count-pill');
+      if (countPill) {
+        const cnt = d.recent_rejects ? d.recent_rejects.length : 0;
+        countPill.innerText = `${cnt} Rejects${selectedLbBankFilter ? ' (' + selectedLbBankFilter + ')' : ''}`;
+      }
       if (rejectsTbody) {
         if (d.recent_rejects && d.recent_rejects.length > 0) {
           rejectsTbody.innerHTML = d.recent_rejects.map(r => `
             <tr style="border-bottom: 1px solid rgba(255,255,255,0.04); background: ${r.category === 'LB_REJECT' ? 'rgba(255,34,85,0.08)' : 'rgba(255,184,0,0.04)'};">
-              <td style="padding: 4px; color: var(--text-dim);">${r.time}</td>
+              <td style="padding: 4px; color: var(--text-dim); white-space: nowrap;">${r.time}</td>
+              <td style="padding: 4px; color: var(--neon-cyan); font-weight: 700; white-space: nowrap;">${r.tx_ref || 'N/A'}</td>
               <td style="padding: 4px; font-weight: 700; color: #fff;">${r.bank}</td>
-              <td style="padding: 4px; color: var(--text-dim);">${r.client_ip}</td>
-              <td style="padding: 4px; color: var(--neon-cyan);">${r.url || r.type}</td>
-              <td style="padding: 4px; text-align: center; font-weight: 800; color: ${r.retcode >= 500 ? 'var(--neon-red)' : 'var(--neon-amber)'};">${r.retcode}</td>
-              <td style="padding: 4px; text-align: center;">
-                <span style="font-size: 8px; font-weight: 800; padding: 1px 5px; border-radius: 3px; background: ${r.category === 'LB_REJECT' ? 'rgba(255,34,85,0.2); color: #ff2255;' : 'rgba(255,184,0,0.2); color: #ffb800;'}">
-                  ${r.category === 'LB_REJECT' ? 'LB / NETWORK' : 'APP REJECT'}
+              <td style="padding: 4px; color: var(--text-dim); white-space: nowrap;">${r.client_ip}</td>
+              <td style="padding: 4px; color: #ffffff; max-width: 170px; word-break: break-all;">${r.url || r.type}</td>
+              <td style="padding: 4px; text-align: center; font-weight: 800;">
+                <span style="padding: 1px 5px; border-radius: 3px; font-size: 8.5px; background: ${r.retcode >= 500 ? 'rgba(255,34,85,0.2)' : 'rgba(255,184,0,0.2)'}; color: ${r.retcode >= 500 ? 'var(--neon-red)' : 'var(--neon-amber)'};">
+                  ${r.retcode}
                 </span>
               </td>
-              <td style="padding: 4px; text-align: center; color: var(--neon-teal);">${r.node || 'N/A'}</td>
+              <td style="padding: 4px;">
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                  <span style="font-size: 7.5px; font-weight: 800; padding: 1px 4px; border-radius: 2px; width: fit-content; background: ${r.category === 'LB_REJECT' ? 'rgba(255,34,85,0.2); color: #ff2255;' : 'rgba(255,184,0,0.2); color: #ffb800;'}">
+                    ${r.category === 'LB_REJECT' ? 'LB / NETWORK DROP' : 'APPLICATION REJECT'}
+                  </span>
+                  <span style="font-size: 8px; color: #cbd5e1;">${r.reason || (r.retcode === 400 ? 'Bad Request' : 'Rejection')}</span>
+                </div>
+              </td>
+              <td style="padding: 4px; text-align: center; color: var(--neon-teal); font-weight: 700;">${r.node || 'N/A'}</td>
               <td style="padding: 4px; text-align: right; color: var(--text-dim);">${r.latency_ms || 0}ms</td>
             </tr>
           `).join('');
         } else {
-          rejectsTbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 12px; color: #10b981;">✓ 100% Normal Clearing (Zero Rejections in Window)</td></tr>';
+          rejectsTbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 14px; color: #10b981;">✓ Zero Rejections logged for ${selectedLbBankFilter ? selectedLbBankFilter : 'selected window'}</td></tr>`;
         }
       }
     }

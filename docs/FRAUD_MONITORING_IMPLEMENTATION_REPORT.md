@@ -6,7 +6,7 @@
 **Status**: Production Active (Deployed & Operational)  
 **Host Server**: `175.0.198.10` (`WEBSERVER01`)  
 **Switching Log Ingestion Nodes**: VM1 (`175.2.0.23`), VM2 (`175.2.0.24`)  
-**Active Production Port**: `http://175.0.198.10:3005`
+**Active Production Port**: `http://175.0.198.10:3006`
 
 ---
 
@@ -15,6 +15,7 @@
 
 | Version | Date / Time (GMT+7) | Category | Description of Changes | Modified Files / Modules | Deployed Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
+| **v1.0.12** | 2026-11-25 11:15 | OCC Audit & Network Mapping | Configured port 3006 migration (`PORT=3006`). Applied authoritative member bank subnet mapping from MariaDB `member` table (all 25 member subnets). Added granular HTTP 400 root cause analysis (`Missing Host Header / OPTIONS Probe` vs `Field Validation Error`), explicit Rejection Category & Detail breakdown (`APP REJECT` vs `LB DROP`), new `Reference / TxID` column in audit ledger, interactive click-to-filter on `App Rej` counts with active filter banner, and full participating member bank listing (removed `LIMIT 6`). | `src/ingestion/fortiadc_streamer.py`, `src/geomap/app.py`, `src/geomap/templates/index.html`, `docs/FRAUD_MONITORING_IMPLEMENTATION_REPORT.md` | ✅ Live on 175.0.198.10:3006 |
 | **v1.0.11** | 2026-11-25 10:42 | Infrastructure & Edge Monitoring | Implemented real-time FortiADC Load Balancer (`LMDCLB01001` / `175.2.2.40`) UDP Syslog ingestion daemon (`src/ingestion/fortiadc_streamer.py`), PostgreSQL audit table `fraud_monitoring.fortiadc_traffic_logs`, Redis live telemetry keys, REST API `/api/fortiadc-stats`, live OCC KPI status pill, and Gateway & Transaction Rejection Inspector modal distinguishing Application Rejects (`400`, `500`) vs Network/LB Rejects (`502`, `503`, WAF drops). Configured systemd service `lapnet-fortiadc-streamer.service`. | `src/ingestion/fortiadc_streamer.py`, `src/geomap/app.py`, `src/geomap/templates/index.html`, `config/systemd/lapnet-fortiadc-streamer.service` | ✅ Live on 175.0.198.10 |
 | **v1.0.10** | 2026-10-26 15:28 | UI & Reporting | Added "📈 Fraud Statistics Report" option into the `Report ▼` dropdown menu and quick "📈 Stats" pill button in the Live Alerts header. Implemented dedicated executive statistics report route (`/report/statistics`) and A4 template (`statistics_report.html`) for clean 2-page executive printing. | `src/geomap/templates/statistics_report.html`, `src/geomap/templates/index.html`, `src/geomap/app.py` | ✅ Live on 175.0.198.10 |
 | **v1.0.9** | 2026-10-26 15:15 | Major Feature | Added comprehensive Real-Time Fraud Transaction Statistics Engine (`compute_fraud_statistics` & `/api/fraud-stats`), macro KPI metrics, financial exposure (LAK, THB, USD), dual-node balance (VM1 vs VM2), Top 5 Source Banks, Top 5 Mule Destination Banks, Top 5 Interbank Corridors, Top 6 Rules, and Executive Forensic Typology Analysis across `/report/timeline` and `/report/<tx_id>`. Expanded numeric formatting up to 14-digit multi-billion scale (`FM999,999,999,999,990.00`). | `src/geomap/app.py`, `src/geomap/templates/timeline_report.html`, `src/geomap/templates/fraud_report.html` | ✅ Live on 175.0.198.10 |
@@ -335,9 +336,74 @@ Implemented in `src/ingestion/fortiadc_streamer.py`, stored in `fraud_monitoring
   - Top originating member banks with total traffic and reject ratios.
   - Live rejections audit ledger listing timestamp, bank, client IP, URI, HTTP return code, rejection category, and node.
 
+### 11.4 FortiADC Precision Audit Ledger, Bank Subnet Mapping & Port 3006 Deployment (v1.0.12 - 2026-11-25 11:15 GMT+7)
+
+1. **Port Migration (Port 3006)**:
+   - Updated `src/geomap/app.py` to support dynamic port resolution via environment variable `PORT` (or `GEOMAP_PORT`) and command-line flag `--port`, defaulting to `3006`.
+   - Updated systemd service configuration `lapnet-geomap.service` to run on dedicated port `3006`.
+
+2. **Authoritative Member Bank Subnet Mapping (`BANK_IP_MAP`)**:
+   - Replaced preliminary heuristic mapping with ground-truth mapping extracted directly from the production MariaDB `member` table on core node `175.2.0.30`:
+     - `175.28.1.x` ➔ `BCEL` (also handles LandTax, RoadTax, Finpass gateways)
+     - `175.28.2.x` ➔ `APB` (Agricultural Promotion Bank inward inquiry gateway)
+     - `175.28.3.x` ➔ `LDB` (Lao Development Bank consumer gateway)
+     - `175.28.4.x` ➔ `LVB` (Lao-Viet Bank core switch)
+     - `175.28.5.x` ➔ `MJB` (Maruhan Japan Bank Lao domestic payment gateway)
+     - `175.28.6.x` ➔ `JDB` (Joint Development Bank / jdblapnetapipro gateway)
+     - `175.28.7.x` ➔ `ICBC` (Industrial and Commercial Bank of China Vientiane)
+     - `175.28.8.x` ➔ `CAMBODIA` (NBC / Bakong QR Cross-Border & ACLEDA)
+     - `175.28.9.x` ➔ `LCNB` (Lao-China Normal Bank)
+     - `175.28.10.x` ➔ `BOC` (Bank of China Vientiane)
+     - `175.28.11.x` ➔ `BIC` (BIC Bank Lao)
+     - `175.28.12.x` ➔ `VTB` (VietinBank Lao remittance gateway)
+     - `175.28.13.x` ➔ `SACOM` (Sacombank Lao)
+     - `175.28.14.x` ➔ `IDB` (Industrial Development Bank)
+     - `175.28.15.x` ➔ `STB` (Sathapana Bank Lao)
+     - `175.28.16.x` ➔ `PBLL` (Public Bank Berhad Lao)
+     - `175.28.17.x` ➔ `KBANK` (Kasikornbank Lao)
+     - `175.28.18.x` ➔ `BFL` (Banque Franco-Lao)
+     - `175.28.19.1` ➔ `VMB` (MB Bank Lao)
+     - `175.28.19.4` ➔ `Umoney.MB` (Star Telecom Umoney gateway)
+     - `175.28.19.x` ➔ `APB`
+     - `175.28.20.x` ➔ `PSV` (Phongsavanh Bank)
+     - `175.28.21.x` ➔ `VCBLAO` (Vietcombank Lao)
+     - `175.28.22.x` ➔ `LFX` (Lao Foreign Exchange)
+     - `175.28.23.1` ➔ `LBB` (Lao-Banque Commerciale)
+     - `175.28.23.2` ➔ `FINA.LBB`
+     - `175.28.23.x` ➔ `ACLE`
+     - `175.28.24.x` ➔ `BIC`
+     - `175.28.25.x` ➔ `VIB`
+     - `203.184.80.x` ➔ `UPI` (UnionPay International Cross-Border Gateway)
+     - `175.29.x.x` ➔ `UMONEY_GW` (Ministry of Finance / Single Window Tax Gateways)
+     - `175.2.0.23` / `175.2.0.24` ➔ `VM1_CORE` / `VM2_CORE`
+     - `10.79.79.177` / `10.3.0.x` ➔ `CORE_PROBE` (Internal Monitoring Probes)
+     - `175.17.4.x` ➔ `LAPNET_ADMIN` (LAPNet OCC Management Console)
+   - Executed database migration script to backfill existing historical records in `fraud_monitoring.fortiadc_traffic_logs`.
+
+3. **HTTP Code 400 Diagnosis & Classification**:
+   - *LB Rejections (Code 400, Real Server `none`, URI `unknown`)*: Identified as TCP/HTTP `OPTIONS` health check probes arriving without a valid HTTP `Host:` header (violating RFC 7230 / RFC 9112). FortiADC immediately returns `400 Bad Request` at the load balancer proxy boundary before forwarding to backend apps. Displayed in ledger as `OPTIONS / (Probe)` with description `LB: 400 Bad Request (Missing Host / OPTIONS Probe)`.
+   - *App Rejections (Code 400, Real Server `lmps-app1` / `lmps-app2`)*: Backend LMPS switching app responded with `400 Bad Request` due to field validation errors or malformed payloads. Displayed as `APP: 400 Bad Request (Field Validation Error)`.
+
+4. **Granular Rejection Categories & Reasons**:
+   - Rejection audit ledger now provides dual-layered classification:
+     - Badge source: `APPLICATION REJECT` vs `LB / NETWORK DROP`.
+     - Granular reason: Identifies exact cause including `APP: 404 Route Not Found`, `APP: 401 Unauthorized`, `APP: 500 Internal Error`, `LB: Missing Host Header`, or `LB: WAF / Policy Drop`.
+
+5. **Traceable Transaction Reference (`Reference / TxID`)**:
+   - Added `tx_ref` column across streamer ingestion pipeline, PostgreSQL schema (`fraud_monitoring.fortiadc_traffic_logs`), and OCC audit ledger table.
+   - Extracts business references (e.g., `Search=FQR...`) from query parameters, falling back to unique FortiADC message tracking identifiers (`LB-114164435`).
+
+6. **Interactive Click-to-Filter on Reject Counts**:
+   - In `Top Originating Banks via FortiADC`, clicking any member bank's `App Rej` or `LB Drops` badge instantly filters the `Live Rejections Audit Ledger` to display only events for that selected institution.
+   - Highlights active filter banner with a `[✕ Clear Filter]` button and automatically scrolls to the audit ledger.
+
+7. **Full Participating Member Banks Listing**:
+   - Removed `LIMIT 6` restriction from `/api/fortiadc-stats` query.
+   - Table now displays all active member institutions with a scrollable container and live member count badge.
+
 ---
 
 *Sign-off: LAPNet Cybersecurity & Fraud Prevention Engineering Team*  
-*Host: WEBSERVER01 (175.0.198.10) • Production Branch: main*
+*Host: WEBSERVER01 (175.0.198.10) • Production Port: 3006 • Production Branch: main*
 
 
