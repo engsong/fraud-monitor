@@ -2296,15 +2296,15 @@
               <span style="font-size: 8px; color: var(--text-dim);">App vs Network Health</span>
             </div>
             <!-- Tri-color Stacked Bar -->
-            <div style="height: 14px; border-radius: 4px; overflow: hidden; display: flex; background: #030d14; border: 1px solid rgba(255,255,255,0.1);">
-              <div id="lb-bar-success" style="width: 95%; background: #10b981;" title="Approved / 200 OK"></div>
-              <div id="lb-bar-app-rej" style="width: 4%; background: #ffb800;" title="App Rejects (400/500)"></div>
-              <div id="lb-bar-lb-rej" style="width: 1%; background: #ff2255;" title="LB/Network Drops"></div>
+            <div style="height: 14px; border-radius: 4px; overflow: hidden; display: flex; background: #030d14; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;">
+              <div id="lb-bar-success" onclick="filterRejectsByBoundary('all')" style="width: 95%; background: #10b981;" title="Click to view all approved"></div>
+              <div id="lb-bar-app-rej" onclick="filterRejectsByBoundary('app')" style="width: 4%; background: #ffb800;" title="Click to inspect App Rejects (400/500)"></div>
+              <div id="lb-bar-lb-rej" onclick="filterRejectsByBoundary('lb')" style="width: 1%; background: #ff2255;" title="Click to inspect LB/Network Drops"></div>
             </div>
             <div style="display: flex; justify-content: space-between; font-size: 9px; margin-top: 6px; font-family: monospace;">
-              <span style="color: #10b981;">● Approved (<span id="lb-legend-success">--%</span>)</span>
-              <span style="color: #ffb800;">● App Rejects (<span id="lb-legend-app">--%</span>)</span>
-              <span style="color: #ff2255;">● LB Drops (<span id="lb-legend-lb">--%</span>)</span>
+              <span style="color: #10b981; cursor: pointer;" onclick="filterRejectsByBoundary('all')">● Approved (<span id="lb-legend-success">--%</span>)</span>
+              <span style="color: #ffb800; cursor: pointer; text-decoration: underline;" onclick="filterRejectsByBoundary('app')" title="Click to view App Rejection details">● App Rejects (<span id="lb-legend-app">--%</span>) 🔍</span>
+              <span style="color: #ff2255; cursor: pointer; text-decoration: underline;" onclick="filterRejectsByBoundary('lb')" title="Click to view LB Drop details">● LB Drops (<span id="lb-legend-lb">--%</span>) 🔍</span>
             </div>
           </div>
 
@@ -2763,12 +2763,14 @@
     }
 
     let selectedLbBankFilter = null;
+    let selectedLbBoundaryFilter = null;
 
     function fetchFortiADCData() {
       const q = new URLSearchParams();
       if (currentTimeRange) q.set('time_range', currentTimeRange);
       if (currentFromParam) q.set('from', currentFromParam);
       if (selectedLbBankFilter) q.set('bank', selectedLbBankFilter);
+      if (selectedLbBoundaryFilter && selectedLbBoundaryFilter !== 'all') q.set('boundary', selectedLbBoundaryFilter);
 
       fetch(`/api/fortiadc-stats?${q.toString()}`)
         .then(res => res.json())
@@ -2779,6 +2781,17 @@
         .catch(err => {
           console.error("FortiADC fetch error:", err);
         });
+    }
+
+    function filterRejectsByBoundary(boundary) {
+      selectedLbBoundaryFilter = (boundary === 'all') ? null : boundary;
+      fetchFortiADCData();
+      const ledgerCard = document.getElementById('lb-rejects-card');
+      if (ledgerCard) {
+        ledgerCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        ledgerCard.style.boxShadow = '0 0 15px rgba(255, 34, 85, 0.5)';
+        setTimeout(() => { ledgerCard.style.boxShadow = 'none'; }, 2000);
+      }
     }
 
     function filterRejectsByBank(bankName) {
@@ -2793,6 +2806,7 @@
 
     function clearRejectsBankFilter() {
       selectedLbBankFilter = null;
+      selectedLbBoundaryFilter = null;
       fetchFortiADCData();
     }
 
@@ -2842,15 +2856,52 @@
       const legLb = document.getElementById('lb-legend-lb');
       if (legLb) legLb.innerText = `${m.lb_reject_pct}%`;
 
-      // Node Bar
+      // Node Bar (Threshold rule: >= 80% turns RED #ff2255)
       const barVm1 = document.getElementById('lb-bar-vm1');
-      if (barVm1) barVm1.style.width = `${m.vm1_pct}%`;
       const barVm2 = document.getElementById('lb-bar-vm2');
-      if (barVm2) barVm2.style.width = `${m.vm2_pct}%`;
       const legVm1 = document.getElementById('lb-legend-vm1');
-      if (legVm1) legVm1.innerText = `${m.vm1_pct}% (${(m.vm1_count || 0).toLocaleString()})`;
       const legVm2 = document.getElementById('lb-legend-vm2');
-      if (legVm2) legVm2.innerText = `${m.vm2_pct}% (${(m.vm2_count || 0).toLocaleString()})`;
+
+      if (barVm1) {
+        barVm1.style.width = `${m.vm1_pct}%`;
+        if (m.vm1_pct >= 80) {
+          barVm1.style.background = '#ff2255';
+          barVm1.style.boxShadow = '0 0 10px rgba(255, 34, 85, 0.7)';
+        } else {
+          barVm1.style.background = '#00f2fe';
+          barVm1.style.boxShadow = 'none';
+        }
+      }
+      if (barVm2) {
+        barVm2.style.width = `${m.vm2_pct}%`;
+        if (m.vm2_pct >= 80) {
+          barVm2.style.background = '#ff2255';
+          barVm2.style.boxShadow = '0 0 10px rgba(255, 34, 85, 0.7)';
+        } else {
+          barVm2.style.background = '#0f766e';
+          barVm2.style.boxShadow = 'none';
+        }
+      }
+      if (legVm1) {
+        legVm1.innerText = `${m.vm1_pct}% (${(m.vm1_count || 0).toLocaleString()})`;
+        if (m.vm1_pct >= 80) {
+          legVm1.style.color = '#ff2255';
+          legVm1.style.fontWeight = 'bold';
+        } else {
+          legVm1.style.color = '#00f2fe';
+          legVm1.style.fontWeight = 'normal';
+        }
+      }
+      if (legVm2) {
+        legVm2.innerText = `${m.vm2_pct}% (${(m.vm2_count || 0).toLocaleString()})`;
+        if (m.vm2_pct >= 80) {
+          legVm2.style.color = '#ff2255';
+          legVm2.style.fontWeight = 'bold';
+        } else {
+          legVm2.style.color = '#0f766e';
+          legVm2.style.fontWeight = 'normal';
+        }
+      }
 
       // Render Transaction Types
       const typesTbody = document.getElementById('lb-types-tbody');

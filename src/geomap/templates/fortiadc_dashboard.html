@@ -571,36 +571,36 @@
     <!-- Row 2: Status Breakdown & Node Balance -->
     <div class="split-grid">
       <!-- Traffic Resolution -->
-      <div class="panel-card">
+      <div class="panel-card" id="card-resolution">
         <div class="panel-hdr">
           <span class="panel-title">Traffic Resolution Distribution</span>
-          <span style="font-size: 8.5px; color: var(--text-dim);">App vs Perimeter Gateway Health</span>
+          <span style="font-size: 8.5px; color: var(--neon-cyan); cursor: pointer;" onclick="inspectRejectionDetails('all')">💡 Click bar or legend to inspect rejected txns</span>
         </div>
-        <div class="res-bar-container">
-          <div id="bar-approved" class="res-bar-approved" style="width: 85%;"></div>
-          <div id="bar-app-rej" class="res-bar-app-rej" style="width: 10%;"></div>
-          <div id="bar-lb-drop" class="res-bar-lb-drop" style="width: 5%;"></div>
+        <div class="res-bar-container" style="cursor: pointer;">
+          <div id="bar-approved" class="res-bar-approved" style="width: 85%;" onclick="inspectRejectionDetails('all')" title="Click to view all transactions"></div>
+          <div id="bar-app-rej" class="res-bar-app-rej" style="width: 10%;" onclick="inspectRejectionDetails('app')" title="🔍 Click to inspect App Rejections detail"></div>
+          <div id="bar-lb-drop" class="res-bar-lb-drop" style="width: 5%;" onclick="inspectRejectionDetails('lb')" title="🔍 Click to inspect FortiADC LB Drops detail"></div>
         </div>
         <div style="display: flex; justify-content: space-between; font-size: 9px; font-family: 'JetBrains Mono', monospace;">
-          <span style="color: #10b981;">● Approved (<span id="leg-approved">--%</span>)</span>
-          <span style="color: #ffb800;">● App Rejects (<span id="leg-app">--%</span>)</span>
-          <span style="color: #ff2255;">● LB Drops (<span id="leg-lb">--%</span>)</span>
+          <span id="leg-approved-wrap" style="color: #10b981; cursor: pointer;" onclick="inspectRejectionDetails('all')">● Approved (<span id="leg-approved">--%</span>)</span>
+          <span id="leg-app-wrap" style="color: #ffb800; cursor: pointer; padding: 2px 6px; border-radius: 4px; background: rgba(255, 184, 0, 0.1); border: 1px solid rgba(255, 184, 0, 0.3);" onclick="inspectRejectionDetails('app')" title="Click to see details of transactions rejected by App">● App Rejects (<span id="leg-app">--%</span>) 🔍</span>
+          <span id="leg-lb-wrap" style="color: #ff2255; cursor: pointer; padding: 2px 6px; border-radius: 4px; background: rgba(255, 34, 85, 0.1); border: 1px solid rgba(255, 34, 85, 0.3);" onclick="inspectRejectionDetails('lb')" title="Click to see details of transactions dropped by FortiADC LB">● LB Drops (<span id="leg-lb">--%</span>) 🔍</span>
         </div>
       </div>
 
       <!-- Switching Node Load Balance -->
-      <div class="panel-card">
+      <div class="panel-card" id="card-node-balance">
         <div class="panel-hdr">
           <span class="panel-title">Switching Node Load Balancing</span>
-          <span style="font-size: 8.5px; color: var(--text-dim);">Real Server Weighted Distribution</span>
+          <span id="node-overload-alert" style="font-size: 8.5px; color: var(--text-dim);">Real Server Weighted Distribution</span>
         </div>
         <div class="res-bar-container">
-          <div id="bar-vm1" class="node-bar-vm1" style="width: 33%;"></div>
-          <div id="bar-vm2" class="node-bar-vm2" style="width: 67%;"></div>
+          <div id="bar-vm1" class="node-bar-vm1" style="width: 33%; transition: all 0.3s;"></div>
+          <div id="bar-vm2" class="node-bar-vm2" style="width: 67%; transition: all 0.3s;"></div>
         </div>
         <div style="display: flex; justify-content: space-between; font-size: 9px; font-family: 'JetBrains Mono', monospace;">
-          <span style="color: #00f2fe;">● lmps-app1 VM1 (<span id="leg-vm1">--%</span>)</span>
-          <span style="color: #0f766e;">● lmps-app2 VM2 (<span id="leg-vm2">--%</span>)</span>
+          <span id="leg-vm1-wrap" style="color: #00f2fe; transition: all 0.3s;">● lmps-app1 VM1 (<span id="leg-vm1">--%</span>)</span>
+          <span id="leg-vm2-wrap" style="color: #0f766e; transition: all 0.3s;">● lmps-app2 VM2 (<span id="leg-vm2">--%</span>)</span>
         </div>
       </div>
     </div>
@@ -903,11 +903,67 @@
       document.getElementById('leg-app').innerText = `${m.app_reject_pct}%`;
       document.getElementById('leg-lb').innerText = `${m.lb_reject_pct}%`;
 
-      // Node Bars
-      document.getElementById('bar-vm1').style.width = `${m.vm1_pct}%`;
-      document.getElementById('bar-vm2').style.width = `${m.vm2_pct}%`;
+      // Node Bars with 80% Overload Threshold Rule
+      const barVm1 = document.getElementById('bar-vm1');
+      const barVm2 = document.getElementById('bar-vm2');
+      const legVm1Wrap = document.getElementById('leg-vm1-wrap');
+      const legVm2Wrap = document.getElementById('leg-vm2-wrap');
+      const nodeAlert = document.getElementById('node-overload-alert');
+
+      barVm1.style.width = `${m.vm1_pct}%`;
+      barVm2.style.width = `${m.vm2_pct}%`;
       document.getElementById('leg-vm1').innerText = `${m.vm1_pct}% (${(m.vm1_count || 0).toLocaleString()})`;
       document.getElementById('leg-vm2').innerText = `${m.vm2_pct}% (${(m.vm2_count || 0).toLocaleString()})`;
+
+      let overloadWarnings = [];
+
+      // If VM1 usage is 80% or more, turn bar and text RED
+      if (m.vm1_pct >= 80) {
+        barVm1.style.background = '#ff2255';
+        barVm1.style.boxShadow = '0 0 12px rgba(255, 34, 85, 0.8)';
+        if (legVm1Wrap) {
+          legVm1Wrap.style.color = '#ff2255';
+          legVm1Wrap.style.fontWeight = '800';
+        }
+        overloadWarnings.push('⚠️ VM1 OVERLOAD (≥80%)');
+      } else {
+        barVm1.style.background = '#00f2fe';
+        barVm1.style.boxShadow = 'none';
+        if (legVm1Wrap) {
+          legVm1Wrap.style.color = '#00f2fe';
+          legVm1Wrap.style.fontWeight = 'normal';
+        }
+      }
+
+      // If VM2 usage is 80% or more, turn bar and text RED
+      if (m.vm2_pct >= 80) {
+        barVm2.style.background = '#ff2255';
+        barVm2.style.boxShadow = '0 0 12px rgba(255, 34, 85, 0.8)';
+        if (legVm2Wrap) {
+          legVm2Wrap.style.color = '#ff2255';
+          legVm2Wrap.style.fontWeight = '800';
+        }
+        overloadWarnings.push('⚠️ VM2 OVERLOAD (≥80%)');
+      } else {
+        barVm2.style.background = '#0f766e';
+        barVm2.style.boxShadow = 'none';
+        if (legVm2Wrap) {
+          legVm2Wrap.style.color = '#0f766e';
+          legVm2Wrap.style.fontWeight = 'normal';
+        }
+      }
+
+      if (nodeAlert) {
+        if (overloadWarnings.length > 0) {
+          nodeAlert.innerText = overloadWarnings.join(' • ');
+          nodeAlert.style.color = '#ff2255';
+          nodeAlert.style.fontWeight = '800';
+        } else {
+          nodeAlert.innerText = 'Real Server Weighted Distribution';
+          nodeAlert.style.color = 'var(--text-dim)';
+          nodeAlert.style.fontWeight = 'normal';
+        }
+      }
 
       // Transaction Types Table
       const typesTbody = document.getElementById('tbody-types');
@@ -947,18 +1003,18 @@
                 <td style="text-align: center; color: var(--neon-teal);">${(b.total_req || 0).toLocaleString()}</td>
                 <td style="text-align: center;">
                   ${hasAppRej ? `
-                    <span onclick="filterByBank('${b.bank_name}', 'app')" 
+                    <span onclick="filterByBank('${b.bank_name}', 'app'); inspectRejectionDetails('app')" 
                           style="cursor: pointer; padding: 2px 7px; border-radius: 3px; background: rgba(255, 184, 0, 0.2); color: #ffb800; border: 1px solid rgba(255, 184, 0, 0.5); font-weight: 800;"
-                          title="Click to filter ${b.bank_name} App Rejections in audit ledger below">
+                          title="Click to filter & inspect ${b.bank_name} App Rejections">
                       ${b.app_reject_cnt} 🔍
                     </span>
                   ` : `<span style="color: var(--text-dim);">0</span>`}
                 </td>
                 <td style="text-align: center;">
                   ${hasLbRej ? `
-                    <span onclick="filterByBank('${b.bank_name}', 'lb')" 
+                    <span onclick="filterByBank('${b.bank_name}', 'lb'); inspectRejectionDetails('lb')" 
                           style="cursor: pointer; padding: 2px 7px; border-radius: 3px; background: rgba(255, 34, 85, 0.2); color: #ff2255; border: 1px solid rgba(255, 34, 85, 0.5); font-weight: 800;"
-                          title="Click to filter ${b.bank_name} LB Pre-Core Drops in audit ledger below">
+                          title="Click to filter & inspect ${b.bank_name} LB Pre-Core Drops">
                       ${b.lb_reject_cnt} 🔍
                     </span>
                   ` : `<span style="color: var(--text-dim);">0</span>`}
@@ -990,47 +1046,145 @@
 
       // Rejections Ledger Table
       const rejTbody = document.getElementById('tbody-rejects');
+      const modalRejTbody = document.getElementById('tbody-modal-rejects');
       const countBadge = document.getElementById('badge-reject-count');
+      const modalCountBadge = document.getElementById('modal-rej-count');
+
+      const cnt = d.recent_rejects ? d.recent_rejects.length : 0;
       if (countBadge) {
-        const cnt = d.recent_rejects ? d.recent_rejects.length : 0;
         const bLabel = activeBankFilter !== 'ALL' ? ` (${activeBankFilter})` : '';
         countBadge.innerText = `${cnt} Rejections${bLabel}`;
       }
-      if (rejTbody) {
-        if (d.recent_rejects && d.recent_rejects.length > 0) {
-          rejTbody.innerHTML = d.recent_rejects.map(r => `
-            <tr style="background: ${r.category === 'LB_REJECT' ? 'rgba(255,34,85,0.08)' : 'rgba(255,184,0,0.04)'};">
-              <td style="color: var(--text-dim); white-space: nowrap;">${r.time}</td>
-              <td style="color: var(--neon-cyan); font-weight: 700; white-space: nowrap;">${r.tx_ref || 'N/A'}</td>
-              <td style="font-weight: 700; color: #fff;">${r.bank}</td>
-              <td style="color: var(--text-dim); white-space: nowrap;">${r.client_ip}</td>
-              <td style="color: #ffffff; max-width: 220px; word-break: break-all;">
-                <strong>${r.http_method || ''}</strong> ${r.url || r.type}
-              </td>
-              <td style="text-align: center; font-weight: 800;">
-                <span style="padding: 1px 6px; border-radius: 3px; font-size: 8.5px; background: ${r.retcode >= 500 ? 'rgba(255,34,85,0.2)' : 'rgba(255,184,0,0.2)'}; color: ${r.retcode >= 500 ? 'var(--neon-red)' : 'var(--neon-amber)'};">
-                  ${r.retcode}
-                </span>
-              </td>
-              <td>
-                ${r.category === 'LB_REJECT' 
-                  ? `<span class="badge-lb-boundary">LB DROPPED (PRE-CORE)</span>` 
-                  : `<span class="badge-app-boundary">CORE SWITCH (VM1/VM2)</span>`}
-              </td>
-              <td style="font-size: 8.5px; color: #cbd5e1;">${r.reason}</td>
-              <td style="text-align: center; color: var(--neon-teal); font-weight: 700;">${r.node || 'N/A'}</td>
-              <td style="text-align: right; color: var(--text-dim);">${r.latency_ms || 0}ms</td>
-            </tr>
-          `).join('');
-        } else {
-          rejTbody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 16px; color: #10b981;">✓ Zero Rejections logged for ${activeBankFilter !== 'ALL' ? activeBankFilter : 'selected window'}</td></tr>`;
-        }
+      if (modalCountBadge) {
+        modalCountBadge.innerText = `${cnt} Rejected Transactions`;
       }
+
+      const rowsHtml = (d.recent_rejects && d.recent_rejects.length > 0) ? d.recent_rejects.map(r => `
+        <tr style="background: ${r.category === 'LB_REJECT' ? 'rgba(255,34,85,0.08)' : 'rgba(255,184,0,0.04)'};">
+          <td style="color: var(--text-dim); white-space: nowrap;">${r.time}</td>
+          <td style="color: var(--neon-cyan); font-weight: 700; white-space: nowrap;">${r.tx_ref || 'N/A'}</td>
+          <td style="font-weight: 700; color: #fff;">${r.bank}</td>
+          <td style="color: var(--text-dim); white-space: nowrap;">${r.client_ip}</td>
+          <td style="color: #ffffff; max-width: 220px; word-break: break-all;">
+            <strong>${r.http_method || ''}</strong> ${r.url || r.type}
+          </td>
+          <td style="text-align: center; font-weight: 800;">
+            <span style="padding: 1px 6px; border-radius: 3px; font-size: 8.5px; background: ${r.retcode >= 500 ? 'rgba(255,34,85,0.2)' : 'rgba(255,184,0,0.2)'}; color: ${r.retcode >= 500 ? 'var(--neon-red)' : 'var(--neon-amber)'};">
+              ${r.retcode}
+            </span>
+          </td>
+          <td>
+            ${r.category === 'LB_REJECT' 
+              ? `<span class="badge-lb-boundary">LB DROPPED (PRE-CORE)</span>` 
+              : `<span class="badge-app-boundary">CORE SWITCH (VM1/VM2)</span>`}
+          </td>
+          <td style="font-size: 8.5px; color: #cbd5e1;">${r.reason}</td>
+          <td style="text-align: center; color: var(--neon-teal); font-weight: 700;">${r.node || 'N/A'}</td>
+          <td style="text-align: right; color: var(--text-dim);">${r.latency_ms || 0}ms</td>
+        </tr>
+      `).join('') : `<tr><td colspan="10" style="text-align: center; padding: 16px; color: #10b981;">✓ Zero Rejections logged for ${activeBankFilter !== 'ALL' ? activeBankFilter : 'selected window'}</td></tr>`;
+
+      if (rejTbody) rejTbody.innerHTML = rowsHtml;
+      if (modalRejTbody) modalRejTbody.innerHTML = rowsHtml;
+    }
+
+    // Inspect Rejections Modal handler (Image 4 click support)
+    function inspectRejectionDetails(boundary) {
+      activeBoundaryFilter = boundary;
+      const selBoundary = document.getElementById('hdr-boundary-select');
+      if (selBoundary) selBoundary.value = boundary;
+
+      fetchStats();
+
+      const modal = document.getElementById('modal-reject-details');
+      const badge = document.getElementById('modal-rej-badge');
+      const title = document.getElementById('modal-rej-title');
+      const notice = document.getElementById('modal-rej-notice');
+
+      if (boundary === 'app') {
+        badge.innerText = 'CORE SWITCH APPLICATION REJECTIONS';
+        badge.style.background = 'rgba(255, 184, 0, 0.2)';
+        badge.style.color = '#ffb800';
+        badge.style.borderColor = '#ffb800';
+        title.innerText = 'Transactions Reached Core Switch but Rejected by LMPSCore App';
+        notice.innerHTML = '<strong>Boundary: LMPSCore Application Layer (VM1 / VM2)</strong><br>These requests successfully passed FortiADC load balancer VIP 175.2.0.29:8055, but the switching application returned an error (e.g. 404 Route Not Found, 401 Unauthorized, or 400 Field Validation Error).';
+      } else if (boundary === 'lb') {
+        badge.innerText = 'FORTIADC LOAD BALANCER DROPS (PRE-CORE)';
+        badge.style.background = 'rgba(255, 34, 85, 0.2)';
+        badge.style.color = '#ff2255';
+        badge.style.borderColor = '#ff2255';
+        title.innerText = 'Transactions Dropped at FortiADC Gateway (Did NOT Reach Core Switch)';
+        notice.innerHTML = '<strong>Boundary: FortiADC 300E Load Balancer Perimeter (Pre-Core Drop)</strong><br>These requests were terminated by FortiADC before being forwarded to VM1 or VM2. The Core Switch has ZERO record of these requests. Common causes: Missing RFC 7230 Host header on HTTP/1.1 probes, connection reset, or upstream gateway timeout.';
+      } else {
+        badge.innerText = 'ALL REJECTED TRANSACTIONS';
+        badge.style.background = 'rgba(0, 242, 254, 0.2)';
+        badge.style.color = '#00f2fe';
+        badge.style.borderColor = '#00f2fe';
+        title.innerText = 'Complete Audit Ledger of Rejected Transactions';
+        notice.innerHTML = 'Showing all transaction exceptions across both the FortiADC perimeter load balancer and the core switching application layer.';
+      }
+
+      if (modal) modal.style.display = 'flex';
+
+      const card = document.getElementById('ledger-card');
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        card.style.boxShadow = boundary === 'lb' ? '0 0 20px rgba(255,34,85,0.4)' : '0 0 20px rgba(255,184,0,0.4)';
+        setTimeout(() => { card.style.boxShadow = 'none'; }, 2000);
+      }
+    }
+
+    function closeRejectionModal() {
+      const modal = document.getElementById('modal-reject-details');
+      if (modal) modal.style.display = 'none';
     }
 
     // Polling interval every 5 seconds
     setInterval(fetchStats, 5000);
     fetchStats();
   </script>
+
+  <!-- Rejection Details Inspector Modal -->
+  <div id="modal-reject-details" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.75); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px);" onclick="if(event.target === this) closeRejectionModal();">
+    <div style="background: #081a28; border: 1px solid var(--border-blue); border-radius: 8px; width: 1100px; max-width: 96vw; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+      <div style="padding: 12px 16px; background: #061524; border-bottom: 1px solid var(--border-blue); display: flex; justify-content: space-between; align-items: center; border-radius: 8px 8px 0 0;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span id="modal-rej-badge" class="badge-pill" style="background: rgba(255, 184, 0, 0.2); color: #ffb800; border: 1px solid #ffb800;">APP REJECTIONS</span>
+          <strong id="modal-rej-title" style="color: #ffffff; font-size: 13px;">Itemized Rejection Transaction Audit</strong>
+          <span id="modal-rej-count" class="badge-pill badge-cyan">0 Transactions</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button class="btn-action btn-report" onclick="openBankIncidentReport()">📄 Open Official Notice</button>
+          <button class="btn-action" onclick="exportRejectionCSV()">📥 Export CSV</button>
+          <button style="background: none; border: none; color: #fff; font-size: 16px; cursor: pointer; padding: 2px 6px;" onclick="closeRejectionModal()">✕</button>
+        </div>
+      </div>
+      <div style="padding: 14px 16px; overflow-y: auto; flex: 1;">
+        <div id="modal-rej-notice" style="background: #092032; border: 1px solid var(--border-blue); border-radius: 6px; padding: 10px 14px; margin-bottom: 12px; font-size: 10px; color: #cbd5e1; line-height: 1.4;">
+        </div>
+        <div class="table-container" style="max-height: 55vh;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 75px;">Time (GMT+7)</th>
+                <th style="width: 120px;">Reference ID</th>
+                <th style="width: 80px;">Bank</th>
+                <th style="width: 100px;">Client IP</th>
+                <th>Method & Path</th>
+                <th style="text-align: center; width: 60px;">HTTP Code</th>
+                <th style="width: 140px;">Failure Boundary</th>
+                <th>Technical Reason & Diagnosis</th>
+                <th style="text-align: center; width: 70px;">Node</th>
+                <th style="text-align: right; width: 60px;">Latency</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-modal-rejects">
+              <tr><td colspan="10" style="text-align: center; padding: 20px;">Loading transactions...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
