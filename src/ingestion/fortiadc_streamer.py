@@ -132,6 +132,7 @@ class FortiADCStreamer:
         # Rolling counters for RPS calculation
         self.rolling_req_count = 0
         self.last_rps_calc = time.time()
+        self.recent_script_refs = []
 
     def get_db_connection(self):
         return psycopg2.connect(
@@ -212,6 +213,15 @@ class FortiADCStreamer:
                     tx_ref = ref_match.group(1)
                 elif len(http_qry) >= 8 and "=" not in http_qry:
                     tx_ref = http_qry[:24]
+
+            if not tx_ref:
+                # Check recent script-extracted references within 4 seconds
+                now_ts = time.time()
+                with self.queue_lock:
+                    for ts, sref in reversed(self.recent_script_refs):
+                        if now_ts - ts <= 4.0:
+                            tx_ref = sref
+                            break
 
             if not tx_ref and msg_id:
                 tx_ref = f"LB-{msg_id}"
@@ -439,6 +449,19 @@ class FortiADCStreamer:
                 raw_msg = data.decode("utf-8", errors="ignore").strip()
                 if not raw_msg:
                     continue
+
+                # Check for FortiADC script logs (LMPS_TXN_REF or LMPS_PAYLOAD_BODY)
+                script_ref_match = re.search(r'LMPS_TXN_REF:\s*([A-Za-z0-9_\-]+)', raw_msg)
+                if not script_ref_match and "LMPS_PAYLOAD_BODY" in raw_msg:
+                    script_ref_match = re.search(r'"(?:reference|txnRef|tx_id|traceNo)"\s*:\s*"([^"]+)"', raw_msg)
+
+                if script_ref_match:
+                    s_ref = script_ref_match.group(1).strip()
+                    logger.info(f"Captured FortiADC script reference: {s_ref}")
+                    with self.queue_lock:
+                        self.recent_script_refs.append((time.time(), s_ref))
+                        if len(self.recent_script_refs) > 100:
+                            self.recent_script_refs.pop(0)
 
                 parsed = self.parse_fortiadc_log(raw_msg)
                 if parsed:
