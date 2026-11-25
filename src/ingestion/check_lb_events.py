@@ -55,5 +55,13 @@ def main():
         print(f"Time: {r[0]} | Dev: {r[1]} | Bank: {r[2]} | URL: {r[4]} | Ref: {r[5]}")
         print(f"Raw snippet: {r[6][:250]}...\n")
 
+    print("\n=== CHECKING IF 'LMPS' APPEARS IN ANY RAW LOGS ===")
+    cur.execute("SELECT count(1) FROM fraud_monitoring.fortiadc_traffic_logs WHERE raw_log LIKE '%LMPS%';")
+    print("LMPS raw matches:", cur.fetchone())
+
+    print("\n=== CHECKING IF '0300010000' (SCRIPT LOG ID) APPEARS IN ANY RAW LOGS ===")
+    cur.execute("SELECT count(1) FROM fraud_monitoring.fortiadc_traffic_logs WHERE raw_log LIKE '%0300010000%';")
+    print("Script log matches:", cur.fetchone())
+
 if __name__ == "__main__":
     main()
