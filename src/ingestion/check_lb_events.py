@@ -32,16 +32,28 @@ def main():
         print(f"Time: {row[0]}, Dev: {row[1]}, Bank: {row[3]}, Method: {row[4]}, URL: {row[5]}, Code: {row[6]}, Action: {row[7]}, RealServer: {row[8]}")
         print(f"Raw: {row[9][:200]}...\n")
         
-    print("\n=== SAMPLE RAW LOGS FOR ANY ACTION in ('close', 'drop', 'block', 'reject', 'reset') ===")
+    print("\n=== TRANSACTIONS WITH BUSINESS REFERENCE (tx_ref NOT 'N/A' AND NOT LIKE 'LB-%') ===")
     cur.execute("""
-        SELECT timestamp, devname, client_ip, bank_name, http_method, http_url, http_retcode, action, real_server, raw_log 
+        SELECT timestamp, bank_name, http_method, http_url, tx_ref, raw_log 
         FROM fraud_monitoring.fortiadc_traffic_logs 
-        WHERE action NOT IN ('none', '') OR http_retcode IN (502, 503, 504)
+        WHERE tx_ref NOT LIKE 'LB-%' AND tx_ref != 'N/A'
+        ORDER BY timestamp DESC LIMIT 10;
+    """)
+    rows = cur.fetchall()
+    print(f"Total matching rows: {len(rows)}")
+    for r in rows:
+        print(f"Time: {r[0]} | Bank: {r[1]} | Method: {r[2]} | URL: {r[3]} | Ref: {r[4]}")
+
+    print("\n=== LATEST 5 /transfer TRANSACTIONS IN DATABASE ===")
+    cur.execute("""
+        SELECT timestamp, devname, bank_name, http_method, http_url, tx_ref, raw_log 
+        FROM fraud_monitoring.fortiadc_traffic_logs 
+        WHERE http_url LIKE '%transfer%'
         ORDER BY timestamp DESC LIMIT 5;
     """)
-    for row in cur.fetchall():
-        print(f"Time: {row[0]}, Dev: {row[1]}, Bank: {row[3]}, Code: {row[6]}, Action: {row[7]}, RealServer: {row[8]}")
-        print(f"Raw: {row[9][:200]}...\n")
+    for r in cur.fetchall():
+        print(f"Time: {r[0]} | Dev: {r[1]} | Bank: {r[2]} | URL: {r[4]} | Ref: {r[5]}")
+        print(f"Raw snippet: {r[6][:250]}...\n")
 
 if __name__ == "__main__":
     main()
