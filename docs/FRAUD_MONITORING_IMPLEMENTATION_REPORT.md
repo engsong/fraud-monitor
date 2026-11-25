@@ -439,10 +439,24 @@ Implemented in `src/ingestion/fortiadc_streamer.py`, stored in `fraud_monitoring
        - Complete itemized breakdown: Timestamp (GMT+7), Unique Tracking Reference (`LB-<msg_id>`), Bank Name, Client IP, HTTP Method & Path, HTTP Status Code, Node (`VM1`, `VM2`, `LB_DIRECT`), Latency, and Technical Reason.
        - Direct action buttons: `[📄 Open Official Bank Notice]` and `[📥 Export Forensic CSV]`.
 
+10. **Official LAPNet Company Legal Title & Bilingual Letterhead Standardization (v1.0.15 - 2026-11-25 14:25 GMT+7)**:
+    - **Letterhead Nomenclature Standardization**:
+      - Standardized the primary corporate English title to:
+        `Lao National Payment Network CO., LTD (LAPNet)`
+      - Standardized the official Lao legal corporate title to:
+        `ບໍລິສັດ ລາວເນ ເຊີນນໍ ເພເມັ້ນ ເນັດເວີກ ຈຳກັດ`
+      - Replaced all previous variants across formal documents:
+        - `src/geomap/templates/bank_incident_report.html`: Main incident notice letterhead.
+        - `src/geomap/templates/statistics_report.html`: Executive fraud risk statistics report.
+        - `src/geomap/templates/timeline_report.html`: Timeline fraud risk & forensic audit dossier.
+        - `src/geomap/templates/fraud_report.html`: Multi-hop fraud investigation dossier.
+    - Preserved official OCC division and AML/CFT supervisory subtitles across all printable reports.
+
 ---
 
 *Sign-off: LAPNet Cybersecurity & Fraud Prevention Engineering Team*  
-*Host: WEBSERVER01 (175.0.198.10) • Production Ports: 3005 & 3006 • Production Branch: main • Version: v1.0.14*
+*Host: WEBSERVER01 (175.0.198.10) • Production Ports: 3005 & 3006 • Production Branch: main • Version: v1.0.15*
+
 
 
 
